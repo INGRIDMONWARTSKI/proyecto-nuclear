@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+.angular/
+
+# Keep environment variables out of version control
+.env
+.env.*
+!.env.example
+
+# Databases
+*.db
+*.db-journal
+generated/
+*.sqlite
+*.sqlite3

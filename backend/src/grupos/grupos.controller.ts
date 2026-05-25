@@ -1,0 +1,104 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
+import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
+import { ActualizarGrupoDto } from './dto/actualizar-grupo.dto';
+import { AsignarEstudiantesDto } from './dto/asignar-estudiantes.dto';
+import { CrearGrupoDto } from './dto/crear-grupo.dto';
+import { GruposService } from './grupos.service';
+
+@Controller('grupos')
+@UseGuards(JwtAuthGuard)
+export class GruposController {
+  constructor(private readonly gruposService: GruposService) {}
+
+  @Post()
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
+  create(
+    @Body() crearGrupoDto: CrearGrupoDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.gruposService.create(crearGrupoDto, currentUser);
+  }
+
+  @Get()
+  findAll(@CurrentUser() currentUser: AuthenticatedUser) {
+    return this.gruposService.findAll(currentUser);
+  }
+
+  @Get(':id/estudiantes')
+  listStudents(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.gruposService.listStudents(id, currentUser);
+  }
+
+  @Post(':id/estudiantes')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
+  assignStudents(
+    @Param('id') id: string,
+    @Body() asignarEstudiantesDto: AsignarEstudiantesDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.gruposService.assignStudents(
+      id,
+      asignarEstudiantesDto,
+      currentUser,
+    );
+  }
+
+  @Delete(':id/estudiantes/:estudianteId')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
+  removeStudent(
+    @Param('id') id: string,
+    @Param('estudianteId') estudianteId: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.gruposService.removeStudent(id, estudianteId, currentUser);
+  }
+
+  @Get(':id')
+  findOne(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.gruposService.findOne(id, currentUser);
+  }
+
+  @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
+  update(
+    @Param('id') id: string,
+    @Body() actualizarGrupoDto: ActualizarGrupoDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.gruposService.update(id, actualizarGrupoDto, currentUser);
+  }
+
+  @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
+  remove(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.gruposService.remove(id, currentUser);
+  }
+}

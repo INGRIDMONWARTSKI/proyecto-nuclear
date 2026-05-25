@@ -1,0 +1,136 @@
+@if (loading()) {
+  <app-loading-state message="Cargando grupo..." />
+} @else {
+  @if (grupoData(); as g) {
+    <section class="page-header">
+      <div>
+        <h1>{{ g.nombre }}</h1>
+        @if (g.descripcion) {
+          <p class="page-header__subtitle">{{ g.descripcion }}</p>
+        }
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" routerLink="/grupos">Volver</a>
+        @if (puedeAdministrar()) {
+          <a class="btn btn-secondary" [routerLink]="['/grupos', g.id, 'editar']">Editar</a>
+          @if (g.isActive) {
+            <button class="btn btn-danger" type="button" (click)="confirmarDesactivar()">
+              Desactivar
+            </button>
+          }
+        }
+      </div>
+    </section>
+
+    @if (errorMessage()) {
+      <app-alert-message [message]="errorMessage()!" />
+    }
+    @if (successMessage()) {
+      <app-alert-message [message]="successMessage()!" type="success" />
+    }
+
+    <div class="meta-chips card">
+      <span class="chip" [class.chip--active]="g.isActive" [class.chip--inactive]="!g.isActive">
+        {{ g.isActive ? 'Activo' : 'Inactivo' }}
+      </span>
+      <span class="chip">{{ estudiantes().length }} estudiantes</span>
+      <span class="chip">{{ g.createdAt | date: 'mediumDate' }}</span>
+    </div>
+
+    <app-classroom-scene
+      [estudiantes]="estudiantes()"
+      [estudiantesDisponibles]="estudiantesDisponibles()"
+      [asientos]="asientos()"
+      [puedeAdministrar]="puedeAdministrar()"
+      [grupoActivo]="g.isActive"
+      [loadingSalon]="loadingEstudiantes()"
+      (removeRequested)="confirmarRemover($event)"
+      (assignRequested)="asignarDesdePupitre($event)"
+    />
+
+    @if (puedeAdministrar() && g.isActive) {
+      <section class="assign-toolbar card">
+        <div class="assign-toolbar__head">
+          <h2>Asignar estudiantes</h2>
+          <button class="btn btn-primary" type="button" (click)="toggleAssignPanel()">
+            {{ showAssignPanel() ? 'Ocultar' : 'Asignación múltiple' }}
+          </button>
+        </div>
+
+        @if (showAssignPanel()) {
+          <form class="assign-panel" [formGroup]="assignForm" (ngSubmit)="asignarEstudiantes()">
+            <div class="form-field">
+              <label for="estudianteIds">Estudiantes</label>
+              @if (estudiantesPendientes().length === 0) {
+                <p class="hint">Todos los estudiantes del sistema ya están en este grupo.</p>
+              } @else {
+                <div class="student-search">
+                  <input
+                    type="search"
+                    class="student-search__input"
+                    placeholder="Buscar por nombre o correo..."
+                    [value]="busquedaAsignacion()"
+                    (input)="actualizarBusquedaAsignacion($event)"
+                    aria-label="Buscar estudiantes"
+                  />
+                  @if (busquedaAsignacion()) {
+                    <button
+                      type="button"
+                      class="student-search__clear"
+                      (click)="limpiarBusquedaAsignacion()"
+                    >
+                      Limpiar
+                    </button>
+                  }
+                </div>
+                <p class="student-search__count">
+                  {{ estudiantesPendientesFiltrados().length }} de
+                  {{ estudiantesPendientes().length }} estudiantes
+                </p>
+                <ul class="student-picker" aria-label="Lista de estudiantes">
+                  @if (estudiantesPendientesFiltrados().length === 0) {
+                    <li class="student-picker__empty">Sin coincidencias para la búsqueda.</li>
+                  } @else {
+                    @for (estudiante of estudiantesPendientesFiltrados(); track estudiante.id) {
+                      <li>
+                        <label class="student-picker__item">
+                          <input
+                            type="checkbox"
+                            [checked]="estaSeleccionadoParaAsignar(estudiante.id)"
+                            (change)="toggleSeleccionEstudiante(estudiante.id, $any($event.target).checked)"
+                          />
+                          <span class="student-picker__text">
+                            <strong>{{ estudiante.fullName }}</strong>
+                            <small>{{ estudiante.email }}</small>
+                          </span>
+                        </label>
+                      </li>
+                    }
+                  }
+                </ul>
+                <small class="hint">Marca varios estudiantes o asigna desde un pupitre vacío.</small>
+              }
+            </div>
+
+            <button
+              class="btn btn-primary"
+              type="submit"
+              [disabled]="assigning() || estudiantesPendientes().length === 0"
+            >
+              {{ assigning() ? 'Asignando...' : 'Confirmar' }}
+            </button>
+          </form>
+        }
+      </section>
+    }
+  } @else {
+    <section class="page-header">
+      <h1>Grupo no disponible</h1>
+      <p class="page-header__subtitle">No existe o no tienes permiso para verlo.</p>
+      <a class="btn btn-secondary" routerLink="/grupos">Volver a grupos</a>
+    </section>
+    @if (errorMessage()) {
+      <app-alert-message [message]="errorMessage()!" />
+    }
+  }
+}

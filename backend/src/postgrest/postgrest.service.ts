@@ -82,10 +82,17 @@ export class PostgrestService {
     return (await response.json()) as T[];
   }
 
+  async remove(table: string, options: MutationOptions = {}): Promise<void> {
+    await this.request(table, {
+      method: 'DELETE',
+      query: options,
+    });
+  }
+
   private async request(
     table: string,
     options: {
-      method: 'GET' | 'POST' | 'PATCH';
+      method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
       query?: QueryOptions;
       body?: object;
       headers?: HeadersInit;
@@ -149,12 +156,13 @@ export class PostgrestService {
       if (Array.isArray(rawValue)) {
         url.searchParams.set(
           field,
-          `in.(${rawValue.map((item) => encodeURIComponent(String(item))).join(',')})`,
+          `in.(${rawValue.map((item) => String(item)).join(',')})`,
         );
         continue;
       }
 
-      url.searchParams.set(field, `eq.${encodeURIComponent(String(rawValue))}`);
+      // searchParams ya codifica el valor; no usar encodeURIComponent aqui.
+      url.searchParams.set(field, `eq.${String(rawValue)}`);
     }
   }
 

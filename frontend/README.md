@@ -1,5 +1,21 @@
 # Frontend
 
-Este directorio queda reservado para la aplicación Angular del proyecto.
+Aplicación Angular del Simulador de Psicología Social.
 
-Por alcance actual, la implementación activa del repositorio está concentrada en backend para la Persona 1. La estructura base ya quedó preparada para que la Persona 4 construya aquí la aplicación Angular.
+## Módulo implementado
+
+- **Grupos académicos** (`src/app/grupos/`)
+- Base de autenticación JWT (`src/app/core/`, `src/app/auth/`)
+
+## Ejecutar
+
+```bash
+npm install
+npm start
+```
+
+Abre `http://localhost:4200`. El backend debe estar en `http://localhost:3000/api` (ver `src/environments/environment.ts`).
+
+## Credenciales de prueba
+
+Usa el admin del seed del backend (`admin@nuclear.local` / `Admin123*`).

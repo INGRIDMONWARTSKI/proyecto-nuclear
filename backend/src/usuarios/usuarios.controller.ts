@@ -7,23 +7,28 @@ import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { UsuariosService } from './usuarios.service';
 
 @Controller('usuarios')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
+@UseGuards(JwtAuthGuard)
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
   findAll() {
     return this.usuariosService.findAll();
   }
 
   @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
   async findOne(@Param('id') id: string) {
     const usuario = await this.usuariosService.findById(id);
     return this.usuariosService.sanitizeUser(usuario);
   }
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   async create(@Body() crearUsuarioDto: CrearUsuarioDto) {
     const usuario = await this.usuariosService.create(crearUsuarioDto);
     return this.usuariosService.sanitizeUser(usuario);

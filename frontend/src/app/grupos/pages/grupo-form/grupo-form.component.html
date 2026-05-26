@@ -1,0 +1,62 @@
+<section class="page-header">
+  <div>
+    <h1>{{ isEdit() ? 'Editar grupo' : 'Nuevo grupo' }}</h1>
+    @if (authService.hasRole(Role.PROFESOR) && !isEdit()) {
+      <p class="page-header__subtitle">Se asignará a tu usuario como profesor.</p>
+    }
+  </div>
+  <a class="btn btn-secondary" routerLink="/grupos">Volver</a>
+</section>
+
+@if (errorMessage()) {
+  <app-alert-message [message]="errorMessage()!" />
+}
+
+@if (loading()) {
+  <app-loading-state message="Cargando..." />
+} @else {
+  <form class="card form-card" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form-field">
+      <label for="nombre">Nombre</label>
+      <input id="nombre" type="text" formControlName="nombre" placeholder="Ej. Psicología Social A" />
+      @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+        <small class="field-error">Mínimo 3 caracteres.</small>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="descripcion">Descripción</label>
+      <textarea id="descripcion" rows="3" formControlName="descripcion" placeholder="Opcional"></textarea>
+    </div>
+
+    @if (authService.hasRole(Role.ADMIN)) {
+      <div class="form-field">
+        <label for="profesorId">Profesor</label>
+        @if (profesores().length === 0) {
+          <p class="hint">No hay profesores. Ejecuta <code>npm run db:seed</code> en el backend.</p>
+        } @else {
+          <select id="profesorId" formControlName="profesorId">
+            <option value="">Seleccionar...</option>
+            @for (profesor of profesores(); track profesor.id) {
+              <option [value]="profesor.id">{{ profesor.fullName }} ({{ profesor.email }})</option>
+            }
+          </select>
+          @if (form.controls.profesorId.touched && form.controls.profesorId.invalid) {
+            <small class="field-error">Selecciona un profesor.</small>
+          }
+        }
+      </div>
+    }
+
+    <div class="form-actions">
+      <button
+        class="btn btn-primary"
+        type="submit"
+        [disabled]="saving() || form.invalid || (authService.hasRole(Role.ADMIN) && profesores().length === 0 && !isEdit())"
+      >
+        {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar' : 'Crear') }}
+      </button>
+      <a class="btn btn-secondary" routerLink="/grupos">Cancelar</a>
+    </div>
+  </form>
+}

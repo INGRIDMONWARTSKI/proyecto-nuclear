@@ -1,0 +1,169 @@
+<section class="classroom" [@fadeSlideIn] aria-label="Salón de clases interactivo">
+  <div class="classroom__sky">
+    <span class="cloud cloud--1" aria-hidden="true"></span>
+    <span class="cloud cloud--2" aria-hidden="true"></span>
+    <span class="star star--1" aria-hidden="true">✦</span>
+    <span class="star star--2" aria-hidden="true">✧</span>
+  </div>
+
+  <div class="classroom__room">
+    <!-- Pared trasera -->
+    <div class="classroom__wall">
+      <div class="window window--left" aria-hidden="true">
+        <div class="window__pane"></div>
+        <div class="window__pane"></div>
+      </div>
+
+      <div class="chalkboard" aria-hidden="true">
+        <div class="chalkboard__frame">
+          <span class="chalkboard__title">{{ estudiantes().length }} estudiantes</span>
+          <span class="chalkboard__sub">Psicología Social</span>
+        </div>
+      </div>
+
+      <div class="window window--right" aria-hidden="true">
+        <div class="window__pane"></div>
+        <div class="window__pane"></div>
+      </div>
+
+      <div class="clock" aria-hidden="true">
+        <span class="clock__face"></span>
+        <span class="clock__hand clock__hand--h"></span>
+        <span class="clock__hand clock__hand--m"></span>
+      </div>
+
+      <div class="poster poster--math" aria-hidden="true">1+1=2</div>
+      <div class="poster poster--art" aria-hidden="true">🎨</div>
+    </div>
+
+    <!-- Zona profesor -->
+    <div class="teacher-zone">
+      <div class="teacher-desk" aria-hidden="true">
+        <div class="teacher-desk__top"></div>
+        <div class="teacher-desk__drawer"></div>
+      </div>
+      <div class="teacher-avatar" [style.background]="avatarProfesor().bg">
+        <span class="teacher-avatar__emoji">{{ avatarProfesor().emoji }}</span>
+        <span class="teacher-avatar__badge">Prof.</span>
+      </div>
+      <div class="plant plant--left" aria-hidden="true">🪴</div>
+      <div class="plant plant--right" aria-hidden="true">🌿</div>
+      <div class="backpack backpack--1" aria-hidden="true">🎒</div>
+      <div class="backpack backpack--2" aria-hidden="true">🎒</div>
+    </div>
+
+    <!-- Puerta lateral -->
+    <div class="door" aria-hidden="true">
+      <div class="door__panel"></div>
+      <div class="door__knob"></div>
+    </div>
+
+    <!-- Piso y pupitres -->
+    <div class="classroom__floor">
+      @if (loadingSalon()) {
+        <div class="classroom__loading">
+          <span class="classroom__loading-spinner"></span>
+          <p>Preparando el salón...</p>
+        </div>
+      } @else {
+        <div
+          class="desks-grid"
+          [style.--desk-cols]="columnas()"
+        >
+          @for (slot of slots(); track slot.index) {
+            <app-classroom-desk
+              [index]="slot.index"
+              [estudiante]="slot.estudiante"
+              [selected]="pupitreSeleccionado() === slot.index"
+              [interactive]="grupoActivo() && (puedeAdministrar() || !!slot.estudiante)"
+              (clicked)="onDeskClick(slot)"
+            ></app-classroom-desk>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Panel estudiante seleccionado -->
+  @if (estudianteSeleccionado(); as est) {
+    <aside class="info-panel" [@panelSlide] role="dialog" aria-label="Información del estudiante">
+      <button type="button" class="info-panel__close" (click)="cerrarPanel()" aria-label="Cerrar">×</button>
+      <div
+        class="info-panel__avatar"
+        [style.background]="buildAvatarStyle(est.fullName, est.id).bg"
+        [style.borderColor]="buildAvatarStyle(est.fullName, est.id).accent"
+      >
+        <span>{{ buildAvatarStyle(est.fullName, est.id).emoji }}</span>
+      </div>
+      <h3>{{ est.fullName }}</h3>
+      <p class="info-panel__email">{{ est.email }}</p>
+      <span class="info-panel__chip info-panel__chip--ok">● Presente en clase</span>
+      <span class="info-panel__chip">{{ est.role }}</span>
+      @if (puedeAdministrar() && grupoActivo()) {
+        <button
+          type="button"
+          class="info-panel__btn info-panel__btn--danger"
+          (click)="solicitarRemover(est)"
+        >
+          Remover del pupitre
+        </button>
+      }
+    </aside>
+  }
+
+  <!-- Panel asignar en pupitre vacío -->
+  @if (mostrarAsignar() && puedeAdministrar()) {
+    <aside class="info-panel info-panel--assign" [@panelSlide] role="dialog" aria-label="Asignar estudiante">
+      <button type="button" class="info-panel__close" (click)="cerrarPanel()" aria-label="Cerrar">×</button>
+      <h3>Asignar a pupitre</h3>
+      <p class="info-panel__hint">Selecciona un estudiante.</p>
+      @if (disponiblesParaAsignar().length === 0) {
+        <p class="info-panel__empty">No hay estudiantes pendientes. Usa la asignación múltiple.</p>
+      } @else {
+        <div class="assign-search">
+          <input
+            type="search"
+            class="assign-search__input"
+            placeholder="Buscar..."
+            [value]="busquedaAsignar()"
+            (input)="actualizarBusquedaAsignar($event)"
+            aria-label="Buscar estudiante"
+          />
+          @if (busquedaAsignar()) {
+            <button type="button" class="assign-search__clear" (click)="limpiarBusquedaAsignar()">
+              Limpiar
+            </button>
+          }
+        </div>
+        <p class="assign-search__count">
+          {{ disponiblesFiltrados().length }} de {{ disponiblesParaAsignar().length }}
+        </p>
+        <ul class="assign-list">
+          @if (disponiblesFiltrados().length === 0) {
+            <li class="assign-list__empty">Sin coincidencias.</li>
+          }
+          @for (candidato of disponiblesFiltrados(); track candidato.id) {
+            <li>
+              <button
+                type="button"
+                class="assign-list__item"
+                (click)="seleccionarParaAsignar(candidato.id)"
+              >
+                <span
+                  class="assign-list__avatar"
+                  [style.background]="buildAvatarStyle(candidato.fullName, candidato.id).bg"
+                >
+                  {{ buildAvatarStyle(candidato.fullName, candidato.id).emoji }}
+                </span>
+                <span>
+                  <strong>{{ candidato.fullName }}</strong>
+                  <small>{{ candidato.email }}</small>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </aside>
+  }
+</section>

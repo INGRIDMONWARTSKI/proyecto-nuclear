@@ -1,0 +1,181 @@
+.page-header--playful h1 {
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  color: #3d3566;
+}
+
+.page-header__subtitle {
+  color: #6b5b95;
+}
+
+.btn--bounce {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.03);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px) scale(0.98);
+  }
+}
+
+.card--playful {
+  border-radius: 20px;
+  border: 2px solid rgba(255, 209, 102, 0.5);
+  background: linear-gradient(145deg, #ffffff 0%, #fff9f0 100%);
+  box-shadow: 0 12px 28px rgba(74, 58, 143, 0.1);
+}
+
+.meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.chip {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4a3a8f;
+}
+
+.chip--active {
+  background: #d8fae8;
+  color: #0f9d58;
+}
+
+.chip--inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.assign-toolbar {
+  margin-top: 0.5rem;
+}
+
+.assign-toolbar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.assign-toolbar h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #3d3566;
+}
+
+.assign-panel {
+  border: 2px dashed #b8d4ff;
+  border-radius: 16px;
+  padding: 1rem;
+  background: #f8fbff;
+  animation: panel-in 0.35s ease-out;
+}
+
+.student-search {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.student-search__input {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  border: 2px solid #d4e4ff;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.student-search__clear {
+  border: none;
+  background: #eef2ff;
+  color: #4a3a8f;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.student-search__count {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.student-picker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 2px solid #d4e4ff;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.student-picker__empty {
+  padding: 0.85rem 1rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.student-picker__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #eef2ff;
+}
+
+.student-picker__item:hover {
+  background: #f8fbff;
+}
+
+.student-picker__item input {
+  margin-top: 0.2rem;
+}
+
+.student-picker__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.student-picker__text strong {
+  font-size: 0.88rem;
+  color: #3d3566;
+}
+
+.student-picker__text small {
+  font-size: 0.78rem;
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.hint {
+  color: #6b5b95;
+  font-size: 0.8rem;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

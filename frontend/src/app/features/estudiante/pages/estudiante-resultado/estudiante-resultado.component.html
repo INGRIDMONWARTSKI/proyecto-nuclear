@@ -1,0 +1,62 @@
+<section class="siep-page resultado">
+  <app-page-header
+    title="Resultado del caso"
+    subtitle="Revisa tu desempeño y la retroalimentación recibida."
+    icon="🌿"
+  >
+    <a actions class="siep-btn-secondary" routerLink="/estudiante/casos">Volver a mis casos</a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando resultado..." />
+  } @else {
+    @if (resultado(); as r) {
+      <article class="siep-card score-card">
+        <div class="score-card__head">
+          <h2>{{ r.caso.titulo }}</h2>
+          <app-status-badge variant="status" status="success" [label]="r.nivel" />
+        </div>
+        <div class="score-grid">
+          <p><strong>Puntaje total:</strong> {{ r.puntajeTotal }}</p>
+          <p><strong>Puntaje máximo:</strong> {{ r.puntajeMaximo }}</p>
+          <p><strong>Porcentaje:</strong> {{ r.porcentaje }}%</p>
+          <p><strong>Respondidas:</strong> {{ r.respondidas }} / {{ r.totalPreguntas }}</p>
+        </div>
+        <p class="score-card__summary">{{ r.resumen }}</p>
+      </article>
+
+      <section class="result-list" aria-label="Respuestas y retroalimentación">
+        @for (item of r.respuestas; track $index) {
+          <article class="siep-card result-item">
+            <p class="result-item__row">
+              <span>Pregunta</span>
+              {{ item.pregunta }}
+            </p>
+            <p class="result-item__row">
+              <span>Opción seleccionada</span>
+              {{ item.opcionSeleccionada }}
+            </p>
+            <p class="result-item__row">
+              <span>Puntaje obtenido</span>
+              {{ item.puntajeObtenido }}
+            </p>
+            <p class="result-item__row result-item__row--retro">
+              <span>Retroalimentación</span>
+              {{ item.retroalimentacion || 'Sin retroalimentación' }}
+            </p>
+          </article>
+        }
+      </section>
+
+      <section class="result-actions">
+        <button class="siep-btn-primary" type="button" (click)="reintentar()">
+          Reintentar caso
+        </button>
+      </section>
+    }
+  }
+</section>

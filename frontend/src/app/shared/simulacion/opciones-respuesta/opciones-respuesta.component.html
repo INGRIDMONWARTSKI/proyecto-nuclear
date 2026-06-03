@@ -1,0 +1,19 @@
+<section class="siep-card opciones">
+  <h3>{{ pregunta.enunciado }}</h3>
+  <ul class="opciones__list">
+    @for (opcion of pregunta.opciones; track opcion.id) {
+      <li>
+        <button
+          type="button"
+          class="opcion-btn"
+          [class.opcion-btn--selected]="selectedOpcionId === opcion.id"
+          [disabled]="locked"
+          (click)="onSelect(opcion)"
+        >
+          <span class="opcion-btn__order">{{ opcion.orden }}.</span>
+          <span>{{ opcion.texto }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+</section>

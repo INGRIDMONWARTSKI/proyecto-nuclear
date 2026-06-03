@@ -1,0 +1,96 @@
+<section class="siep-page revision">
+  <app-page-header
+    title="Revisión del intento"
+    subtitle="Modo revisión · solo lectura"
+    icon="🌿"
+  >
+    <a actions class="siep-btn-secondary" routerLink="/profesor/evidencias">
+      Volver a evidencias
+    </a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando revisión..." />
+  } @else {
+    @if (revision(); as r) {
+      <div class="revision-panel">
+        <article class="siep-card revision-card">
+          <div class="revision-card__head">
+            <h2>{{ r.caso.titulo }}</h2>
+            <app-status-badge variant="status" status="pending" label="Solo lectura" />
+          </div>
+
+          <h3 class="revision-card__section-title">Información del estudiante</h3>
+          <dl class="revision-grid">
+            <div>
+              <dt>Estudiante</dt>
+              <dd>{{ r.estudiante.nombre }}</dd>
+            </div>
+            <div>
+              <dt>Correo</dt>
+              <dd>{{ r.estudiante.email }}</dd>
+            </div>
+            <div>
+              <dt>Inicio</dt>
+              <dd>{{ r.fechaInicio | date: 'medium' }}</dd>
+            </div>
+            <div>
+              <dt>Finalización</dt>
+              <dd>
+                @if (r.fechaFinalizacion) {
+                  {{ r.fechaFinalizacion | date: 'medium' }}
+                } @else {
+                  —
+                }
+              </dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="siep-card revision-card">
+          <h3 class="revision-card__section-title">Resultado</h3>
+          <div class="revision-score-grid">
+            <p><strong>Puntaje total:</strong> {{ r.puntajeTotal }}</p>
+            <p><strong>Puntaje máximo:</strong> {{ r.puntajeMaximo }}</p>
+            <p><strong>Porcentaje:</strong> {{ r.porcentaje }}%</p>
+            <p class="revision-score-grid__nivel">
+              <strong>Nivel:</strong>
+              <app-status-badge variant="status" status="success" [label]="r.nivel" />
+            </p>
+            <p><strong>Respondidas:</strong> {{ r.respondidas }} / {{ r.totalPreguntas }}</p>
+          </div>
+          <p class="revision-card__resumen">{{ r.resumen }}</p>
+        </article>
+
+        <section class="revision-respuestas" aria-label="Respuestas del estudiante">
+          <h3 class="revision-respuestas__title">Respuestas y retroalimentación</h3>
+
+          @for (item of r.respuestas; track $index) {
+            <article class="siep-card revision-card revision-card--answer">
+              <p class="revision-answer__pregunta">
+                <span>Pregunta</span>
+                {{ item.pregunta }}
+              </p>
+              <p class="revision-answer__opcion">
+                <span>Opción seleccionada</span>
+                {{ item.opcionSeleccionada }}
+              </p>
+              <p class="revision-answer__puntaje">
+                <span>Puntaje obtenido</span>
+                {{ item.puntajeObtenido }}
+              </p>
+              <p class="revision-answer__retro">
+                <span>Retroalimentación</span>
+                {{ item.retroalimentacion || 'Sin retroalimentación registrada.' }}
+              </p>
+            </article>
+          }
+        </section>
+      </div>
+    }
+  }
+</section>

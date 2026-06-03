@@ -1,0 +1,67 @@
+<section class="siep-page">
+  <app-page-header
+    [title]="isEdit() ? 'Editar grupo' : 'Nuevo grupo'"
+    [subtitle]="formSubtitle()"
+    icon="🌿"
+  >
+    <a actions class="siep-btn-secondary" routerLink="..">Volver</a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando..." />
+  } @else {
+    <form class="siep-card grupo-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="siep-field">
+        <label for="nombre">Nombre</label>
+        <input
+          id="nombre"
+          type="text"
+          formControlName="nombre"
+          placeholder="Ej. Psicología Social A"
+        />
+        @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+          <small class="field-error">Mínimo 3 caracteres.</small>
+        }
+      </div>
+
+      <div class="siep-field">
+        <label for="descripcion">Descripción</label>
+        <textarea id="descripcion" rows="3" formControlName="descripcion" placeholder="Opcional"></textarea>
+      </div>
+
+      @if (authService.hasRole(Role.ADMIN)) {
+        <div class="siep-field">
+          <label for="profesorId">Profesor</label>
+          @if (profesores().length === 0) {
+            <p class="hint">No hay profesores. Ejecuta <code>npm run db:seed</code> en el backend.</p>
+          } @else {
+            <select id="profesorId" formControlName="profesorId">
+              <option value="">Seleccionar...</option>
+              @for (profesor of profesores(); track profesor.id) {
+                <option [value]="profesor.id">{{ profesor.fullName }} ({{ profesor.email }})</option>
+              }
+            </select>
+            @if (form.controls.profesorId.touched && form.controls.profesorId.invalid) {
+              <small class="field-error">Selecciona un profesor.</small>
+            }
+          }
+        </div>
+      }
+
+      <div class="form-actions">
+        <button
+          class="siep-btn-primary"
+          type="submit"
+          [disabled]="saving() || form.invalid || (authService.hasRole(Role.ADMIN) && profesores().length === 0 && !isEdit())"
+        >
+          {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar' : 'Crear') }}
+        </button>
+        <a class="siep-btn-secondary" routerLink="..">Cancelar</a>
+      </div>
+    </form>
+  }
+</section>

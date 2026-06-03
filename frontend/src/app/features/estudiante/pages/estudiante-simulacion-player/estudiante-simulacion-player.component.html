@@ -1,0 +1,70 @@
+<section class="siep-page player">
+  <app-page-header
+    title="Entrenamiento psicosocial"
+    subtitle="Lee el escenario, toma una decisión y revisa la retroalimentación formativa."
+    icon="🌿"
+  >
+    <a actions class="siep-btn-secondary" routerLink="/estudiante/casos">Volver</a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando escenario..." />
+  } @else {
+    @if (data(); as state) {
+      <app-simulacion-progress
+        [respondidas]="state.progreso.respondidas"
+        [total]="state.progreso.totalPreguntas"
+      />
+
+      @if (state.escenario) {
+        <div class="player-grid">
+          <app-escenario-viewer [escenario]="state.escenario" />
+
+          <app-opciones-respuesta
+            [pregunta]="state.escenario.pregunta"
+            [selectedOpcionId]="selectedOpcion()?.id ?? null"
+            [locked]="feedback() !== null || sending()"
+            (select)="seleccionarOpcion($event)"
+          />
+        </div>
+
+        @if (feedback(); as fb) {
+          <app-feedback-panel [feedback]="fb" />
+        }
+
+        <section class="player-actions">
+          @if (!feedback()) {
+            <button
+              class="siep-btn-primary"
+              type="button"
+              [disabled]="!selectedOpcion() || sending()"
+              (click)="responder()"
+            >
+              {{ sending() ? 'Enviando...' : 'Responder' }}
+            </button>
+          } @else if (completed()) {
+            <button class="siep-btn-primary" type="button" (click)="verResultado()">
+              Ver resultado
+            </button>
+          } @else {
+            <button class="siep-btn-primary" type="button" (click)="continuar()">
+              Continuar
+            </button>
+          }
+        </section>
+      } @else {
+        <section class="siep-card player-complete">
+          <h2>La sesión no tiene más escenarios pendientes.</h2>
+          <p>Puedes consultar el resultado final para cerrar la simulación.</p>
+          <button class="siep-btn-primary" type="button" (click)="verResultado()">
+            Ver resultado
+          </button>
+        </section>
+      }
+    }
+  }
+</section>

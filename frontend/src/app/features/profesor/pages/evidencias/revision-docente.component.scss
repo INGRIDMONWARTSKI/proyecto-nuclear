@@ -1,0 +1,132 @@
+.revision-panel {
+  display: grid;
+  gap: var(--siep-space-4);
+}
+
+.revision-card {
+  margin: 0;
+
+  h2 {
+    margin: 0;
+    font-family: var(--siep-font-title);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--siep-forest);
+  }
+}
+
+.revision-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--siep-space-3);
+  margin-bottom: var(--siep-space-4);
+}
+
+.revision-card__section-title {
+  margin: 0 0 var(--siep-space-3);
+  font-family: var(--siep-font-title);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--siep-forest);
+}
+
+.revision-grid,
+.revision-score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--siep-space-3) var(--siep-space-5);
+  margin: 0;
+}
+
+.revision-grid dt {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--siep-text-soft);
+  font-family: var(--siep-font-title);
+}
+
+.revision-grid dd {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--siep-text);
+}
+
+.revision-score-grid p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--siep-text);
+}
+
+.revision-score-grid__nivel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--siep-space-2);
+}
+
+.revision-card__resumen {
+  margin: var(--siep-space-4) 0 0;
+  padding: var(--siep-space-4);
+  border-radius: var(--siep-radius-md);
+  background: rgba(102, 187, 106, 0.1);
+  border-left: 4px solid var(--siep-sage);
+  font-weight: 600;
+  color: var(--siep-forest);
+  line-height: 1.5;
+}
+
+.revision-respuestas {
+  display: grid;
+  gap: var(--siep-space-3);
+}
+
+.revision-respuestas__title {
+  margin: 0 0 var(--siep-space-1);
+  font-family: var(--siep-font-title);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--siep-forest);
+}
+
+.revision-card--answer p {
+  margin: 0 0 var(--siep-space-3);
+  line-height: 1.5;
+  color: var(--siep-text);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  span {
+    display: block;
+    margin-bottom: 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--siep-text-soft);
+    font-family: var(--siep-font-title);
+  }
+}
+
+.revision-answer__retro {
+  padding-top: var(--siep-space-3);
+  border-top: 1px dashed var(--siep-border);
+}
+
+.revision .siep-btn-secondary {
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .revision-card__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

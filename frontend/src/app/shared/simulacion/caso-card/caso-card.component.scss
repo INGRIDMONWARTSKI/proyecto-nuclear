@@ -1,0 +1,19 @@
+.caso-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.caso-card h3 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.caso-card__desc,
+.caso-card__goal {
+  margin: 0;
+}
+
+.caso-card__meta {
+  display: flex;
+  justify-content: flex-start;
+}

@@ -1,0 +1,97 @@
+<section class="siep-page asignaciones">
+  <app-page-header
+    title="Asignaciones"
+    subtitle="Asocia casos publicados con grupos académicos para controlar el acceso de los estudiantes."
+    icon="🌿"
+  />
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+  @if (successMessage()) {
+    <app-alert-message [message]="successMessage()!" type="success" />
+  }
+
+  <div class="asignaciones-grid">
+    <section class="siep-card asignaciones-panel">
+      <h2 class="asignaciones-panel__title">Casos publicados</h2>
+      @if (loadingCasos()) {
+        <app-loading-state message="Cargando casos..." />
+      } @else if (casosPublicados().length === 0) {
+        <app-empty-state
+          title="Sin casos publicados"
+          message="Publica un caso para poder asignarlo a tus grupos académicos."
+          icon="🌱"
+        />
+      } @else {
+        <ul class="caso-list">
+          @for (caso of casosPublicados(); track caso.id) {
+            <li>
+              <button
+                type="button"
+                class="siep-card-row caso-item"
+                [class.caso-item--active]="selectedCasoId() === caso.id"
+                (click)="seleccionarCaso(caso.id)"
+              >
+                <div class="caso-item__body">
+                  <span class="caso-item__titulo">{{ caso.titulo }}</span>
+                  <span class="caso-item__desc">{{ caso.descripcion || 'Sin descripción' }}</span>
+                </div>
+                <app-status-badge variant="status" status="success" label="Publicado" />
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="siep-card asignaciones-panel">
+      <h2 class="asignaciones-panel__title">Grupos del caso</h2>
+      @if (!selectedCasoId()) {
+        <app-empty-state
+          title="Selecciona un caso"
+          message="Elige un caso publicado de la lista para gestionar sus grupos asignados."
+          icon="📋"
+        />
+      } @else if (loadingGrupos() || loadingAsignados()) {
+        <app-loading-state message="Cargando grupos..." />
+      } @else if (grupos().length === 0) {
+        <app-empty-state
+          title="Sin grupos activos"
+          message="No tienes grupos académicos activos. Crea un grupo para poder asignarlo."
+          icon="🌱"
+        />
+      } @else {
+        <ul class="grupo-list">
+          @for (grupo of grupos(); track grupo.id) {
+            <li class="siep-card-row grupo-item" [class.grupo-item--assigned]="estaSeleccionado(grupo.id)">
+              <label class="grupo-item__label">
+                <input
+                  type="checkbox"
+                  [checked]="estaSeleccionado(grupo.id)"
+                  (change)="toggleGrupo(grupo.id)"
+                  [disabled]="saving()"
+                />
+                <span class="grupo-item__nombre">{{ grupo.nombre }}</span>
+                @if (estaSeleccionado(grupo.id)) {
+                  <app-status-badge variant="status" status="success" label="Asignado" />
+                }
+              </label>
+            </li>
+          }
+        </ul>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="siep-btn-primary"
+            [disabled]="!selectedCasoId() || saving() || !hayCambios()"
+            (click)="guardar()"
+          >
+            {{ saving() ? 'Guardando...' : 'Guardar asignaciones' }}
+          </button>
+        </div>
+      }
+    </section>
+  </div>
+</section>

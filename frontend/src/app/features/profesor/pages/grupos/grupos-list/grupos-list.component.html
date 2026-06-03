@@ -1,0 +1,50 @@
+<section class="siep-page">
+  <app-page-header
+    title="Grupos"
+    [subtitle]="listSubtitle()"
+    icon="🌿"
+  >
+    @if (authService.canManageGrupos()) {
+      <a actions class="siep-btn-primary" routerLink="nuevo">Nuevo grupo</a>
+    }
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando grupos..." />
+  } @else if (grupos().length === 0) {
+    <app-empty-state
+      title="Sin grupos"
+      message="Aún no hay grupos registrados. Crea uno para organizar a tus estudiantes."
+      icon="🌱"
+      [actionLabel]="authService.canManageGrupos() ? 'Crear grupo' : undefined"
+      (actionClick)="irANuevoGrupo()"
+    />
+  } @else {
+    <ul class="grupos-grid">
+      @for (grupo of grupos(); track grupo.id) {
+        <li class="siep-card grupo-card">
+          <h3 class="grupo-card__title">{{ grupo.nombre }}</h3>
+          <p class="grupo-card__desc">{{ grupo.descripcion || 'Sin descripción' }}</p>
+          <div class="grupo-card__meta">
+            <app-status-badge
+              variant="status"
+              [status]="grupo.isActive ? 'active' : 'inactive'"
+              [label]="grupo.isActive ? 'Activo' : 'Inactivo'"
+            />
+            <span class="grupo-card__date">{{ grupo.createdAt | date: 'shortDate' }}</span>
+          </div>
+          <div class="grupo-card__actions">
+            <a class="siep-btn-primary" [routerLink]="[grupo.id]">Abrir</a>
+            @if (puedeAdministrar(grupo)) {
+              <a class="siep-btn-secondary" [routerLink]="[grupo.id, 'editar']">Editar</a>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

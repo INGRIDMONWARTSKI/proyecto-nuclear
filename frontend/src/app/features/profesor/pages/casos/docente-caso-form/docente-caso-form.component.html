@@ -1,0 +1,41 @@
+<section class="siep-page">
+  <app-page-header
+    [title]="isEdit() ? 'Editar caso' : 'Nuevo caso'"
+    subtitle="Define la información general del caso psicológico."
+    icon="🌿"
+  >
+    <a actions class="siep-btn-secondary" routerLink="..">Volver</a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando caso..." />
+  } @else {
+    <form class="siep-card caso-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="siep-field">
+        <label for="titulo">Título</label>
+        <input id="titulo" type="text" formControlName="titulo" />
+      </div>
+
+      <div class="siep-field">
+        <label for="descripcion">Descripción</label>
+        <textarea id="descripcion" rows="4" formControlName="descripcion"></textarea>
+      </div>
+
+      <div class="siep-field">
+        <label for="objetivoAprendizaje">Objetivo de aprendizaje</label>
+        <textarea id="objetivoAprendizaje" rows="3" formControlName="objetivoAprendizaje"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="siep-btn-primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+        <a class="siep-btn-secondary" routerLink="..">Cancelar</a>
+      </div>
+    </form>
+  }
+</section>

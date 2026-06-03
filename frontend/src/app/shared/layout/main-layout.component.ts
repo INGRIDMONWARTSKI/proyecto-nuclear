@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Role } from '../../core/models/role.enum';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -11,6 +12,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class MainLayoutComponent {
   protected readonly authService = inject(AuthService);
+  protected readonly Role = Role;
 
   logout() {
     this.authService.logout();

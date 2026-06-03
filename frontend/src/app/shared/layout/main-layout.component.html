@@ -5,6 +5,12 @@
     </a>
     <nav class="nav">
       <a routerLink="/grupos" routerLinkActive="active">Grupos</a>
+      @if (authService.hasRole(Role.ESTUDIANTE)) {
+        <a routerLink="/simulacion/casos" routerLinkActive="active">Simulaciones</a>
+      }
+      @if (authService.hasRole(Role.ADMIN, Role.PROFESOR)) {
+        <a routerLink="/simulacion/docente/casos" routerLinkActive="active">Casos docente</a>
+      }
     </nav>
     @if (authService.user(); as user) {
       <div class="user-box">

@@ -1,0 +1,10 @@
+<section class="siep-card progress">
+  <div class="progress__meta">
+    <strong>Progreso</strong>
+    <span>{{ respondidas }} / {{ total }}</span>
+  </div>
+  <div class="progress__bar" aria-hidden="true">
+    <span class="progress__fill" [style.width.%]="porcentaje"></span>
+  </div>
+  <small>{{ porcentaje }}% completado</small>
+</section>

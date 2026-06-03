@@ -1,0 +1,47 @@
+.player {
+  min-height: 100%;
+}
+
+.player-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--siep-space-4);
+  margin-top: var(--siep-space-4);
+}
+
+.player-actions {
+  margin-top: var(--siep-space-4);
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--siep-space-2);
+}
+
+.player-complete {
+  margin-top: var(--siep-space-4);
+  display: grid;
+  gap: var(--siep-space-3);
+
+  h2 {
+    margin: 0;
+    font-family: var(--siep-font-title);
+    font-size: 1.1rem;
+    color: var(--siep-forest);
+  }
+
+  p {
+    margin: 0;
+    color: var(--siep-text-soft);
+    line-height: 1.5;
+  }
+}
+
+.player .siep-btn-secondary {
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .player-grid {
+    grid-template-columns: 1fr;
+  }
+}

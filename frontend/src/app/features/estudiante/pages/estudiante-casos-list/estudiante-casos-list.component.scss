@@ -1,0 +1,44 @@
+.casos-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--siep-space-5);
+}
+
+.caso-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--siep-space-3);
+  margin: 0;
+  padding: var(--siep-space-5);
+}
+
+.caso-card__title {
+  margin: 0;
+  font-family: var(--siep-font-title);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--siep-forest);
+}
+
+.caso-card__desc,
+.caso-card__goal {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--siep-text-soft);
+}
+
+.caso-card__goal strong {
+  color: var(--siep-text);
+}
+
+.caso-card__meta {
+  margin-top: auto;
+}
+
+.caso-card .siep-btn-primary {
+  width: 100%;
+}

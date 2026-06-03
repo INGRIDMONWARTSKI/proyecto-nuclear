@@ -1,0 +1,28 @@
+<header class="topbar topbar--admin">
+  <div class="container topbar__inner">
+    <a routerLink="/admin/dashboard" class="brand">
+      <span class="brand__text">SIEP · Admin</span>
+    </a>
+    <nav class="nav">
+      <a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/admin/usuarios" routerLinkActive="active">Usuarios</a>
+      <a routerLink="/admin/grupos" routerLinkActive="active">Grupos</a>
+    </nav>
+    @if (authService.user(); as user) {
+      <div class="user-box">
+        <span class="user-box__avatar">{{ userInitials(user.fullName) }}</span>
+        <div class="user-box__info">
+          <span class="user-box__name">{{ user.fullName }}</span>
+          <span class="user-box__role">{{ user.role }}</span>
+        </div>
+        <button type="button" class="btn btn-secondary btn--small" (click)="logout()">
+          Cerrar sesión
+        </button>
+      </div>
+    }
+  </div>
+</header>
+
+<main class="container main-content">
+  <router-outlet />
+</main>

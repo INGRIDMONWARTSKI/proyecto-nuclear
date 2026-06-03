@@ -1,0 +1,33 @@
+.grupo-form {
+  max-width: 560px;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--siep-space-3);
+  flex-wrap: wrap;
+  margin-top: var(--siep-space-2);
+
+  .siep-btn-secondary {
+    text-decoration: none;
+  }
+}
+
+.field-error,
+.hint {
+  display: block;
+  margin-top: var(--siep-space-1);
+  font-size: 0.85rem;
+  color: var(--siep-text-soft);
+}
+
+.field-error {
+  color: var(--siep-error-text);
+}
+
+.hint code {
+  background: var(--siep-white);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--siep-radius-sm);
+  font-size: 0.8rem;
+}

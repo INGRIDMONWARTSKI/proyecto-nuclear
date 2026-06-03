@@ -70,6 +70,36 @@ export class AuthService {
     return this.hasRole(Role.ADMIN, Role.PROFESOR);
   }
 
+  getDefaultRouteForRole(role: Role): string {
+    switch (role) {
+      case Role.ADMIN:
+        return '/admin/dashboard';
+      case Role.PROFESOR:
+        return '/profesor/dashboard';
+      case Role.ESTUDIANTE:
+        return '/estudiante/dashboard';
+      default:
+        return '/login';
+    }
+  }
+
+  getRoleBasePath(): string {
+    const role = this.role();
+    if (!role) {
+      return '/login';
+    }
+    switch (role) {
+      case Role.ADMIN:
+        return '/admin';
+      case Role.PROFESOR:
+        return '/profesor';
+      case Role.ESTUDIANTE:
+        return '/estudiante';
+      default:
+        return '/login';
+    }
+  }
+
   private persistSession(response: AuthResponse) {
     const session: AuthSession = {
       accessToken: response.accessToken,

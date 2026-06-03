@@ -1,0 +1,133 @@
+<section class="siep-page canvas">
+  <app-page-header
+    title="Flujo visual del caso"
+    [subtitle]="pageSubtitle()"
+    icon="🌿"
+  >
+    <a actions class="siep-btn-secondary" [routerLink]="['/profesor/casos', casoId]">
+      Volver al caso
+    </a>
+  </app-page-header>
+
+  <section class="siep-card canvas__notice" aria-label="Modo solo lectura">
+    <app-status-badge variant="status" status="pending" label="Modo visual · solo lectura" />
+    <p>
+      Las conexiones se derivan de <code>escenarioDestinoId</code> en cada opción.
+      Edita destinos desde <strong>Configurar decisión</strong> en cada escenario.
+    </p>
+  </section>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando flujo del caso..." />
+  } @else {
+    @if (preview()) {
+      <section class="canvas__legend" aria-label="Leyenda del flujo">
+        <app-status-badge variant="status" status="success" label="Final" />
+        <app-status-badge variant="status" status="success" label="Destino explícito" />
+        <app-status-badge variant="status" status="warning" label="Siguiente por orden" />
+        <app-status-badge variant="status" status="inactive" label="Fin de simulación" />
+      </section>
+
+      @if (escenarios().length === 0) {
+        <app-empty-state
+          title="Sin escenarios"
+          message="Este caso aún no tiene escenarios para visualizar en el mapa pedagógico."
+          icon="🌱"
+        />
+      } @else {
+        <section class="canvas__flow" aria-label="Escenarios del flujo">
+          @for (esc of escenarios(); track esc.id) {
+            <article
+              class="siep-card flow-node"
+              [class.flow-node--final]="esc.isFinal"
+              [id]="escenarioCardId(esc.id)"
+            >
+              <header class="flow-node__header">
+                <span class="flow-node__orden">Escenario {{ esc.orden }}</span>
+                @if (esc.isFinal) {
+                  <app-status-badge variant="status" status="success" label="Final" />
+                }
+              </header>
+
+              <h2>{{ esc.titulo }}</h2>
+
+              @if (esc.pregunta; as pregunta) {
+                <div class="flow-node__pregunta">
+                  <span class="flow-node__label">Pregunta</span>
+                  <p>{{ pregunta.enunciado }}</p>
+                </div>
+
+                @if (pregunta.opciones.length === 0) {
+                  <p class="flow-node__warn">Sin opciones configuradas.</p>
+                } @else {
+                  <ul class="flow-node__opciones">
+                    @for (op of pregunta.opciones; track op.id) {
+                      @if (destinoLabel(esc, op); as destino) {
+                        <li class="siep-card-row opcion-link">
+                          <div class="opcion-link__main">
+                            <strong>{{ op.orden }}. {{ op.texto }}</strong>
+                            <span class="opcion-link__meta">Puntaje: {{ op.puntaje }}</span>
+                          </div>
+                          <div class="opcion-link__destino">
+                            <app-status-badge
+                              variant="status"
+                              [status]="destinoBadgeStatus(destino.tipo)"
+                              [label]="destinoBadgeLabel(destino.tipo)"
+                            />
+                            <span class="opcion-link__arrow" aria-hidden="true">→</span>
+                            <span class="opcion-link__texto">{{ destino.texto }}</span>
+                          </div>
+                        </li>
+                      }
+                    }
+                  </ul>
+                }
+              } @else {
+                <p class="flow-node__warn">Sin pregunta de decisión configurada.</p>
+              }
+            </article>
+          }
+        </section>
+
+        <section class="siep-card canvas__connections">
+          <h2 class="canvas__connections-title">Mapa de conexiones</h2>
+          <p class="canvas__connections-help">
+            Cada fila resume una transición posible según la opción elegida por el estudiante.
+          </p>
+
+          @if (conexiones().length === 0) {
+            <p class="canvas__connections-empty">No hay conexiones para mostrar.</p>
+          } @else {
+            <ul class="connections-list">
+              @for (c of conexiones(); track $index) {
+                <li class="siep-card-row connection-row">
+                  <span class="connection-row__origen">
+                    E{{ c.origenOrden }} · Op. {{ c.opcionOrden }}
+                  </span>
+                  <span class="connection-row__arrow" aria-hidden="true">→</span>
+                  <span class="connection-row__destino">
+                    <app-status-badge
+                      variant="status"
+                      [status]="destinoBadgeStatus(c.tipo)"
+                      [label]="destinoBadgeLabel(c.tipo)"
+                    />
+                    @if (c.tipo === 'fin') {
+                      {{ c.destinoTitulo }}
+                    } @else {
+                      E{{ c.destinoOrden }} · {{ c.destinoTitulo }}
+                    }
+                  </span>
+                  <span class="connection-row__opcion">{{ c.opcionTexto }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+    }
+  }
+</section>

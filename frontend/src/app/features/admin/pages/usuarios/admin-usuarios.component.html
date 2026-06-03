@@ -1,0 +1,182 @@
+<section class="siep-page usuarios">
+  <app-page-header
+    title="Usuarios"
+    subtitle="Administra las cuentas, roles y estados de acceso de la plataforma."
+    icon="🌿"
+  >
+    <button actions type="button" class="siep-btn-primary" (click)="abrirCrear()">
+      <span aria-hidden="true">＋</span> Nuevo usuario
+    </button>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+  @if (successMessage()) {
+    <app-alert-message [message]="successMessage()!" type="success" />
+  }
+
+  @if (panelMode() === 'create') {
+    <section class="siep-card usuarios__panel">
+      <h2>Nuevo usuario</h2>
+      <form [formGroup]="createForm" (ngSubmit)="crearUsuario()" class="form-grid">
+        <div class="siep-field">
+          <label for="create-fullName">Nombre completo</label>
+          <input
+            id="create-fullName"
+            type="text"
+            formControlName="fullName"
+            placeholder="Ej. Ana Pérez"
+          />
+        </div>
+        <div class="siep-field">
+          <label for="create-email">Correo electrónico</label>
+          <input
+            id="create-email"
+            type="email"
+            formControlName="email"
+            placeholder="persona@institucion.edu"
+          />
+        </div>
+        <div class="siep-field">
+          <label for="create-password">Contraseña</label>
+          <input
+            id="create-password"
+            type="password"
+            formControlName="password"
+            placeholder="Mínimo 8 caracteres"
+          />
+        </div>
+        <div class="siep-field">
+          <label for="create-role">Rol</label>
+          <select id="create-role" formControlName="role">
+            @for (rol of roles; track rol) {
+              <option [value]="rol">{{ roleLabel(rol) }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="siep-btn-secondary" (click)="cerrarPanel()">Cancelar</button>
+          <button type="submit" class="siep-btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Crear usuario' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  @if (panelMode() === 'edit' && editingUsuario(); as usuario) {
+    <section class="siep-card usuarios__panel">
+      <h2>Editar usuario</h2>
+      <form [formGroup]="editForm" (ngSubmit)="guardarEdicion()" class="form-grid">
+        <div class="siep-field">
+          <label for="edit-fullName">Nombre completo</label>
+          <input id="edit-fullName" type="text" formControlName="fullName" />
+        </div>
+        <div class="siep-field">
+          <label for="edit-email">Correo electrónico</label>
+          <input id="edit-email" type="email" [value]="usuario.email" disabled />
+          <span class="field__hint">El correo no puede modificarse.</span>
+        </div>
+        <div class="siep-field">
+          <label for="edit-role">Rol</label>
+          <select id="edit-role" formControlName="role">
+            @for (rol of roles; track rol) {
+              <option [value]="rol">{{ roleLabel(rol) }}</option>
+            }
+          </select>
+          @if (esAdminActual(usuario)) {
+            <span class="field__hint">No puedes cambiar tu propio rol de administrador.</span>
+          }
+        </div>
+        <div class="form-actions">
+          <button type="button" class="siep-btn-secondary" (click)="cerrarPanel()">Cancelar</button>
+          <button type="submit" class="siep-btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="siep-card usuarios__list">
+    @if (loading()) {
+      <app-loading-state message="Cargando usuarios..." />
+    } @else if (usuarios().length === 0) {
+      <app-empty-state
+        title="Aún no hay usuarios"
+        message="Crea la primera cuenta para comenzar a poblar la plataforma."
+        icon="🌱"
+        actionLabel="Nuevo usuario"
+        (actionClick)="abrirCrear()"
+      />
+    } @else {
+      <ul class="user-rows">
+        @for (usuario of usuarios(); track usuario.id) {
+          <li
+            class="siep-card-row user-row"
+            [class.user-row--inactive]="!usuario.isActive"
+          >
+            <div class="user-row__avatar" aria-hidden="true">
+              {{ usuario.fullName.charAt(0).toUpperCase() }}
+            </div>
+            <div class="user-row__info">
+              <span class="user-row__name">
+                {{ usuario.fullName }}
+                @if (esAdminActual(usuario)) {
+                  <span class="tag-you">Tú</span>
+                }
+              </span>
+              <span class="user-row__email">{{ usuario.email }}</span>
+            </div>
+            <div class="user-row__badges">
+              <app-status-badge
+                variant="role"
+                [role]="roleBadgeKey(usuario.role)"
+                [label]="roleLabel(usuario.role)"
+              />
+              <app-status-badge
+                variant="status"
+                [status]="usuario.isActive ? 'active' : 'inactive'"
+                [label]="usuario.isActive ? 'Activo' : 'Inactivo'"
+              />
+            </div>
+            <div class="user-row__actions">
+              <button type="button" class="siep-btn-secondary siep-btn--compact" (click)="abrirEditar(usuario)">
+                Editar
+              </button>
+              @if (esAdminActual(usuario) && usuario.isActive) {
+                <button
+                  type="button"
+                  class="siep-btn-danger siep-btn--compact"
+                  disabled
+                  title="No puedes desactivarte a ti mismo"
+                >
+                  Desactivar
+                </button>
+              } @else if (usuario.isActive) {
+                <button
+                  type="button"
+                  class="siep-btn-danger siep-btn--compact"
+                  [disabled]="saving()"
+                  (click)="cambiarEstado(usuario)"
+                >
+                  Desactivar
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="siep-btn-secondary siep-btn--compact"
+                  [disabled]="saving()"
+                  (click)="cambiarEstado(usuario)"
+                >
+                  Reactivar
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</section>

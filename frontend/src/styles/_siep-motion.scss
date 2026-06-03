@@ -1,0 +1,64 @@
+/* SIEP / PsychoSim — Microinteracciones suaves */
+
+@keyframes siep-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes siep-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes siep-alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes siep-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.siep-animate-fade-up {
+  animation: siep-fade-up 0.6s ease both;
+}
+
+.siep-animate-fade-in {
+  animation: siep-fade-in 0.4s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .siep-card,
+  .siep-card-row,
+  .siep-btn-primary,
+  .siep-btn-secondary,
+  .siep-btn-danger {
+    transform: none !important;
+  }
+}

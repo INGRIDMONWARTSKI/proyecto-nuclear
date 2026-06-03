@@ -1,0 +1,22 @@
+<section class="siep-card escenario">
+  <header class="escenario__header">
+    <h2>{{ escenario.titulo }}</h2>
+    <span class="escenario__badge">{{ escenario.fondoCodigo }}</span>
+  </header>
+
+  <p class="escenario__text">{{ escenario.situacionTexto }}</p>
+
+  @if (escenario.elementos.length > 0) {
+    <div class="escenario__elementos">
+      <h3>Elementos de la escena</h3>
+      <ul>
+        @for (item of escenario.elementos; track item.id) {
+          <li>
+            {{ item.tipo }}:
+            {{ item.textoContenido || item.assetCodigo || 'elemento' }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</section>

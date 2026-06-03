@@ -1,0 +1,48 @@
+<section class="siep-page">
+  <app-page-header
+    title="Casos de simulación"
+    subtitle="Crea y configura casos psicológicos para tus estudiantes."
+    icon="🌿"
+  >
+    <a actions class="siep-btn-primary" routerLink="nuevo">Nuevo caso</a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando casos..." />
+  } @else if (casos().length === 0) {
+    <app-empty-state
+      title="Sin casos"
+      message="Aún no has creado casos de simulación. Comienza diseñando tu primer escenario pedagógico."
+      icon="🌱"
+      actionLabel="Crear primer caso"
+      (actionClick)="irANuevoCaso()"
+    />
+  } @else {
+    <ul class="casos-grid">
+      @for (caso of casos(); track caso.id) {
+        <li class="siep-card caso-card">
+          <h3 class="caso-card__title">{{ caso.titulo }}</h3>
+          <p class="caso-card__desc">{{ caso.descripcion || 'Sin descripción' }}</p>
+          <div class="caso-card__meta">
+            <app-status-badge
+              variant="status"
+              [status]="estadoBadge(caso.estado)"
+              [label]="estadoLabel(caso.estado)"
+            />
+            <span class="caso-card__date">{{ caso.createdAt | date: 'shortDate' }}</span>
+          </div>
+          <div class="caso-card__actions">
+            <a class="siep-btn-primary" [routerLink]="[caso.id]">Gestionar</a>
+            @if (caso.estado === 'draft') {
+              <a class="siep-btn-secondary" [routerLink]="[caso.id, 'editar']">Editar</a>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

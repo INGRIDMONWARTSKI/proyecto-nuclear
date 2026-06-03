@@ -1,0 +1,16 @@
+.caso-form {
+  max-width: 640px;
+  display: grid;
+  gap: var(--siep-space-1);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--siep-space-3);
+  margin-top: var(--siep-space-2);
+
+  .siep-btn-secondary {
+    text-decoration: none;
+  }
+}

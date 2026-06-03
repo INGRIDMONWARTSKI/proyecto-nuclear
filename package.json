@@ -1,0 +1,15 @@
+{
+  "name": "proyecto-nuclear",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Orquestacion local: infraestructura, backend y frontend",
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "up": "docker compose up -d --wait && node scripts/db-init.mjs && node scripts/up-apps.mjs",
+    "db:init": "node scripts/db-init.mjs",
+    "up:infra": "docker compose up -d --wait",
+    "up:apps": "node scripts/up-apps.mjs",
+    "down": "docker compose down",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend"
+  }
+}

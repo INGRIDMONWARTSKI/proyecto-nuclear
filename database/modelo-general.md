@@ -1,24 +1,32 @@
 # Modelo General
 
-Entidades mínimas definidas para el proyecto completo:
+Inventario de entidades del proyecto academico.
+
+## Entidades implementadas actualmente
 
 - `Usuario`
 - `Rol`
 - `Grupo`
 - `EstudianteGrupo`
+
+Estas entidades tienen soporte operativo en el estado actual del repositorio (SQL + backend + frontend para los modulos existentes).
+
+## Modelo SQL de simulacion
+
 - `Caso`
 - `Escenario`
-- `Pregunta`
+- `ElementoEscena`
+- `PreguntaDecision`
 - `OpcionRespuesta`
-- `Resultado`
 - `Retroalimentacion`
+- `SesionSimulacion`
+- `RespuestaEstudiante`
 
-## Alcance actual
+Estas entidades quedaron preparadas en `database/persona-3-simulacion.sql` para soportar el flujo de simulacion:
 
-La implementación activa del repositorio cubre solo el módulo de la Persona 1:
+Caso -> Escenario -> Elementos visuales -> Pregunta de decision -> Opciones -> Retroalimentacion -> Sesion -> Respuestas.
 
-- `auth`
-- `usuarios`
-- `roles`
+## Nota de alcance actual
 
-Las demás entidades quedan documentadas aquí como referencia para la evolución posterior del monolito modular.
+- El modelo de datos SQL de simulacion ya esta definido.
+- El modulo funcional de simulacion todavia no esta implementado en backend ni frontend.

@@ -1,0 +1,48 @@
+<section class="siep-page">
+  <app-page-header
+    title="Mis casos"
+    subtitle="Explora los casos asignados y continúa tu entrenamiento psicosocial."
+    icon="🌿"
+  />
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando simulaciones..." />
+  } @else if (casos().length === 0) {
+    <app-empty-state
+      title="Sin casos asignados"
+      message="No hay simulaciones disponibles por el momento. Consulta con tu docente o vuelve más tarde."
+      icon="🌱"
+    />
+  } @else {
+    <ul class="casos-grid">
+      @for (caso of casos(); track caso.id) {
+        <li class="siep-card caso-card">
+          <h3 class="caso-card__title">{{ caso.titulo }}</h3>
+          <p class="caso-card__desc">{{ caso.descripcion || 'Sin descripción.' }}</p>
+          <p class="caso-card__goal">
+            <strong>Objetivo:</strong> {{ caso.objetivoAprendizaje || 'No definido' }}
+          </p>
+          <div class="caso-card__meta">
+            <app-status-badge
+              variant="status"
+              status="success"
+              [label]="caso.totalEscenarios + ' escenarios'"
+            />
+          </div>
+          <button
+            class="siep-btn-primary"
+            type="button"
+            (click)="iniciarSimulacion(caso.id)"
+            [disabled]="startingCasoId() === caso.id"
+          >
+            {{ startingCasoId() === caso.id ? 'Iniciando...' : 'Iniciar simulación' }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>

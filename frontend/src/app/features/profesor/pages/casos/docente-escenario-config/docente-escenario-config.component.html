@@ -1,0 +1,154 @@
+<section class="siep-page">
+  <app-page-header
+    title="Configurar decisión"
+    [subtitle]="configSubtitle()"
+    icon="🌿"
+  >
+    <a actions class="siep-btn-secondary" [routerLink]="volverLink()">Volver al caso</a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando configuración..." />
+  } @else {
+    <section class="siep-card">
+      <h2 class="panel-title">Pregunta de decisión</h2>
+      @if (pregunta()) {
+        <p class="locked-note">
+          Pregunta registrada: <strong>{{ pregunta()!.enunciado }}</strong>
+        </p>
+        <p class="muted">Puntaje máximo: {{ pregunta()!.puntajeMaximo }}</p>
+      } @else {
+        <form class="form-grid" [formGroup]="preguntaForm" (ngSubmit)="guardarPregunta()">
+          <div class="siep-field">
+            <label for="enunciado">Enunciado</label>
+            <textarea id="enunciado" rows="3" formControlName="enunciado"></textarea>
+          </div>
+          <div class="siep-field">
+            <label for="puntajeMaximo">Puntaje máximo</label>
+            <input id="puntajeMaximo" type="number" min="0" formControlName="puntajeMaximo" />
+          </div>
+          <button class="siep-btn-primary" type="submit" [disabled]="saving()">Crear pregunta</button>
+        </form>
+      }
+    </section>
+
+    @if (pregunta(); as p) {
+      <section class="siep-card">
+        <h2 class="panel-title">Opciones de respuesta</h2>
+
+        @if (p.opciones.length > 0) {
+          <ul class="opciones-list">
+            @for (op of p.opciones; track op.id) {
+              <li class="siep-card-row opcion-item">
+                <div>
+                  <strong>{{ op.orden }}. {{ op.texto }}</strong>
+                  <p class="muted">
+                    Puntaje: {{ op.puntaje }} · {{ op.isCorrecta ? 'Correcta' : 'Alternativa' }}
+                  </p>
+                  <p class="destino-badge">
+                    <app-status-badge
+                      variant="status"
+                      [status]="op.escenarioDestinoId ? 'success' : 'pending'"
+                      [label]="'Destino: ' + labelEscenarioDestino(op.escenarioDestinoId)"
+                    />
+                  </p>
+                  @if (op.retroalimentacion) {
+                    <p class="opcion-retro">Retro: {{ op.retroalimentacion.mensaje }}</p>
+                  } @else {
+                    <p class="warn">Sin retroalimentación</p>
+                  }
+                </div>
+                <div class="opcion-item__actions">
+                  <button
+                    class="siep-btn-secondary siep-btn--compact"
+                    type="button"
+                    (click)="editarOpcion(op)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    class="siep-btn-secondary siep-btn--compact"
+                    type="button"
+                    (click)="prepararRetro(op)"
+                  >
+                    Retro
+                  </button>
+                  <button
+                    class="siep-btn-danger siep-btn--compact"
+                    type="button"
+                    (click)="eliminarOpcion(op.id)"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        <h3 class="subpanel-title">{{ editingOpcionId() ? 'Editar opción' : 'Nueva opción' }}</h3>
+        <form class="form-grid" [formGroup]="opcionForm" (ngSubmit)="guardarOpcion()">
+          <div class="siep-field">
+            <label for="opcion-texto">Texto</label>
+            <input id="opcion-texto" type="text" formControlName="texto" />
+          </div>
+          <div class="siep-field">
+            <label for="opcion-orden">Orden</label>
+            <input id="opcion-orden" type="number" min="1" formControlName="orden" />
+          </div>
+          <div class="siep-field">
+            <label for="opcion-puntaje">Puntaje</label>
+            <input id="opcion-puntaje" type="number" min="0" formControlName="puntaje" />
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" formControlName="isCorrecta" />
+            Marcar como opción correcta
+          </label>
+          <div class="siep-field">
+            <label for="escenarioDestinoId">Escenario destino</label>
+            <select id="escenarioDestinoId" formControlName="escenarioDestinoId">
+              <option value="">Siguiente por orden (default)</option>
+              @for (esc of escenariosCaso(); track esc.id) {
+                <option [value]="esc.id">{{ esc.orden }}. {{ esc.titulo }}</option>
+              }
+            </select>
+          </div>
+          <button class="siep-btn-primary" type="submit" [disabled]="saving()">
+            {{ editingOpcionId() ? 'Actualizar opción' : 'Agregar opción' }}
+          </button>
+        </form>
+      </section>
+
+      @if (opcionParaRetro(); as op) {
+        <section class="siep-card retro-panel">
+          <h2 class="panel-title">Retroalimentación — {{ op.texto }}</h2>
+          <form class="form-grid" [formGroup]="retroForm" (ngSubmit)="guardarRetroalimentacion(op)">
+            <div class="siep-field">
+              <label for="retro-mensaje">Mensaje</label>
+              <textarea id="retro-mensaje" rows="4" formControlName="mensaje"></textarea>
+            </div>
+            <div class="siep-field">
+              <label for="retro-tipo">Tipo</label>
+              <select id="retro-tipo" formControlName="tipo">
+                <option value="pedagogica">Pedagógica</option>
+                <option value="correctiva">Correctiva</option>
+                <option value="refuerzo">Refuerzo</option>
+              </select>
+            </div>
+            <div class="siep-field">
+              <label for="retro-referencia">Referencia teórica (opcional)</label>
+              <textarea id="retro-referencia" rows="2" formControlName="referenciaTeorica"></textarea>
+            </div>
+            <button class="siep-btn-primary" type="submit" [disabled]="saving()">
+              Guardar retroalimentación
+            </button>
+          </form>
+        </section>
+      }
+    }
+  }
+</section>

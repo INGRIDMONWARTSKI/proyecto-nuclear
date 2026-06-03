@@ -1,0 +1,30 @@
+<header class="topbar topbar--profesor">
+  <div class="container topbar__inner">
+    <a routerLink="/profesor/dashboard" class="brand">
+      <span class="brand__text">SIEP · Profesor</span>
+    </a>
+    <nav class="nav">
+      <a routerLink="/profesor/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/profesor/grupos" routerLinkActive="active">Grupos</a>
+      <a routerLink="/profesor/casos" routerLinkActive="active">Casos</a>
+      <a routerLink="/profesor/asignaciones" routerLinkActive="active">Asignaciones</a>
+      <a routerLink="/profesor/evidencias" routerLinkActive="active">Evidencias</a>
+    </nav>
+    @if (authService.user(); as user) {
+      <div class="user-box">
+        <span class="user-box__avatar">{{ userInitials(user.fullName) }}</span>
+        <div class="user-box__info">
+          <span class="user-box__name">{{ user.fullName }}</span>
+          <span class="user-box__role">{{ user.role }}</span>
+        </div>
+        <button type="button" class="btn btn-secondary btn--small" (click)="logout()">
+          Cerrar sesión
+        </button>
+      </div>
+    }
+  </div>
+</header>
+
+<main class="container main-content">
+  <router-outlet />
+</main>

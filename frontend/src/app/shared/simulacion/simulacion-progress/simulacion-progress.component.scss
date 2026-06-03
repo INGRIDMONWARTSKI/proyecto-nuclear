@@ -1,0 +1,41 @@
+.progress {
+  display: grid;
+  gap: var(--siep-space-2);
+  margin: 0 0 var(--siep-space-1);
+}
+
+.progress__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--siep-font-title);
+  font-size: 0.88rem;
+  color: var(--siep-forest);
+}
+
+.progress__meta span {
+  color: var(--siep-text-soft);
+  font-weight: 600;
+}
+
+.progress__bar {
+  width: 100%;
+  height: 10px;
+  border-radius: var(--siep-radius-pill);
+  background: var(--siep-cream);
+  overflow: hidden;
+}
+
+.progress__fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--siep-leaf) 0%, var(--siep-sage) 100%);
+  border-radius: var(--siep-radius-pill);
+  transition: width 0.35s ease;
+}
+
+.progress small {
+  font-size: 0.78rem;
+  color: var(--siep-text-soft);
+  font-weight: 600;
+}

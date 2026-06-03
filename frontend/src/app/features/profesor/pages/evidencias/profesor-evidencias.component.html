@@ -1,0 +1,77 @@
+<section class="siep-page evidencias">
+  <app-page-header
+    title="Evidencias"
+    subtitle="Consulta los intentos finalizados y revisa el desempeño de tus estudiantes."
+    icon="🌿"
+  />
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando evidencias..." />
+  } @else if (evidencias().length === 0) {
+    <app-empty-state
+      title="No hay intentos finalizados registrados"
+      message="Cuando los estudiantes completen simulaciones asignadas a tus grupos, podrás consultarlas aquí."
+      icon="📂"
+      actionLabel="Ir a asignaciones"
+      (actionClick)="irAAsignaciones()"
+    />
+  } @else {
+    <ul class="evidencias__list" aria-label="Evidencias de intentos">
+      @for (evidencia of evidencias(); track evidencia.sesionId) {
+        <li>
+          <article class="siep-card-row evidencia-card">
+            <div class="evidencia-card__main">
+              <div class="evidencia-card__title-row">
+                <h2>{{ evidencia.casoTitulo }}</h2>
+                <app-status-badge
+                  variant="status"
+                  [status]="estadoBadge(evidencia.estado)"
+                  [label]="estadoLabel(evidencia.estado)"
+                />
+              </div>
+
+              <p class="evidencia-card__estudiante">
+                <strong>{{ evidencia.estudianteNombre }}</strong>
+                <span>{{ evidencia.estudianteEmail }}</span>
+              </p>
+
+              <dl class="evidencia-card__meta">
+                <div>
+                  <dt>Inicio</dt>
+                  <dd>{{ evidencia.fechaInicio | date: 'medium' }}</dd>
+                </div>
+                <div>
+                  <dt>Finalización</dt>
+                  <dd>
+                    @if (evidencia.fechaFinalizacion) {
+                      {{ evidencia.fechaFinalizacion | date: 'medium' }}
+                    } @else {
+                      —
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Puntaje</dt>
+                  <dd>{{ evidencia.puntajeTotal }}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="evidencia-card__actions">
+              <a
+                class="siep-btn-primary"
+                [routerLink]="['/profesor/evidencias', evidencia.sesionId]"
+              >
+                Ver revisión
+              </a>
+            </div>
+          </article>
+        </li>
+      }
+    </ul>
+  }
+</section>

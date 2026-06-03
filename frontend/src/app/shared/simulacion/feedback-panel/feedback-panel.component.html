@@ -1,0 +1,22 @@
+<section
+  class="siep-card feedback"
+  [class.feedback--pedagogica]="feedback.tipo === 'pedagogica'"
+  [class.feedback--correctiva]="feedback.tipo === 'correctiva'"
+  [class.feedback--refuerzo]="feedback.tipo === 'refuerzo'"
+>
+  <div class="feedback__head">
+    <h3>Retroalimentación inmediata</h3>
+    <span class="feedback__type">{{ feedback.tipo }}</span>
+  </div>
+  <p class="feedback__msg">{{ feedback.mensaje }}</p>
+  @if (feedback.referenciaTeorica) {
+    <p class="feedback__ref">
+      <strong>Referencia teórica:</strong> {{ feedback.referenciaTeorica }}
+    </p>
+  }
+  @if (feedback.puntajeObtenido !== undefined) {
+    <p class="feedback__score">
+      <strong>Puntaje obtenido:</strong> {{ feedback.puntajeObtenido }}
+    </p>
+  }
+</section>

@@ -1,0 +1,55 @@
+<section class="siep-page">
+  <app-page-header
+    [title]="isEdit() ? 'Editar escenario' : 'Nuevo escenario'"
+    subtitle="Configura la escena narrativa (sin editor visual en esta fase)."
+    icon="🌿"
+  >
+    <a actions class="siep-btn-secondary" [routerLink]="volverLink()">Volver al caso</a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando escenario..." />
+  } @else {
+    <form class="siep-card escenario-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="siep-field">
+        <label for="orden">Orden</label>
+        <input id="orden" type="number" min="1" formControlName="orden" />
+      </div>
+
+      <div class="siep-field">
+        <label for="titulo">Título</label>
+        <input id="titulo" type="text" formControlName="titulo" />
+      </div>
+
+      <div class="siep-field">
+        <label for="situacionTexto">Texto de situación</label>
+        <textarea id="situacionTexto" rows="5" formControlName="situacionTexto"></textarea>
+      </div>
+
+      <div class="siep-field">
+        <label for="fondoCodigo">Fondo</label>
+        <select id="fondoCodigo" formControlName="fondoCodigo">
+          @for (bg of backgrounds; track bg.code) {
+            <option [value]="bg.code">{{ bg.label }}</option>
+          }
+        </select>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" formControlName="isFinal" />
+        Marcar como escenario final
+      </label>
+
+      <div class="form-actions">
+        <button class="siep-btn-primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Guardando...' : 'Guardar escenario' }}
+        </button>
+        <a class="siep-btn-secondary" [routerLink]="volverLink()">Cancelar</a>
+      </div>
+    </form>
+  }
+</section>

@@ -1,0 +1,72 @@
+<section class="siep-page historial">
+  <app-page-header
+    title="Historial"
+    subtitle="Consulta tus intentos finalizados y revisa tu retroalimentación."
+    icon="🌿"
+  />
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando historial..." />
+  } @else if (intentos().length === 0) {
+    <app-empty-state
+      title="Aún no tienes intentos finalizados"
+      message="Cuando completes una simulación, aparecerá aquí para que puedas consultar tu resultado."
+      icon="📋"
+      actionLabel="Ir a mis casos"
+      (actionClick)="irACasos()"
+    />
+  } @else {
+    <ul class="historial__list" aria-label="Intentos finalizados">
+      @for (intento of intentos(); track intento.sesionId) {
+        <li>
+          <article class="siep-card-row historial-card">
+            <div class="historial-card__main">
+              <div class="historial-card__title-row">
+                <h2>{{ intento.casoTitulo }}</h2>
+                <app-status-badge
+                  variant="status"
+                  [status]="estadoBadge(intento.estado)"
+                  [label]="estadoLabel(intento.estado)"
+                />
+              </div>
+
+              <dl class="historial-card__meta">
+                <div>
+                  <dt>Inicio</dt>
+                  <dd>{{ intento.fechaInicio | date: 'medium' }}</dd>
+                </div>
+                <div>
+                  <dt>Finalización</dt>
+                  <dd>
+                    @if (intento.fechaFinalizacion) {
+                      {{ intento.fechaFinalizacion | date: 'medium' }}
+                    } @else {
+                      —
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Puntaje</dt>
+                  <dd>{{ intento.puntajeTotal }}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="historial-card__actions">
+              <a
+                class="siep-btn-primary"
+                [routerLink]="['/estudiante/resultados', intento.sesionId]"
+              >
+                Ver resultado
+              </a>
+            </div>
+          </article>
+        </li>
+      }
+    </ul>
+  }
+</section>

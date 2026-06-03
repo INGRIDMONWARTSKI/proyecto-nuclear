@@ -12,6 +12,11 @@ export const roleGuard = (...roles: Role[]): CanActivateFn => {
       return true;
     }
 
-    return router.createUrlTree(['/grupos']);
+    const role = authService.role();
+    if (role) {
+      return router.parseUrl(authService.getDefaultRouteForRole(role));
+    }
+
+    return router.createUrlTree(['/login']);
   };
 };

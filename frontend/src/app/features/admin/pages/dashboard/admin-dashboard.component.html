@@ -1,0 +1,206 @@
+<section class="siep-page admin-dashboard">
+  <p class="admin-dashboard__brand" aria-hidden="true">MENTORA · Admin</p>
+
+  <app-page-header
+    class="admin-dashboard__header"
+    title="Panel de administración"
+    subtitle="Gestiona usuarios, roles, grupos académicos y el acceso general a la plataforma."
+    icon="🌿"
+  >
+    <a actions routerLink="/admin/usuarios" class="siep-btn-primary">
+      <span aria-hidden="true">＋</span> Nuevo usuario
+    </a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando panel administrativo..." />
+  } @else {
+    <section class="admin-dashboard__metrics" aria-label="Métricas del sistema">
+      <article class="metric-card" style="animation-delay: 0.05s">
+        <span class="metric-card__icon" aria-hidden="true">👥</span>
+        <div class="metric-card__body">
+          <p class="metric-card__label">Total de usuarios</p>
+          <p class="metric-card__value">{{ totalUsuarios() }}</p>
+        </div>
+      </article>
+
+      <article class="metric-card" style="animation-delay: 0.1s">
+        <span class="metric-card__icon metric-card__icon--profesor" aria-hidden="true">🎓</span>
+        <div class="metric-card__body">
+          <p class="metric-card__label">Profesores activos</p>
+          <p class="metric-card__value">{{ profesoresActivos() }}</p>
+        </div>
+      </article>
+
+      <article class="metric-card" style="animation-delay: 0.15s">
+        <span class="metric-card__icon metric-card__icon--estudiante" aria-hidden="true">📚</span>
+        <div class="metric-card__body">
+          <p class="metric-card__label">Estudiantes activos</p>
+          <p class="metric-card__value">{{ estudiantesActivos() }}</p>
+        </div>
+      </article>
+
+      <article class="metric-card" style="animation-delay: 0.2s">
+        <span class="metric-card__icon metric-card__icon--grupos" aria-hidden="true">🌱</span>
+        <div class="metric-card__body">
+          <p class="metric-card__label">Grupos académicos</p>
+          <p class="metric-card__value">{{ gruposAcademicos() }}</p>
+        </div>
+      </article>
+    </section>
+
+    <div class="admin-dashboard__layout">
+      <div class="admin-dashboard__main">
+        <section class="siep-card admin-dashboard__actions" style="animation-delay: 0.12s">
+          <header class="section-head">
+            <h2>Acciones principales</h2>
+            <p>Accesos directos para las tareas administrativas más frecuentes.</p>
+          </header>
+          <div class="action-grid">
+            <a routerLink="/admin/usuarios" class="action-card">
+              <span class="action-card__icon" aria-hidden="true">＋</span>
+              <span class="action-card__title">Nuevo usuario</span>
+              <span class="action-card__desc">Registrar una cuenta con rol y acceso.</span>
+            </a>
+            <a routerLink="/admin/usuarios" class="action-card">
+              <span class="action-card__icon" aria-hidden="true">⚙</span>
+              <span class="action-card__title">Gestionar usuarios</span>
+              <span class="action-card__desc">Editar roles, estados y perfiles.</span>
+            </a>
+            <a routerLink="/admin/grupos" class="action-card">
+              <span class="action-card__icon" aria-hidden="true">🌿</span>
+              <span class="action-card__title">Ver grupos</span>
+              <span class="action-card__desc">Consultar la organización académica.</span>
+            </a>
+          </div>
+          <div class="action-buttons">
+            <a routerLink="/admin/usuarios" class="siep-btn-primary">Gestionar usuarios</a>
+            <a routerLink="/admin/grupos" class="siep-btn-secondary">Ver grupos académicos</a>
+          </div>
+        </section>
+
+        <section class="siep-card admin-dashboard__users" style="animation-delay: 0.18s">
+          <header class="section-head section-head--row">
+            <div>
+              <h2>Cuentas del sistema</h2>
+              <p>Últimos usuarios registrados en la plataforma.</p>
+            </div>
+            <a routerLink="/admin/usuarios" class="siep-btn-secondary siep-btn--compact">Ver todos</a>
+          </header>
+
+          @if (usuariosRecientes().length === 0) {
+            <app-empty-state
+              title="Sin usuarios registrados"
+              message="Crea la primera cuenta para comenzar a administrar el acceso."
+              icon="🌱"
+              actionLabel="Nuevo usuario"
+              (actionClick)="irAUsuarios()"
+            />
+          } @else {
+            <ul class="user-preview-list">
+              @for (usuario of usuariosRecientes(); track usuario.id) {
+                <li
+                  class="siep-card-row user-preview"
+                  [class.user-preview--inactive]="!usuario.isActive"
+                >
+                  <span class="user-preview__avatar" aria-hidden="true">
+                    {{ usuario.fullName.charAt(0).toUpperCase() }}
+                  </span>
+                  <div class="user-preview__info">
+                    <span class="user-preview__name">{{ usuario.fullName }}</span>
+                    <span class="user-preview__email">{{ usuario.email }}</span>
+                  </div>
+                  <div class="user-preview__badges">
+                    <app-status-badge
+                      variant="role"
+                      [role]="roleBadgeKey(usuario.role)"
+                      [label]="roleLabel(usuario.role)"
+                    />
+                    <app-status-badge
+                      variant="status"
+                      [status]="usuario.isActive ? 'active' : 'inactive'"
+                      [label]="usuario.isActive ? 'Activo' : 'Inactivo'"
+                    />
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+
+      <aside class="admin-dashboard__aside" aria-label="Panel de apoyo administrativo">
+        <section class="siep-card aside-card" style="animation-delay: 0.14s">
+          <header class="aside-card__head">
+            <span class="aside-card__icon" aria-hidden="true">🔐</span>
+            <h3>Seguridad de acceso</h3>
+          </header>
+          <p>
+            Controla quién puede ingresar a MENTORA activando o desactivando cuentas según el rol
+            asignado.
+          </p>
+          @if (cuentasInactivas() > 0) {
+            <p class="aside-card__highlight">
+              {{ cuentasInactivas() }}
+              {{ cuentasInactivas() === 1 ? 'cuenta inactiva' : 'cuentas inactivas' }} en el sistema.
+            </p>
+          } @else {
+            <p class="aside-card__highlight aside-card__highlight--ok">
+              Todas las cuentas registradas están activas.
+            </p>
+          }
+        </section>
+
+        <section class="siep-card aside-card" style="animation-delay: 0.2s">
+          <header class="aside-card__head">
+            <span class="aside-card__icon" aria-hidden="true">🏷</span>
+            <h3>Roles configurados</h3>
+          </header>
+          <p>Distribución actual de cuentas por tipo de acceso.</p>
+          <ul class="roles-list">
+            @for (item of rolesResumen(); track item.role) {
+              <li class="roles-list__item">
+                <app-status-badge
+                  variant="role"
+                  [role]="item.badge"
+                  [label]="item.label"
+                />
+                <span class="roles-list__count">{{ item.count }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="siep-card aside-card" style="animation-delay: 0.26s">
+          <header class="aside-card__head">
+            <span class="aside-card__icon" aria-hidden="true">⏸</span>
+            <h3>Cuentas inactivas</h3>
+          </header>
+          <p>
+            Las cuentas desactivadas conservan su historial pero no pueden iniciar sesión hasta ser
+            reactivadas.
+          </p>
+          <p class="aside-card__stat">
+            <span class="aside-card__stat-value">{{ cuentasInactivas() }}</span>
+            <span class="aside-card__stat-label">inactivas</span>
+          </p>
+        </section>
+
+        <section class="siep-card aside-card aside-card--tip" style="animation-delay: 0.32s">
+          <header class="aside-card__head">
+            <span class="aside-card__icon" aria-hidden="true">💡</span>
+            <h3>Consejo administrativo</h3>
+          </header>
+          <p>
+            Revisa periódicamente los roles asignados y mantén al menos un administrador activo para
+            garantizar la continuidad operativa de la plataforma.
+          </p>
+        </section>
+      </aside>
+    </div>
+  }
+</section>

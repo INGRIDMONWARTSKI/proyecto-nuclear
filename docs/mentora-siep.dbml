@@ -1,0 +1,194 @@
+// MENTORA / SIEP — PostgreSQL · dbdiagram.io
+// Sin Ref: duplicados: cada FK se declara una sola vez (inline en la columna).
+
+Project MENTORA_SIEP {
+  database_type: 'PostgreSQL'
+  Note: 'Simulador de entrenamiento psicosocial — modelo físico actual.'
+}
+
+Enum user_role {
+  ADMIN
+  PROFESOR
+  ESTUDIANTE
+}
+
+Table usuarios {
+  id uuid [pk, not null]
+  fullName text [not null]
+  email text [not null, unique]
+  passwordHash text [not null]
+  role user_role [not null]
+  tokenVersion integer [not null, default: 0]
+  isActive boolean [not null, default: true]
+  createdAt timestamptz [not null]
+  updatedAt timestamptz [not null]
+
+  Note: 'Cuentas: admin, profesor y estudiante. Login y autorización.'
+}
+
+Table grupos {
+  id uuid [pk, not null]
+  nombre text [not null]
+  descripcion text
+  profesorId uuid [not null, ref: > usuarios.id]
+  isActive boolean [not null, default: true]
+  createdAt timestamptz [not null]
+  updatedAt timestamptz [not null]
+
+  Note: 'Grupos académicos bajo un profesor.'
+}
+
+Table estudiante_grupo {
+  id uuid [pk, not null]
+  grupoId uuid [not null, ref: > grupos.id]
+  estudianteId uuid [not null, ref: > usuarios.id]
+  createdAt timestamptz [not null]
+
+  indexes {
+    (grupoId, estudianteId) [unique]
+  }
+
+  Note: 'N:M grupos ↔ estudiantes.'
+}
+
+Table casos {
+  id uuid [pk, not null]
+  titulo text [not null]
+  descripcion text
+  objetivo_aprendizaje text
+  autor_docente_id uuid [not null, ref: > usuarios.id]
+  estado text [not null, default: 'draft']
+  is_active boolean [not null, default: true]
+  published_at timestamptz
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'Caso de simulación (draft / published / archived).'
+}
+
+Table escenarios {
+  id uuid [pk, not null]
+  caso_id uuid [not null, ref: > casos.id]
+  orden integer [not null]
+  titulo text [not null]
+  situacion_texto text [not null]
+  fondo_codigo text [not null]
+  is_final boolean [not null, default: false]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  indexes {
+    (caso_id, orden) [unique]
+  }
+
+  Note: 'Escenas ordenadas del caso.'
+}
+
+Table elementos_escena {
+  id uuid [pk, not null]
+  escenario_id uuid [not null, ref: > escenarios.id]
+  tipo text [not null]
+  asset_codigo text
+  texto_contenido text
+  pos_x numeric [not null]
+  pos_y numeric [not null]
+  ancho numeric [not null]
+  alto numeric [not null]
+  rotacion numeric [not null, default: 0]
+  z_index integer [not null, default: 1]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'Elementos visuales del escenario (lienzo).'
+}
+
+Table preguntas_decision {
+  id uuid [pk, not null]
+  escenario_id uuid [not null, unique, ref: - escenarios.id]
+  enunciado text [not null]
+  tipo text [not null, default: 'single_choice']
+  puntaje_maximo integer [not null, default: 100]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'Una pregunta por escenario (1:1).'
+}
+
+Table opciones_respuesta {
+  id uuid [pk, not null]
+  pregunta_id uuid [not null, ref: > preguntas_decision.id]
+  texto text [not null]
+  orden integer [not null]
+  puntaje integer [not null, default: 0]
+  is_correcta boolean [not null, default: false]
+  escenario_destino_id uuid [ref: > escenarios.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  indexes {
+    (pregunta_id, orden) [unique]
+  }
+
+  Note: 'Opciones; escenario_destino_id = ramificación (NULL = siguiente por orden).'
+}
+
+Table retroalimentaciones {
+  id uuid [pk, not null]
+  opcion_id uuid [not null, unique, ref: - opciones_respuesta.id]
+  mensaje text [not null]
+  tipo text [not null, default: 'pedagogica']
+  referencia_teorica text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'Retroalimentación por opción (1:1).'
+}
+
+Table sesiones_simulacion {
+  id uuid [pk, not null]
+  caso_id uuid [not null, ref: > casos.id]
+  estudiante_id uuid [not null, ref: > usuarios.id]
+  estado text [not null, default: 'in_progress']
+  puntaje_total integer [not null, default: 0]
+  total_preguntas integer [not null, default: 0]
+  respondidas integer [not null, default: 0]
+  started_at timestamptz [not null]
+  finished_at timestamptz
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'Intento de simulación (historial y evidencias RF-12).'
+}
+
+Table respuestas_estudiante {
+  id uuid [pk, not null]
+  sesion_id uuid [not null, ref: > sesiones_simulacion.id]
+  pregunta_id uuid [not null, ref: > preguntas_decision.id]
+  opcion_id uuid [not null, ref: > opciones_respuesta.id]
+  escenario_id uuid [not null, ref: > escenarios.id]
+  puntaje_obtenido integer [not null, default: 0]
+  respondida_at timestamptz [not null]
+
+  indexes {
+    (sesion_id, pregunta_id) [unique]
+  }
+
+  Note: 'Una respuesta por pregunta y sesión.'
+}
+
+Table caso_grupo {
+  id uuid [pk, not null]
+  casoId uuid [not null, ref: > casos.id]
+  grupoId uuid [not null, ref: > grupos.id]
+  asignadoPor uuid [not null, ref: > usuarios.id]
+  createdAt timestamptz [not null]
+
+  indexes {
+    (casoId, grupoId) [unique]
+  }
+
+  Note: 'Asignación caso publicado ↔ grupo (RF-13).'
+}
+
+// --- Mejoras sugeridas (no en DDL) ---
+// Unificar camelCase / snake_case; validar role en FKs; sin canvas_nodes/edges.

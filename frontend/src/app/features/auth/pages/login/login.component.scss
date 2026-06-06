@@ -9,7 +9,7 @@
 /* Pagina */
 .login-page {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 1.5rem 1.5rem 5.5rem;
   background-color: var(--siep-surface);
   background-image:
@@ -26,7 +26,7 @@
   background-size: cover, cover, cover, cover, cover;
   background-position: center, center, center, center, center;
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
-  overflow-x: hidden;
+  overflow: clip;
 }
 
 .login-page__ambient {
@@ -125,7 +125,7 @@
   width: min(1360px, 100%);
   margin: 0 auto;
   align-items: center;
-  min-height: calc(100vh - 8rem);
+  min-height: auto;
 }
 
 /* Hero */
@@ -1117,7 +1117,7 @@
   .login-page {
     padding-left: 1rem;
     padding-right: 1rem;
-    overflow-x: hidden;
+    padding-bottom: 1rem;
   }
 
   .head-visual__face,

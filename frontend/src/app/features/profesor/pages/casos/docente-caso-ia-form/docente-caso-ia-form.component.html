@@ -1,0 +1,80 @@
+<section class="siep-page">
+  <app-page-header
+    title="Generar caso con IA"
+    subtitle="Construye un borrador completo a partir de referencias docentes."
+    icon="ðŸ§ "
+  >
+    <a actions class="siep-btn-secondary" routerLink="/profesor/casos">Volver</a>
+  </app-page-header>
+
+  @if (errorMessage()) {
+    <app-alert-message [message]="errorMessage()!" type="error" />
+  }
+
+  @if (loading()) {
+    <app-loading-state message="Cargando referencias disponibles..." />
+  } @else {
+    <form class="siep-card ia-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="siep-field">
+        <label for="referenciasTexto">Referencias en texto libre</label>
+        <textarea
+          id="referenciasTexto"
+          rows="10"
+          formControlName="referenciasTexto"
+          placeholder="Pega uno o varios casos. Separa cada referencia con una lÃ­nea en blanco."
+        ></textarea>
+      </div>
+
+      <div class="siep-field">
+        <label>Casos existentes como referencia</label>
+        <div class="cases-picker">
+          @if (casosDisponibles().length === 0) {
+            <p class="muted">AÃºn no tienes casos guardados para usar como referencia.</p>
+          } @else {
+            @for (caso of casosDisponibles(); track caso.id) {
+              <label class="case-option">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(caso.id)"
+                  (change)="toggleCaso(caso.id, $any($event.target).checked)"
+                />
+                <span>
+                  <strong>{{ caso.titulo }}</strong>
+                  <small>{{ caso.descripcion || 'Sin descripciÃ³n' }}</small>
+                </span>
+              </label>
+            }
+          }
+        </div>
+      </div>
+
+      <div class="siep-field">
+        <label for="instruccion">InstrucciÃ³n adicional</label>
+        <textarea
+          id="instruccion"
+          rows="4"
+          formControlName="instruccion"
+          placeholder="Ejemplo: enfocar el caso en entrevista inicial, manejo de crisis o evaluaciÃ³n familiar."
+        ></textarea>
+      </div>
+
+      <div class="siep-field">
+        <label for="cantidadEscenarios">Cantidad de escenarios</label>
+        <input
+          id="cantidadEscenarios"
+          type="number"
+          min="1"
+          max="5"
+          formControlName="cantidadEscenarios"
+        />
+      </div>
+
+      <div class="form-actions">
+        <button class="siep-btn-primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Generando...' : 'Generar borrador' }}
+        </button>
+        <a class="siep-btn-secondary" routerLink="/profesor/casos">Cancelar</a>
+      </div>
+    </form>
+  }
+</section>

@@ -10,6 +10,10 @@ import {
 import { CasoPreview } from '../models/docente/caso-preview.model';
 import { EscenarioDocente } from '../models/docente/escenario-docente.model';
 import { EvidenciaDocente } from '../models/docente/evidencia-docente.model';
+import {
+  GenerarCasoIaPayload,
+  GenerarCasoIaResponse,
+} from '../models/docente/generar-caso-ia.model';
 import { RevisionSesionDocente } from '../models/docente/revision-sesion-docente.model';
 import { SesionEvidencia } from '../models/docente/sesion-evidencia.model';
 
@@ -44,6 +48,13 @@ export class SimulacionDocenteService {
     },
   ) {
     return this.http.patch<CasoDocente>(`${this.casosUrl}/${casoId}`, payload);
+  }
+
+  generarCasoConIa(payload: GenerarCasoIaPayload) {
+    return this.http.post<GenerarCasoIaResponse>(
+      `${this.casosUrl}/generar`,
+      payload,
+    );
   }
 
   listarEscenarios(casoId: string) {

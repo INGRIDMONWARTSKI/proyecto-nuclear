@@ -68,6 +68,13 @@ export const profesorRoutes: Routes = [
       ),
   },
   {
+    path: 'casos/generar',
+    loadComponent: () =>
+      import('../pages/casos/docente-caso-ia-form/docente-caso-ia-form.component').then(
+        (m) => m.DocenteCasoIaFormComponent,
+      ),
+  },
+  {
     path: 'casos/:casoId/editar',
     loadComponent: () =>
       import('../pages/casos/docente-caso-form/docente-caso-form.component').then(

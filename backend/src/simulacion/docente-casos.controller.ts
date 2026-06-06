@@ -7,13 +7,18 @@ import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { CasosService } from './casos.service';
 import { CreateCasoDto } from './dto/create-caso.dto';
+import { GenerateCasoIaDto } from './dto/generate-caso-ia.dto';
 import { UpdateCasoDto } from './dto/update-caso.dto';
+import { GeneracionCasosIaService } from './generacion-casos-ia.service';
 
 @Controller('simulacion/docente/casos')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN, Role.PROFESOR)
 export class DocenteCasosController {
-  constructor(private readonly casosService: CasosService) {}
+  constructor(
+    private readonly casosService: CasosService,
+    private readonly generacionCasosIaService: GeneracionCasosIaService,
+  ) {}
 
   @Post()
   create(
@@ -21,6 +26,17 @@ export class DocenteCasosController {
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
     return this.casosService.create(createCasoDto, currentUser);
+  }
+
+  @Post('generar')
+  generateWithIa(
+    @Body() generateCasoIaDto: GenerateCasoIaDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.generacionCasosIaService.generarCaso(
+      generateCasoIaDto,
+      currentUser,
+    );
   }
 
   @Get()

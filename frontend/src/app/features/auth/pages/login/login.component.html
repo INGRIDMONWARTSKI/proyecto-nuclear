@@ -423,20 +423,16 @@
     </section>
   </div>
 
-  <footer class="pillars-bar" aria-label="Beneficios del simulador">
-    @for (pillar of pillars; track pillar.label) {
-      <div class="pillar">
-        <span class="pillar__icon">{{ pillar.icon }}</span>
-        <span class="pillar__label">{{ pillar.label }}</span>
+  <footer class="pillars-bar" aria-label="Consejos del simulador">
+    <aside class="daily-tip" aria-label="Consejo del día">
+      <span class="daily-tip__icon" aria-hidden="true">💡</span>
+      <div
+        class="daily-tip__content"
+        [class.daily-tip__content--visible]="tipVisible()"
+      >
+        <strong>{{ currentTip().title }}</strong>
+        <p>{{ currentTip().message }}</p>
       </div>
-    }
+    </aside>
   </footer>
-
-  <aside class="daily-tip" aria-label="Consejo del día">
-    <span class="daily-tip__icon" aria-hidden="true">💡</span>
-    <div>
-      <strong>Consejo del día</strong>
-      <p>Las decisiones conscientes fortalecen la empatía y el criterio clínico.</p>
-    </div>
-  </aside>
 </div>

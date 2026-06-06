@@ -4,7 +4,10 @@
     subtitle="Crea y configura casos psicológicos para tus estudiantes."
     icon="🌿"
   >
-    <a actions class="siep-btn-primary" routerLink="nuevo">Nuevo caso</a>
+    <div actions class="header-actions">
+      <a class="siep-btn-secondary" routerLink="generar">Generar con IA</a>
+      <a class="siep-btn-primary" routerLink="nuevo">Nuevo caso</a>
+    </div>
   </app-page-header>
 
   @if (errorMessage()) {

@@ -1,5 +1,5 @@
 import { NgStyle } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -21,6 +21,11 @@ interface StoryCard {
 interface Pillar {
   label: string;
   icon: string;
+}
+
+interface DailyTip {
+  title: string;
+  message: string;
 }
 
 interface FloatingLeaf {
@@ -48,10 +53,12 @@ interface OrbitalIcon {
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private tipRotationTimer: number | null = null;
+  private tipTransitionTimer: number | null = null;
 
   protected readonly loading = signal(false);
   protected readonly loginSuccess = signal(false);
@@ -61,6 +68,8 @@ export class LoginComponent {
   protected readonly parallaxX = signal(0);
   protected readonly parallaxY = signal(0);
   protected readonly btnPressed = signal(false);
+  protected readonly activeTipIndex = signal(0);
+  protected readonly tipVisible = signal(true);
 
   protected readonly floatingLeaves: FloatingLeaf[] = [
     { id: 1, top: '6%', left: '4%', size: 28, delay: 0, duration: 18, variant: 1, depth: 6 },
@@ -126,10 +135,49 @@ export class LoginComponent {
     },
   ];
 
+  protected readonly dailyTips: DailyTip[] = [
+    {
+      title: 'Consejo del momento',
+      message: 'Cada decisión consciente fortalece la empatía y el criterio clínico.',
+    },
+    {
+      title: 'Tip de práctica',
+      message: 'Observa el contexto antes de responder: una buena intervención empieza por escuchar.',
+    },
+    {
+      title: 'Frase del simulador',
+      message: 'Aprender con casos te ayuda a conectar teoría, emoción y acción profesional.',
+    },
+    {
+      title: 'Enfoque PsychoSim',
+      message: 'Reflexionar después de cada escenario mejora tu juicio para futuras decisiones.',
+    },
+    {
+      title: 'Recordatorio útil',
+      message: 'La retroalimentación inmediata convierte cada intento en una oportunidad de crecimiento.',
+    },
+  ];
+
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
+
+  ngOnInit() {
+    this.tipRotationTimer = window.setInterval(() => {
+      this.rotateTip();
+    }, 30000);
+  }
+
+  ngOnDestroy() {
+    if (this.tipRotationTimer !== null) {
+      window.clearInterval(this.tipRotationTimer);
+    }
+
+    if (this.tipTransitionTimer !== null) {
+      window.clearTimeout(this.tipTransitionTimer);
+    }
+  }
 
   submit() {
     if (this.form.invalid || this.loading() || this.loginSuccess()) {
@@ -196,6 +244,23 @@ export class LoginComponent {
     const x = this.parallaxX() * 18;
     const y = this.parallaxY() * 18;
     return { transform: `translate3d(${x}px, ${y}px, 0)` };
+  }
+
+  currentTip(): DailyTip {
+    return this.dailyTips[this.activeTipIndex()];
+  }
+
+  private rotateTip() {
+    this.tipVisible.set(false);
+
+    if (this.tipTransitionTimer !== null) {
+      window.clearTimeout(this.tipTransitionTimer);
+    }
+
+    this.tipTransitionTimer = window.setTimeout(() => {
+      this.activeTipIndex.update((index) => (index + 1) % this.dailyTips.length);
+      this.tipVisible.set(true);
+    }, 320);
   }
 
   private resolveLoginError(error: unknown): string {

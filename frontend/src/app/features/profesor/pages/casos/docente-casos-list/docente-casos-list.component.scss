@@ -1,3 +1,9 @@
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--siep-space-2);
+}
+
 .casos-grid {
   list-style: none;
   margin: 0;

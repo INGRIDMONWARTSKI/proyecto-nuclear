@@ -1,4 +1,4 @@
-/* PsychoSim Login — tokens globales SIEP (UI-1); estilos locales solo para layout/animación */
+/* PsychoSim Login - tokens globales SIEP (UI-1); estilos locales solo para layout/animacion */
 
 :host {
   display: block;
@@ -6,7 +6,7 @@
   color: var(--siep-text);
 }
 
-/* —— Página —— */
+/* Pagina */
 .login-page {
   position: relative;
   min-height: 100vh;
@@ -39,7 +39,7 @@
   to { opacity: 1; transform: translateX(20px); }
 }
 
-/* Partículas */
+/* Particulas */
 .particles {
   position: absolute;
   inset: 0;
@@ -103,7 +103,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* —— Layout —— */
+/* Layout */
 .login-layout {
   position: relative;
   z-index: 1;
@@ -116,7 +116,7 @@
   min-height: calc(100vh - 7rem);
 }
 
-/* —— Hero —— */
+/* Hero */
 .login-hero {
   padding: 0.5rem 0.5rem 0.5rem 0;
   overflow: hidden;
@@ -176,7 +176,6 @@
   align-items: center;
 }
 
-/* Story cards */
 .story-cards {
   display: flex;
   flex-direction: column;
@@ -270,7 +269,6 @@
   }
 }
 
-/* Hero visual + orbitales */
 .head-visual {
   position: relative;
   display: flex;
@@ -342,7 +340,7 @@
   to { transform: rotate(360deg) translateX(148px) rotate(-360deg); }
 }
 
-/* —— Panel login —— */
+/* Panel login */
 .login-panel {
   display: flex;
   justify-content: center;
@@ -438,7 +436,6 @@
   }
 }
 
-/* Alerta */
 .login-alert {
   display: flex;
   align-items: flex-start;
@@ -477,7 +474,6 @@
   40%, 80% { transform: translateX(6px); }
 }
 
-/* Formulario */
 .form-field {
   margin-bottom: 1rem;
 
@@ -636,7 +632,6 @@
   }
 }
 
-/* Botón principal */
 .btn-enter {
   position: relative;
   width: 100%;
@@ -759,7 +754,6 @@
   to { transform: scale(1) rotate(0); opacity: 1; }
 }
 
-/* Accesos rápidos */
 .quick-access {
   margin-top: 1.5rem;
   padding-top: 1.3rem;
@@ -900,89 +894,77 @@
   }
 }
 
-/* Pilares */
+/* Footer de consejos */
 .pillars-bar {
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1.25rem 2rem;
   width: min(1200px, 100%);
   margin: 1.5rem auto 0;
-  padding: 1.1rem 1.5rem;
+  padding: 0;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(102, 187, 106, 0.22);
   border-radius: var(--siep-radius-xl);
   backdrop-filter: blur(10px);
 }
 
-.pillar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  text-align: center;
-  min-width: 90px;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  &:hover {
-    transform: translateY(-5px);
-  }
-}
-
-.pillar__icon {
-  font-size: 1.35rem;
-  filter: drop-shadow(0 0 10px var(--siep-glow-soft));
-}
-
-.pillar__label {
-  font-size: 0.67rem;
-  font-weight: 600;
-  color: var(--siep-text-soft);
-  max-width: 100px;
-  line-height: 1.35;
-}
-
-/* Consejo del día */
 .daily-tip {
-  position: fixed;
-  bottom: 1.25rem;
-  right: 1.25rem;
-  z-index: 2;
+  position: relative;
   display: flex;
-  gap: 0.65rem;
-  max-width: 270px;
-  padding: 0.9rem 1.05rem;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid var(--siep-cream);
-  border-radius: var(--siep-radius-lg);
-  box-shadow: 0 10px 28px rgba(31, 61, 46, 0.1);
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(246, 248, 243, 0.88));
+  border: none;
+  border-radius: var(--siep-radius-xl);
+  box-shadow: none;
   animation: fade-up 0.85s ease 0.45s both;
+  overflow: hidden;
 
   strong {
     display: block;
     font-family: var(--siep-font-title);
-    font-size: 0.78rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 700;
     color: var(--siep-forest);
     margin-bottom: 0.2rem;
   }
 
   p {
     margin: 0;
-    font-size: 0.72rem;
-    line-height: 1.5;
+    font-size: 0.84rem;
+    line-height: 1.55;
     color: var(--siep-text-soft);
   }
 }
 
 .daily-tip__icon {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
+  line-height: 1;
   flex-shrink: 0;
+  margin-top: 0.1rem;
 }
 
-/* —— Responsive —— */
+.daily-tip__content {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 320ms ease,
+    transform 320ms ease;
+}
+
+.daily-tip__content--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes tip-breathe {
+  0%, 100% { opacity: 0.82; transform: translateY(0); }
+  12%, 88% { opacity: 1; transform: translateY(0); }
+  50% { opacity: 0.96; transform: translateY(-1px); }
+}
+
+/* Responsive */
 @media (max-width: 960px) {
   .login-layout {
     grid-template-columns: 1fr;
@@ -1022,10 +1004,7 @@
   }
 
   .daily-tip {
-    position: static;
-    max-width: none;
-    margin: 1rem auto 0;
-    width: min(1200px, 100%);
+    padding: 0.95rem 1rem;
   }
 
   .login-page {
@@ -1051,6 +1030,10 @@
   .role-chip__icon svg {
     width: 1.15rem;
     height: 1.15rem;
+  }
+
+  .daily-tip {
+    padding: 0.9rem;
   }
 }
 

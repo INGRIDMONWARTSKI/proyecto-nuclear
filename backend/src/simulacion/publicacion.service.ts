@@ -8,6 +8,7 @@ import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { PostgrestService } from '../postgrest/postgrest.service';
 import { ALLOWED_BACKGROUND_CODES } from './constants/backgrounds.constant';
+import { CasoPreviewBuilderService } from './caso-preview-builder.service';
 import { CasosService } from './casos.service';
 import { Caso, CasoRecord } from './entities/caso.entity';
 import { EscenarioRecord } from './entities/escenario.entity';
@@ -15,136 +16,19 @@ import { OpcionRespuestaRecord } from './entities/opcion-respuesta.entity';
 import { PreguntaDecisionRecord } from './entities/pregunta-decision.entity';
 import { RetroalimentacionRecord } from './entities/retroalimentacion.entity';
 
-interface ElementoEscenaRecord {
-  id: string;
-  escenario_id: string;
-  tipo: 'personaje' | 'objeto' | 'texto';
-  asset_codigo: string | null;
-  texto_contenido: string | null;
-  pos_x: number;
-  pos_y: number;
-  ancho: number;
-  alto: number;
-  rotacion: number;
-  z_index: number;
-  created_at: string;
-  updated_at: string;
-}
-
 @Injectable()
 export class PublicacionService {
   constructor(
     private readonly postgrest: PostgrestService,
     private readonly casosService: CasosService,
+    private readonly previewBuilder: CasoPreviewBuilderService,
   ) {}
 
   async preview(casoId: string, currentUser: AuthenticatedUser) {
     this.assertDocenteRole(currentUser);
     const caso = await this.casosService.findCasoById(casoId);
     this.casosService.assertCanAccessCasoDocente(caso, currentUser);
-
-    const escenarios = await this.postgrest.select<EscenarioRecord>('escenarios', {
-      filters: { caso_id: casoId },
-      order: 'orden.asc',
-    });
-
-    const escenariosPreview: Array<Record<string, unknown>> = [];
-
-    for (const escenario of escenarios) {
-      const elementos = await this.postgrest.select<ElementoEscenaRecord>(
-        'elementos_escena',
-        {
-          filters: { escenario_id: escenario.id },
-          order: 'z_index.asc',
-        },
-      );
-
-      const [pregunta] = await this.postgrest.select<PreguntaDecisionRecord>(
-        'preguntas_decision',
-        {
-          filters: { escenario_id: escenario.id },
-          limit: 1,
-        },
-      );
-
-      let preguntaPreview: Record<string, unknown> | null = null;
-
-      if (pregunta) {
-        const opciones = await this.postgrest.select<OpcionRespuestaRecord>(
-          'opciones_respuesta',
-          {
-            filters: { pregunta_id: pregunta.id },
-            order: 'orden.asc',
-          },
-        );
-
-        const opcionesPreview: Array<Record<string, unknown>> = [];
-
-        for (const opcion of opciones) {
-          const [retro] = await this.postgrest.select<RetroalimentacionRecord>(
-            'retroalimentaciones',
-            {
-              filters: { opcion_id: opcion.id },
-              limit: 1,
-            },
-          );
-
-          opcionesPreview.push({
-            id: opcion.id,
-            texto: opcion.texto,
-            orden: opcion.orden,
-            puntaje: opcion.puntaje,
-            isCorrecta: opcion.is_correcta,
-            escenarioDestinoId: opcion.escenario_destino_id ?? null,
-            retroalimentacion: retro
-              ? {
-                  id: retro.id,
-                  mensaje: retro.mensaje,
-                  tipo: retro.tipo,
-                  referenciaTeorica: retro.referencia_teorica,
-                }
-              : null,
-          });
-        }
-
-        preguntaPreview = {
-          id: pregunta.id,
-          enunciado: pregunta.enunciado,
-          tipo: pregunta.tipo,
-          puntajeMaximo: pregunta.puntaje_maximo,
-          opciones: opcionesPreview,
-        };
-      }
-
-      escenariosPreview.push({
-        id: escenario.id,
-        orden: escenario.orden,
-        titulo: escenario.titulo,
-        situacionTexto: escenario.situacion_texto,
-        fondoCodigo: escenario.fondo_codigo,
-        isFinal: escenario.is_final,
-        elementos: elementos.map((el) => ({
-          id: el.id,
-          tipo: el.tipo,
-          assetCodigo: el.asset_codigo,
-          textoContenido: el.texto_contenido,
-          posX: el.pos_x,
-          posY: el.pos_y,
-          ancho: el.ancho,
-          alto: el.alto,
-          rotacion: el.rotacion,
-          zIndex: el.z_index,
-          createdAt: el.created_at,
-          updatedAt: el.updated_at,
-        })),
-        pregunta: preguntaPreview,
-      });
-    }
-
-    return {
-      ...this.toCaso(caso),
-      escenarios: escenariosPreview,
-    };
+    return this.previewBuilder.build(caso);
   }
 
   async publish(casoId: string, currentUser: AuthenticatedUser) {
@@ -186,6 +70,11 @@ export class PublicacionService {
     );
 
     return this.toCaso(updated);
+  }
+
+  async validateCaseCompletenessById(casoId: string): Promise<string[]> {
+    const caso = await this.casosService.findCasoById(casoId);
+    return this.validateCaseCompleteness(caso);
   }
 
   private async validateCaseCompleteness(caso: CasoRecord): Promise<string[]> {
@@ -257,6 +146,15 @@ export class PublicacionService {
       const escenarioPreguntas = preguntas.filter(
         (item) => item.escenario_id === escenario.id,
       );
+
+      if (escenario.is_final) {
+        if (escenarioPreguntas.length > 1) {
+          errors.push(
+            `El escenario final ${escenario.orden} no debe tener mas de una pregunta.`,
+          );
+        }
+        continue;
+      }
 
       if (escenarioPreguntas.length !== 1) {
         errors.push(

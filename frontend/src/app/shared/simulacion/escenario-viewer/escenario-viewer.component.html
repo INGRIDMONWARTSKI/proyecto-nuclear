@@ -6,17 +6,47 @@
 
   <p class="escenario__text">{{ escenario.situacionTexto }}</p>
 
-  @if (escenario.elementos.length > 0) {
-    <div class="escenario__elementos">
-      <h3>Elementos de la escena</h3>
-      <ul>
-        @for (item of escenario.elementos; track item.id) {
-          <li>
-            {{ item.tipo }}:
-            {{ item.textoContenido || item.assetCodigo || 'elemento' }}
-          </li>
-        }
-      </ul>
+  <article class="escenario__stage" [style.background]="backgroundStyle()">
+    <div class="escenario__backdrop">
+      <div class="escenario__window"></div>
+      <div class="escenario__sofa"></div>
+      <div class="escenario__table"></div>
     </div>
-  }
+
+    @for (item of visibleElements(); track item.id) {
+      @if (item.type === 'character') {
+        <div class="stage-character" [ngStyle]="elementStyle(item)">
+          @if (contentText(item, 'dialogo')) {
+            <div class="stage-character__bubble">{{ contentText(item, 'dialogo') }}</div>
+          }
+          <div
+            class="stage-character__avatar"
+            [style.background]="characterGradient(item)"
+          ></div>
+          <div class="stage-character__label">
+            <strong>{{ contentLabel(item, 'nombre') || 'Personaje' }}</strong>
+            <span>
+              {{ contentLabel(item, 'rol') || 'Rol' }}
+              @if (contentLabel(item, 'expresion')) {
+                · {{ contentLabel(item, 'expresion') }}
+              }
+            </span>
+          </div>
+        </div>
+      } @else if (item.type === 'text' || item.type === 'instruction' || item.type === 'feedback') {
+        <div class="stage-note" [ngStyle]="elementStyle(item)">
+          {{ contentText(item) || contentText(item, 'mensaje') }}
+        </div>
+      } @else if (item.type === 'question') {
+        <div class="stage-question" [ngStyle]="elementStyle(item)">
+          <span>Decision</span>
+          <strong>{{ contentLabel(item, 'enunciado') || escenario.pregunta.enunciado }}</strong>
+        </div>
+      } @else {
+        <div class="stage-object" [ngStyle]="elementStyle(item)">
+          <span>{{ contentLabel(item, 'nombre') || item.type }}</span>
+        </div>
+      }
+    }
+  </article>
 </section>

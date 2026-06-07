@@ -10,6 +10,7 @@ import { PostgrestService } from '../postgrest/postgrest.service';
 import { ALLOWED_BACKGROUND_CODES } from './constants/backgrounds.constant';
 import { CasoPreviewBuilderService } from './caso-preview-builder.service';
 import { CasosService } from './casos.service';
+import { normalizeLayout } from './editor-layout.util';
 import { Caso, CasoRecord } from './entities/caso.entity';
 import { EscenarioRecord } from './entities/escenario.entity';
 import { OpcionRespuestaRecord } from './entities/opcion-respuesta.entity';
@@ -139,6 +140,27 @@ export class PublicacionService {
       if (!escenario.situacion_texto || escenario.situacion_texto.trim().length < 10) {
         errors.push(
           `El escenario ${escenario.orden} debe tener situacionTexto valido.`,
+        );
+      }
+
+      const layout = normalizeLayout(escenario.layout_data, escenario);
+      const hasBackground = layout.elements.some((item) => item.type === 'background');
+      if (!hasBackground) {
+        errors.push(`El escenario ${escenario.orden} debe incluir un fondo en el layout.`);
+      }
+
+      const charactersWithoutDialog = layout.elements.filter((item) => {
+        if (item.type !== 'character') {
+          return false;
+        }
+
+        const dialogo = item.content['dialogo'];
+        return typeof dialogo !== 'string' || dialogo.trim().length === 0;
+      });
+
+      if (charactersWithoutDialog.length > 0) {
+        errors.push(
+          `El escenario ${escenario.orden} tiene personajes sin dialogo asociado.`,
         );
       }
 

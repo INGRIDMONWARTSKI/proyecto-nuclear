@@ -1,14 +1,37 @@
-<section class="siep-page">
+<section class="siep-page casos-page">
   <app-page-header
-    title="Casos de simulación"
-    subtitle="Crea y configura casos psicológicos para tus estudiantes."
-    icon="🌿"
+    title="Casos de simulacion"
+    subtitle="Organiza, edita y publica experiencias psicologicas construidas por escenas."
+    icon="🧩"
   >
     <div actions class="header-actions">
       <a class="siep-btn-secondary" routerLink="generar">Generar con IA</a>
       <a class="siep-btn-primary" routerLink="nuevo">Nuevo caso</a>
     </div>
   </app-page-header>
+
+  <section class="siep-card casos-summary" aria-label="Resumen de casos">
+    <article>
+      <span>Total</span>
+      <strong>{{ casos().length }}</strong>
+      <p>Casos disponibles para editar o publicar.</p>
+    </article>
+    <article>
+      <span>Borrador</span>
+      <strong>{{ totalPorEstado('draft') }}</strong>
+      <p>Listos para seguir construyendo en el editor visual.</p>
+    </article>
+    <article>
+      <span>Publicado</span>
+      <strong>{{ totalPorEstado('published') }}</strong>
+      <p>Simulaciones visibles para estudiantes.</p>
+    </article>
+    <article>
+      <span>Archivado</span>
+      <strong>{{ totalPorEstado('archived') }}</strong>
+      <p>Casos fuera de circulacion activa.</p>
+    </article>
+  </section>
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />
@@ -19,7 +42,7 @@
   } @else if (casos().length === 0) {
     <app-empty-state
       title="Sin casos"
-      message="Aún no has creado casos de simulación. Comienza diseñando tu primer escenario pedagógico."
+      message="Aun no has creado casos de simulacion. Comienza con tu primera experiencia interactiva."
       icon="🌱"
       actionLabel="Crear primer caso"
       (actionClick)="irANuevoCaso()"
@@ -28,9 +51,7 @@
     <ul class="casos-grid">
       @for (caso of casos(); track caso.id) {
         <li class="siep-card caso-card">
-          <h3 class="caso-card__title">{{ caso.titulo }}</h3>
-          <p class="caso-card__desc">{{ caso.descripcion || 'Sin descripción' }}</p>
-          <div class="caso-card__meta">
+          <div class="caso-card__top">
             <app-status-badge
               variant="status"
               [status]="estadoBadge(caso.estado)"
@@ -38,10 +59,23 @@
             />
             <span class="caso-card__date">{{ caso.createdAt | date: 'shortDate' }}</span>
           </div>
+
+          <h3 class="caso-card__title">{{ caso.titulo }}</h3>
+          <p class="caso-card__desc">{{ caso.descripcion || 'Sin descripcion' }}</p>
+
+          <div class="caso-card__highlights">
+            <span>Escenas interactivas</span>
+            <span>Decision con feedback</span>
+            <span>Mapa narrativo</span>
+          </div>
+
           <div class="caso-card__actions">
             <a class="siep-btn-primary" [routerLink]="[caso.id]">Gestionar</a>
+            <a class="siep-btn-secondary" [routerLink]="[caso.id, 'canvas']">
+              Abrir editor visual
+            </a>
             @if (caso.estado === 'draft') {
-              <a class="siep-btn-secondary" [routerLink]="[caso.id, 'editar']">Editar</a>
+              <a class="siep-btn-secondary" [routerLink]="[caso.id, 'editar']">Editar datos</a>
             }
           </div>
         </li>

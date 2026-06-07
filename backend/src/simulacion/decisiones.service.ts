@@ -11,6 +11,7 @@ import { PostgrestService } from '../postgrest/postgrest.service';
 import { CasosService } from './casos.service';
 import { CreateOpcionRespuestaDto } from './dto/create-opcion-respuesta.dto';
 import { CreatePreguntaDecisionDto } from './dto/create-pregunta-decision.dto';
+import { UpdatePreguntaDecisionDto } from './dto/update-pregunta-decision.dto';
 import { UpdateOpcionRespuestaDto } from './dto/update-opcion-respuesta.dto';
 import { CasoRecord } from './entities/caso.entity';
 import { OpcionRespuesta, OpcionRespuestaRecord } from './entities/opcion-respuesta.entity';
@@ -117,6 +118,51 @@ export class DecisionesService {
       );
       throw error;
     }
+  }
+
+  async updatePregunta(
+    preguntaId: string,
+    dto: UpdatePreguntaDecisionDto,
+    currentUser: AuthenticatedUser,
+  ): Promise<PreguntaDecision> {
+    this.assertDocenteRole(currentUser);
+
+    const context = await this.getPreguntaContext(preguntaId);
+    this.casosService.assertCanAccessCasoDocente(context.caso, currentUser);
+    this.assertCaseEditable(context.caso);
+
+    const payload: Record<string, string | number> = {};
+
+    if (dto.enunciado !== undefined) {
+      payload.enunciado = dto.enunciado.trim();
+    }
+
+    if (dto.tipo !== undefined) {
+      payload.tipo = dto.tipo;
+    }
+
+    if (dto.puntajeMaximo !== undefined) {
+      payload.puntaje_maximo = dto.puntajeMaximo;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      throw new BadRequestException('No se enviaron campos para actualizar.');
+    }
+
+    const [updated] = await this.postgrest.update<PreguntaDecisionRecord>(
+      'preguntas_decision',
+      payload,
+      {
+        filters: { id: preguntaId },
+        select: '*',
+      },
+    );
+
+    if (!updated) {
+      throw new NotFoundException('Pregunta de decision no encontrada.');
+    }
+
+    return this.toPregunta(updated);
   }
 
   async updateOpcion(

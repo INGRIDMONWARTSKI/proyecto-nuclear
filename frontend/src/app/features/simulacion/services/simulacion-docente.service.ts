@@ -3,6 +3,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  CasoEditor,
+} from '../models/docente/caso-editor.model';
+import {
   CasoDocente,
   CasoDocenteDetalle,
   PublicarCasoResponse,
@@ -29,6 +32,10 @@ export class SimulacionDocenteService {
 
   obtenerCaso(casoId: string) {
     return this.http.get<CasoDocenteDetalle>(`${this.casosUrl}/${casoId}`);
+  }
+
+  obtenerEditorCaso(casoId: string) {
+    return this.http.get<CasoEditor>(`${this.casosUrl}/${casoId}/editor`);
   }
 
   crearCaso(payload: {
@@ -95,11 +102,38 @@ export class SimulacionDocenteService {
     );
   }
 
+  actualizarLayoutEscenario(
+    escenarioId: string,
+    payload: {
+      version?: number;
+      elements: unknown[];
+    },
+  ) {
+    return this.http.patch<EscenarioDocente>(
+      `${this.docenteUrl}/escenarios/${escenarioId}/layout`,
+      payload,
+    );
+  }
+
+  duplicarEscenario(escenarioId: string) {
+    return this.http.post<EscenarioDocente>(
+      `${this.docenteUrl}/escenarios/${escenarioId}/duplicate`,
+      {},
+    );
+  }
+
   crearPregunta(
     escenarioId: string,
     payload: { enunciado: string; tipo?: string; puntajeMaximo?: number },
   ) {
     return this.http.post(`${this.docenteUrl}/escenarios/${escenarioId}/pregunta`, payload);
+  }
+
+  actualizarPregunta(
+    preguntaId: string,
+    payload: { enunciado?: string; tipo?: string; puntajeMaximo?: number },
+  ) {
+    return this.http.patch(`${this.docenteUrl}/preguntas/${preguntaId}`, payload);
   }
 
   crearOpcion(

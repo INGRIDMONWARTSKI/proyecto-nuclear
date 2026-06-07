@@ -1,3 +1,5 @@
+import { EscenarioLayout } from './docente/editor-layout.model';
+
 export interface EscenarioElemento {
   id: string;
   tipo: 'personaje' | 'objeto' | 'texto';
@@ -30,6 +32,7 @@ export interface EscenarioActual {
   titulo: string;
   situacionTexto: string;
   fondoCodigo: string;
+  layout: EscenarioLayout;
   elementos: EscenarioElemento[];
   pregunta: PreguntaEscenario;
 }

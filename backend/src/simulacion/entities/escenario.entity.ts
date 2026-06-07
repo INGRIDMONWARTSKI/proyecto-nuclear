@@ -6,6 +6,8 @@ export interface EscenarioRecord {
   situacion_texto: string;
   fondo_codigo: string;
   is_final: boolean;
+  layout_version: number | null;
+  layout_data: unknown | null;
   created_at: string;
   updated_at: string;
 }
@@ -18,6 +20,8 @@ export interface Escenario {
   situacionTexto: string;
   fondoCodigo: string;
   isFinal: boolean;
+  layoutVersion: number | null;
+  layoutData: unknown | null;
   createdAt: string;
   updatedAt: string;
 }

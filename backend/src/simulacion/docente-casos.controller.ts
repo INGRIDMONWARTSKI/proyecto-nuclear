@@ -5,11 +5,13 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
+import { CasoEditorBuilderService } from './caso-editor-builder.service';
 import { CasosService } from './casos.service';
 import { CreateCasoDto } from './dto/create-caso.dto';
 import { GenerateCasoIaDto } from './dto/generate-caso-ia.dto';
 import { UpdateCasoDto } from './dto/update-caso.dto';
 import { GeneracionCasosIaService } from './generacion-casos-ia.service';
+import { PublicacionService } from './publicacion.service';
 
 @Controller('simulacion/docente/casos')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -18,6 +20,8 @@ export class DocenteCasosController {
   constructor(
     private readonly casosService: CasosService,
     private readonly generacionCasosIaService: GeneracionCasosIaService,
+    private readonly casoEditorBuilder: CasoEditorBuilderService,
+    private readonly publicacionService: PublicacionService,
   ) {}
 
   @Post()
@@ -50,6 +54,20 @@ export class DocenteCasosController {
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
     return this.casosService.findOneDocente(casoId, currentUser);
+  }
+
+  @Get(':casoId/editor')
+  async getEditor(
+    @Param('casoId') casoId: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    const caso = await this.casosService.findCasoById(casoId);
+    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+    const validationErrors =
+      caso.estado === 'draft'
+        ? await this.publicacionService.validateCaseCompletenessById(casoId)
+        : [];
+    return this.casoEditorBuilder.build(caso, validationErrors);
   }
 
   @Patch(':casoId')

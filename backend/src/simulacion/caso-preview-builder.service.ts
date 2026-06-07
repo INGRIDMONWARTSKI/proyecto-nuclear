@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { normalizeLayout } from './editor-layout.util';
 import { PostgrestService } from '../postgrest/postgrest.service';
 import { Caso, CasoRecord } from './entities/caso.entity';
 import { EscenarioRecord } from './entities/escenario.entity';
@@ -126,6 +127,7 @@ export class CasoPreviewBuilderService {
           createdAt: el.created_at,
           updatedAt: el.updated_at,
         })),
+        layout: normalizeLayout(escenario.layout_data, escenario, elementos),
         pregunta: preguntaPreview,
       });
     }

@@ -17,6 +17,7 @@ import { CreateOpcionRespuestaDto } from './dto/create-opcion-respuesta.dto';
 import { CreatePreguntaDecisionDto } from './dto/create-pregunta-decision.dto';
 import { CreateRetroalimentacionDto } from './dto/create-retroalimentacion.dto';
 import { UpdateOpcionRespuestaDto } from './dto/update-opcion-respuesta.dto';
+import { UpdatePreguntaDecisionDto } from './dto/update-pregunta-decision.dto';
 import { UpdateRetroalimentacionDto } from './dto/update-retroalimentacion.dto';
 import { DecisionesService } from './decisiones.service';
 import { RetroalimentacionesService } from './retroalimentaciones.service';
@@ -37,6 +38,15 @@ export class DocenteDecisionesController {
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
     return this.decisionesService.createPregunta(escenarioId, dto, currentUser);
+  }
+
+  @Patch('preguntas/:preguntaId')
+  updatePregunta(
+    @Param('preguntaId') preguntaId: string,
+    @Body() dto: UpdatePreguntaDecisionDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.decisionesService.updatePregunta(preguntaId, dto, currentUser);
   }
 
   @Post('preguntas/:preguntaId/opciones')

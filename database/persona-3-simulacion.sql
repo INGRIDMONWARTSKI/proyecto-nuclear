@@ -51,6 +51,8 @@ create table if not exists public.escenarios (
   situacion_texto text not null,
   fondo_codigo text not null,
   is_final boolean not null default false,
+  layout_version integer,
+  layout_data jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (caso_id, orden)
@@ -60,6 +62,12 @@ comment on table public.escenarios is 'Escenas ordenadas de un caso psicologico.
 
 create index if not exists escenarios_caso_id_idx
   on public.escenarios (caso_id);
+
+alter table public.escenarios
+  add column if not exists layout_version integer;
+
+alter table public.escenarios
+  add column if not exists layout_data jsonb;
 
 drop trigger if exists escenarios_set_updated_at on public.escenarios;
 create trigger escenarios_set_updated_at

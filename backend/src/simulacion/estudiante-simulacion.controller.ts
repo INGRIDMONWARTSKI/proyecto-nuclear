@@ -5,6 +5,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
+import { normalizeLayout } from './editor-layout.util';
 import { StartSesionSimulacionDto } from './dto/start-sesion-simulacion.dto';
 import { SubmitRespuestaDto } from './dto/submit-respuesta.dto';
 import { RespuestasEstudianteService } from './respuestas-estudiante.service';
@@ -73,6 +74,11 @@ export class EstudianteSimulacionController {
     const opciones = await this.sesionesService.listOpcionesPublicasByPregunta(
       pending.pregunta.id,
     );
+    const layout = normalizeLayout(
+      pending.escenario.layout_data,
+      pending.escenario,
+      elementos,
+    );
 
     return {
       sesionId: sesion.id,
@@ -83,6 +89,7 @@ export class EstudianteSimulacionController {
         titulo: pending.escenario.titulo,
         situacionTexto: pending.escenario.situacion_texto,
         fondoCodigo: pending.escenario.fondo_codigo,
+        layout,
         elementos: elementos.map((el) => ({
           id: el.id,
           tipo: el.tipo,

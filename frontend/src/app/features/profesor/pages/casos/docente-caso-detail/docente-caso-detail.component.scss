@@ -1,3 +1,31 @@
+.case-detail-page {
+  display: grid;
+  gap: var(--siep-space-4);
+}
+
+.case-header-actions,
+.case-hero__chips,
+.section-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--siep-space-2);
+}
+
+.case-hero {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(239, 247, 240, 0.95)),
+    radial-gradient(circle at top right, rgba(255, 183, 77, 0.16), transparent 30%);
+}
+
+.case-hero__chips span {
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--siep-radius-pill);
+  background: rgba(232, 245, 233, 0.75);
+  color: var(--siep-success);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
 .caso-meta__row {
   display: flex;
   flex-wrap: wrap;

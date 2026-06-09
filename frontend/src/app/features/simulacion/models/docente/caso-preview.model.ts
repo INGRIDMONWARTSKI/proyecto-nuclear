@@ -1,4 +1,5 @@
 import { CasoDocente } from './caso-docente.model';
+import { EscenarioLayout } from './editor-layout.model';
 
 export interface RetroalimentacionPreview {
   id: string;
@@ -33,6 +34,7 @@ export interface EscenarioPreview {
   fondoCodigo: string;
   isFinal: boolean;
   elementos: unknown[];
+  layout: EscenarioLayout;
   pregunta: PreguntaPreview | null;
 }
 

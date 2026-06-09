@@ -293,6 +293,8 @@ export class CasosService {
       situacionTexto: record.situacion_texto,
       fondoCodigo: record.fondo_codigo,
       isFinal: record.is_final,
+      layoutVersion: record.layout_version,
+      layoutData: record.layout_data,
       createdAt: record.created_at,
       updatedAt: record.updated_at,
     };

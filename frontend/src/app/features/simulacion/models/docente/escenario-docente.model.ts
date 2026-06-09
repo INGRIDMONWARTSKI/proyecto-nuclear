@@ -6,6 +6,8 @@ export interface EscenarioDocente {
   situacionTexto: string;
   fondoCodigo: string;
   isFinal: boolean;
+  layoutVersion: number | null;
+  layoutData: unknown | null;
   createdAt: string;
   updatedAt: string;
 }

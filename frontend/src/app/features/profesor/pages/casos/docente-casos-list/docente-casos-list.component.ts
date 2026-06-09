@@ -85,4 +85,8 @@ export class DocenteCasosListComponent implements OnInit {
   irANuevoCaso(): void {
     void this.router.navigate(['nuevo'], { relativeTo: this.route });
   }
+
+  totalPorEstado(estado: CasoDocente['estado']): number {
+    return this.casos().filter((caso) => caso.estado === estado).length;
+  }
 }

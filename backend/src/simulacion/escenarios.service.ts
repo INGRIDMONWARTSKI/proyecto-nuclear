@@ -12,6 +12,8 @@ import { CasosService } from './casos.service';
 import { ALLOWED_BACKGROUND_CODES } from './constants/backgrounds.constant';
 import { CreateEscenarioDto } from './dto/create-escenario.dto';
 import { UpdateEscenarioDto } from './dto/update-escenario.dto';
+import { UpdateEscenarioLayoutDto } from './dto/update-escenario-layout.dto';
+import { normalizeLayout } from './editor-layout.util';
 import { CasoRecord } from './entities/caso.entity';
 import { Escenario, EscenarioRecord } from './entities/escenario.entity';
 
@@ -131,6 +133,83 @@ export class EscenariosService {
     }
   }
 
+  async updateLayout(
+    escenarioId: string,
+    dto: UpdateEscenarioLayoutDto,
+    currentUser: AuthenticatedUser,
+  ) {
+    this.assertDocenteRole(currentUser);
+    const escenario = await this.findEscenarioById(escenarioId);
+    const caso = await this.casosService.findCasoById(escenario.caso_id);
+
+    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+    this.assertCaseEditable(caso);
+
+    const layout = normalizeLayout(
+      {
+        version: dto.version ?? 1,
+        elements: dto.elements,
+      },
+      escenario,
+    );
+
+    const [escenarioActualizado] = await this.postgrest.update<EscenarioRecord>(
+      'escenarios',
+      {
+        layout_version: layout.version,
+        layout_data: layout,
+      },
+      {
+        filters: { id: escenarioId },
+        select: '*',
+      },
+    );
+
+    if (!escenarioActualizado) {
+      throw new NotFoundException('Escenario no encontrado.');
+    }
+
+    return this.toEscenario(escenarioActualizado);
+  }
+
+  async duplicate(
+    escenarioId: string,
+    currentUser: AuthenticatedUser,
+  ): Promise<Escenario> {
+    this.assertDocenteRole(currentUser);
+    const escenario = await this.findEscenarioById(escenarioId);
+    const caso = await this.casosService.findCasoById(escenario.caso_id);
+
+    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+    this.assertCaseEditable(caso);
+
+    const escenarios = await this.postgrest.select<EscenarioRecord>('escenarios', {
+      filters: { caso_id: escenario.caso_id },
+      order: 'orden.asc',
+    });
+
+    const nextOrder = Math.max(...escenarios.map((item) => item.orden), 0) + 1;
+
+    const payload = {
+      caso_id: escenario.caso_id,
+      orden: nextOrder,
+      titulo: `${escenario.titulo} (copia)`,
+      situacion_texto: escenario.situacion_texto,
+      fondo_codigo: escenario.fondo_codigo,
+      is_final: escenario.is_final,
+      layout_version: escenario.layout_version ?? 1,
+      layout_data:
+        escenario.layout_data ??
+        normalizeLayout(null, escenario),
+    };
+
+    const created = await this.postgrest.insert<EscenarioRecord>('escenarios', payload, {
+      select: '*',
+    });
+
+    return this.toEscenario(created);
+  }
+
   async listByCaso(casoId: string, currentUser: AuthenticatedUser): Promise<Escenario[]> {
     this.assertDocenteRole(currentUser);
     const caso = await this.casosService.findCasoById(casoId);
@@ -209,6 +288,8 @@ export class EscenariosService {
       situacionTexto: record.situacion_texto,
       fondoCodigo: record.fondo_codigo,
       isFinal: record.is_final,
+      layoutVersion: record.layout_version,
+      layoutData: record.layout_data,
       createdAt: record.created_at,
       updatedAt: record.updated_at,
     };

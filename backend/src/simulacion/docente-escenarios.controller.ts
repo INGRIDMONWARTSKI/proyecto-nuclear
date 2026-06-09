@@ -6,6 +6,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { CreateEscenarioDto } from './dto/create-escenario.dto';
+import { UpdateEscenarioLayoutDto } from './dto/update-escenario-layout.dto';
 import { UpdateEscenarioDto } from './dto/update-escenario.dto';
 import { EscenariosService } from './escenarios.service';
 
@@ -35,6 +36,27 @@ export class DocenteEscenariosController {
       updateEscenarioDto,
       currentUser,
     );
+  }
+
+  @Patch('escenarios/:escenarioId/layout')
+  updateLayout(
+    @Param('escenarioId') escenarioId: string,
+    @Body() updateEscenarioLayoutDto: UpdateEscenarioLayoutDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.escenariosService.updateLayout(
+      escenarioId,
+      updateEscenarioLayoutDto,
+      currentUser,
+    );
+  }
+
+  @Post('escenarios/:escenarioId/duplicate')
+  duplicate(
+    @Param('escenarioId') escenarioId: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.escenariosService.duplicate(escenarioId, currentUser);
   }
 
   @Get('casos/:casoId/escenarios')

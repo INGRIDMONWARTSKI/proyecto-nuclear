@@ -1,5 +1,6 @@
 import { AllowedBackgroundCode } from '../constants/backgrounds.constant';
 import { Caso } from '../entities/caso.entity';
+import { EscenarioLayout } from './editor-layout.types';
 
 export interface RetroalimentacionPreview {
   id: string;
@@ -49,6 +50,7 @@ export interface EscenarioPreview {
   fondoCodigo: AllowedBackgroundCode;
   isFinal: boolean;
   elementos: ElementoEscenaPreview[];
+  layout: EscenarioLayout;
   pregunta: PreguntaPreview | null;
 }
 

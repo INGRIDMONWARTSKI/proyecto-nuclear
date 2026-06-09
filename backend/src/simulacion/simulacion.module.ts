@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { PostgrestModule } from '../postgrest/postgrest.module';
 import { AsignacionesService } from './asignaciones.service';
+import { CasoEditorBuilderService } from './caso-editor-builder.service';
 import { CasoPreviewBuilderService } from './caso-preview-builder.service';
 import { CasosService } from './casos.service';
 import { DocenteAsignacionesController } from './docente-asignaciones.controller';
@@ -43,6 +44,7 @@ import { SesionesSimulacionService } from './sesiones-simulacion.service';
   providers: [
     CasosService,
     AsignacionesService,
+    CasoEditorBuilderService,
     CasoPreviewBuilderService,
     EscenariosService,
     DecisionesService,

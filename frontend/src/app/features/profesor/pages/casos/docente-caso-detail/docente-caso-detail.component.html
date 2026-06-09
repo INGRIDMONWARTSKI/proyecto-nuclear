@@ -2,188 +2,205 @@
   <app-loading-state message="Cargando caso..." />
 } @else {
   @if (caso(); as c) {
-  <section class="siep-page">
-    <app-page-header
-      [title]="c.titulo"
-      subtitle="Gestiona escenarios, contenido pedagógico y publicación."
-      icon="🌿"
-    >
-      <a actions class="siep-btn-secondary" routerLink="..">Volver</a>
-    </app-page-header>
+    <section class="siep-page case-detail-page">
+      <app-page-header
+        [title]="c.titulo"
+        subtitle="Gestiona escenarios, contenido pedagogico, editor visual y publicacion."
+        icon="🧠"
+      >
+        <div actions class="case-header-actions">
+          <a class="siep-btn-secondary" routerLink="..">Volver</a>
+          <a class="siep-btn-primary" [routerLink]="['canvas']">Abrir editor visual</a>
+        </div>
+      </app-page-header>
 
-    @if (errorMessage()) {
-      <app-alert-message [message]="errorMessage()!" type="error" />
-    }
-
-    @if (publishErrors().length > 0) {
-      <section class="siep-card publish-errors">
-        <h2>Pendientes para publicar</h2>
-        <ul>
-          @for (err of publishErrors(); track err) {
-            <li>{{ err }}</li>
-          }
-        </ul>
-      </section>
-    }
-
-    <section class="siep-card caso-meta">
-      <div class="caso-meta__row">
-        <app-status-badge
-          variant="status"
-          [status]="estadoBadge(c.estado)"
-          [label]="estadoLabel(c.estado)"
-        />
-        @if (c.estado === 'draft') {
-          <a class="siep-btn-secondary siep-btn--compact" [routerLink]="['editar']">Editar datos</a>
-        }
-      </div>
-      <p class="caso-meta__text">{{ c.descripcion || 'Sin descripción' }}</p>
-      <p class="caso-meta__text">
-        <strong>Objetivo:</strong> {{ c.objetivoAprendizaje || 'Sin objetivo definido' }}
-      </p>
-    </section>
-
-    <section class="siep-card">
-      <div class="section-header">
-        <h2>Escenarios</h2>
-        @if (c.estado === 'draft') {
-          <a class="siep-btn-primary siep-btn--compact" [routerLink]="['escenarios', 'nuevo']">
-            Agregar escenario
-          </a>
-        }
-      </div>
-
-      @if (c.escenarios.length === 0) {
-        <app-empty-state
-          title="Sin escenarios"
-          message="Agrega al menos un escenario antes de publicar el caso."
-          icon="🌱"
-        />
-      } @else {
-        <ul class="escenarios-list">
-          @for (esc of c.escenarios; track esc.id) {
-            <li class="siep-card-row escenario-item">
-              <div>
-                <h3>{{ esc.orden }}. {{ esc.titulo }}</h3>
-                <p class="muted">
-                  Fondo: {{ esc.fondoCodigo }} ·
-                  {{ esc.isFinal ? 'Escenario final' : 'Intermedio' }}
-                </p>
-              </div>
-              <div class="escenario-item__actions">
-                @if (c.estado === 'draft') {
-                  <a
-                    class="siep-btn-secondary siep-btn--compact"
-                    [routerLink]="['/profesor/escenarios', esc.id, 'editar']"
-                    [queryParams]="{ casoId: c.id }"
-                  >
-                    Editar escena
-                  </a>
-                  <a
-                    class="siep-btn-primary siep-btn--compact"
-                    [routerLink]="['/profesor/escenarios', esc.id, 'decision']"
-                    [queryParams]="{ casoId: c.id }"
-                  >
-                    Configurar decisión
-                  </a>
-                }
-              </div>
-            </li>
-          }
-        </ul>
+      @if (errorMessage()) {
+        <app-alert-message [message]="errorMessage()!" type="error" />
       }
-    </section>
 
-    <section class="siep-card actions-panel">
-      <h2>Acciones del caso</h2>
-      <div class="actions-panel__buttons">
-        <button
-          class="siep-btn-secondary"
-          type="button"
-          [disabled]="loadingPreview()"
-          (click)="cargarPreview()"
-        >
-          {{ loadingPreview() ? 'Cargando...' : 'Vista previa' }}
-        </button>
-        @if (c.estado === 'published') {
-          <button class="siep-btn-secondary" type="button" (click)="cargarEvidencias()">
-            Ver evidencias
-          </button>
-        }
-        @if (c.estado === 'draft') {
-          <button
-            class="siep-btn-primary"
-            type="button"
-            [disabled]="publishing()"
-            (click)="publicar()"
-          >
-            {{ publishing() ? 'Publicando...' : 'Publicar caso' }}
-          </button>
-        }
-      </div>
-    </section>
-
-    @if (showPreview() && preview(); as p) {
-      <section class="siep-card preview-panel">
-        <h2>Vista previa pedagógica</h2>
-        @for (esc of p.escenarios; track esc.id) {
-          <article class="preview-item">
-            <h3>{{ esc.orden }}. {{ esc.titulo }}</h3>
-            <p>{{ esc.situacionTexto }}</p>
-            @if (esc.pregunta) {
-              <p><strong>Pregunta:</strong> {{ esc.pregunta.enunciado }}</p>
-              <ul>
-                @for (op of esc.pregunta.opciones; track op.id) {
-                  <li>
-                    {{ op.texto }}
-                    @if (op.retroalimentacion) {
-                      — <em>{{ op.retroalimentacion.tipo }}</em>
-                    } @else {
-                      — <span class="warn">Sin retroalimentación</span>
-                    }
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="warn">Sin pregunta configurada.</p>
+      @if (publishErrors().length > 0) {
+        <section class="siep-card publish-errors">
+          <h2>Pendientes para publicar</h2>
+          <ul>
+            @for (err of publishErrors(); track err) {
+              <li>{{ err }}</li>
             }
-          </article>
-        }
-      </section>
-    }
+          </ul>
+        </section>
+      }
 
-    @if (showEvidencias()) {
-      <section class="siep-card">
-        <h2>Evidencias de sesiones</h2>
-        @if (evidencias().length === 0) {
-          <app-empty-state
-            title="Sin sesiones"
-            message="No hay sesiones registradas para este caso."
-            icon="📋"
+      <section class="siep-card case-hero">
+        <div class="caso-meta__row">
+          <app-status-badge
+            variant="status"
+            [status]="estadoBadge(c.estado)"
+            [label]="estadoLabel(c.estado)"
           />
-        } @else {
-          <div class="evidencias-list">
-            @for (ev of evidencias(); track ev.sesionId) {
-              <article class="siep-card-row evidencia-row">
-                <span>Estudiante: {{ ev.estudianteId }}</span>
-                <span>Estado: {{ ev.estado }}</span>
-                <span>Puntaje: {{ ev.puntajeTotal }}</span>
-                <span>Progreso: {{ ev.respondidas }}/{{ ev.totalPreguntas }}</span>
-                <span>Inicio: {{ ev.startedAt | date: 'short' }}</span>
-                <span>Fin: {{ ev.finishedAt ? (ev.finishedAt | date: 'short') : '—' }}</span>
-              </article>
+          @if (c.estado === 'draft') {
+            <a class="siep-btn-secondary siep-btn--compact" [routerLink]="['editar']">
+              Editar datos
+            </a>
+          }
+        </div>
+        <p class="caso-meta__text">{{ c.descripcion || 'Sin descripcion' }}</p>
+        <p class="caso-meta__text">
+          <strong>Objetivo:</strong>
+          {{ c.objetivoAprendizaje || 'Sin objetivo definido' }}
+        </p>
+        <div class="case-hero__chips">
+          <span>Escenas interactivas</span>
+          <span>Preguntas situadas</span>
+          <span>Rutas de decision</span>
+        </div>
+      </section>
+
+      <section class="siep-card">
+        <div class="section-header">
+          <h2>Escenarios</h2>
+          <div class="section-header__actions">
+            <a class="siep-btn-secondary siep-btn--compact" [routerLink]="['canvas']">
+              Ver mapa visual
+            </a>
+            @if (c.estado === 'draft') {
+              <a class="siep-btn-primary siep-btn--compact" [routerLink]="['escenarios', 'nuevo']">
+                Agregar escenario
+              </a>
             }
           </div>
+        </div>
+
+        @if (c.escenarios.length === 0) {
+          <app-empty-state
+            title="Sin escenarios"
+            message="Agrega al menos un escenario antes de publicar el caso."
+            icon="🌱"
+          />
+        } @else {
+          <ul class="escenarios-list">
+            @for (esc of c.escenarios; track esc.id) {
+              <li class="siep-card-row escenario-item">
+                <div>
+                  <h3>{{ esc.orden }}. {{ esc.titulo }}</h3>
+                  <p class="muted">
+                    Fondo: {{ esc.fondoCodigo }} ·
+                    {{ esc.isFinal ? 'Escenario final' : 'Intermedio' }}
+                  </p>
+                </div>
+                <div class="escenario-item__actions">
+                  @if (c.estado === 'draft') {
+                    <a
+                      class="siep-btn-secondary siep-btn--compact"
+                      [routerLink]="['/profesor/escenarios', esc.id, 'editar']"
+                      [queryParams]="{ casoId: c.id }"
+                    >
+                      Editar escena
+                    </a>
+                    <a
+                      class="siep-btn-primary siep-btn--compact"
+                      [routerLink]="['/profesor/escenarios', esc.id, 'decision']"
+                      [queryParams]="{ casoId: c.id }"
+                    >
+                      Configurar decision
+                    </a>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
         }
       </section>
-    }
-  </section>
+
+      <section class="siep-card actions-panel">
+        <h2>Acciones del caso</h2>
+        <div class="actions-panel__buttons">
+          <a class="siep-btn-primary" [routerLink]="['canvas']">Disenar en editor visual</a>
+          <button
+            class="siep-btn-secondary"
+            type="button"
+            [disabled]="loadingPreview()"
+            (click)="cargarPreview()"
+          >
+            {{ loadingPreview() ? 'Cargando...' : 'Vista previa pedagogica' }}
+          </button>
+          @if (c.estado === 'published') {
+            <button class="siep-btn-secondary" type="button" (click)="cargarEvidencias()">
+              Ver evidencias
+            </button>
+          }
+          @if (c.estado === 'draft') {
+            <button
+              class="siep-btn-primary"
+              type="button"
+              [disabled]="publishing()"
+              (click)="publicar()"
+            >
+              {{ publishing() ? 'Publicando...' : 'Publicar caso' }}
+            </button>
+          }
+        </div>
+      </section>
+
+      @if (showPreview() && preview(); as p) {
+        <section class="siep-card preview-panel">
+          <h2>Vista previa pedagogica</h2>
+          @for (esc of p.escenarios; track esc.id) {
+            <article class="preview-item">
+              <h3>{{ esc.orden }}. {{ esc.titulo }}</h3>
+              <p>{{ esc.situacionTexto }}</p>
+              @if (esc.pregunta) {
+                <p><strong>Pregunta:</strong> {{ esc.pregunta.enunciado }}</p>
+                <ul>
+                  @for (op of esc.pregunta.opciones; track op.id) {
+                    <li>
+                      {{ op.texto }}
+                      @if (op.retroalimentacion) {
+                        · <em>{{ op.retroalimentacion.tipo }}</em>
+                      } @else {
+                        · <span class="warn">Sin retroalimentacion</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="warn">Sin pregunta configurada.</p>
+              }
+            </article>
+          }
+        </section>
+      }
+
+      @if (showEvidencias()) {
+        <section class="siep-card">
+          <h2>Evidencias de sesiones</h2>
+          @if (evidencias().length === 0) {
+            <app-empty-state
+              title="Sin sesiones"
+              message="No hay sesiones registradas para este caso."
+              icon="📋"
+            />
+          } @else {
+            <div class="evidencias-list">
+              @for (ev of evidencias(); track ev.sesionId) {
+                <article class="siep-card-row evidencia-row">
+                  <span>Estudiante: {{ ev.estudianteId }}</span>
+                  <span>Estado: {{ ev.estado }}</span>
+                  <span>Puntaje: {{ ev.puntajeTotal }}</span>
+                  <span>Progreso: {{ ev.respondidas }}/{{ ev.totalPreguntas }}</span>
+                  <span>Inicio: {{ ev.startedAt | date: 'short' }}</span>
+                  <span>Fin: {{ ev.finishedAt ? (ev.finishedAt | date: 'short') : '-' }}</span>
+                </article>
+              }
+            </div>
+          }
+        </section>
+      }
+    </section>
   } @else {
     <section class="siep-page">
       <app-page-header
         title="Caso no disponible"
-        subtitle="No se pudo cargar la información del caso."
-        icon="🌿"
+        subtitle="No se pudo cargar la informacion del caso."
+        icon="🧠"
       >
         <a actions class="siep-btn-secondary" routerLink="..">Volver</a>
       </app-page-header>

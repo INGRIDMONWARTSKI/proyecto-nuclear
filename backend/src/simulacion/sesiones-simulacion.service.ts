@@ -322,6 +322,11 @@ export class SesionesSimulacionService {
   > {
     const caso = await this.casosService.findCasoById(casoId);
     this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+    const allowedPairs = await this.buildAllowedCasoEstudiantePairs(currentUser);
+
+    if (allowedPairs.size === 0) {
+      return [];
+    }
 
     const sesiones = await this.postgrest.select<SesionSimulacionRecord>(
       'sesiones_simulacion',
@@ -331,16 +336,18 @@ export class SesionesSimulacionService {
       },
     );
 
-    return sesiones.map((sesion) => ({
-      sesionId: sesion.id,
-      estudianteId: sesion.estudiante_id,
-      estado: sesion.estado,
-      puntajeTotal: sesion.puntaje_total,
-      totalPreguntas: sesion.total_preguntas,
-      respondidas: sesion.respondidas,
-      startedAt: sesion.started_at,
-      finishedAt: sesion.finished_at,
-    }));
+    return sesiones
+      .filter((sesion) => allowedPairs.has(`${sesion.caso_id}:${sesion.estudiante_id}`))
+      .map((sesion) => ({
+        sesionId: sesion.id,
+        estudianteId: sesion.estudiante_id,
+        estado: sesion.estado,
+        puntajeTotal: sesion.puntaje_total,
+        totalPreguntas: sesion.total_preguntas,
+        respondidas: sesion.respondidas,
+        startedAt: sesion.started_at,
+        finishedAt: sesion.finished_at,
+      }));
   }
 
   async findPendingScenarioForSession(sesion: SesionSimulacionRecord): Promise<{

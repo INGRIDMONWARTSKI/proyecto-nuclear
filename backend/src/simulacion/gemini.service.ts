@@ -8,12 +8,12 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GeminiService {
-  private readonly apiKey: string;
+  private readonly apiKey: string | null;
   private readonly model: string;
   private readonly apiUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.apiKey = this.configService.getOrThrow<string>('GEMINI_API_KEY');
+    this.apiKey = this.configService.get<string>('GEMINI_API_KEY') ?? null;
     this.model = this.configService.get<string>('GEMINI_MODEL', 'gemini-2.5-flash');
     this.apiUrl = this.configService.get<string>(
       'GEMINI_API_URL',
@@ -26,6 +26,12 @@ export class GeminiService {
   }
 
   async generateJson(prompt: string): Promise<string> {
+    if (!this.apiKey) {
+      throw new ServiceUnavailableException(
+        'La generacion con IA no esta disponible porque GEMINI_API_KEY no esta configurada.',
+      );
+    }
+
     const url = `${this.apiUrl.replace(/\/$/, '')}/${this.model}:generateContent?key=${this.apiKey}`;
 
     try {

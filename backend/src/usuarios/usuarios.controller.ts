@@ -25,14 +25,14 @@ export class UsuariosController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.PROFESOR)
+  @Roles(Role.ADMIN)
   findAll() {
     return this.usuariosService.findAll();
   }
 
   @Get(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.PROFESOR)
+  @Roles(Role.ADMIN)
   async findOne(@Param('id') id: string) {
     const usuario = await this.usuariosService.findById(id);
     return this.usuariosService.sanitizeUser(usuario);

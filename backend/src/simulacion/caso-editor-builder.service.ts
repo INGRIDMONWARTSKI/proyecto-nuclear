@@ -87,6 +87,19 @@ export class CasoEditorBuilderService {
         escenario,
         legacyByEscenarioId.get(escenario.id) ?? [],
       );
+      const backgroundElement = layout.elements.find((item) => item.type === 'background');
+      const aiBackgroundUrl =
+        typeof backgroundElement?.style?.['imageUrl'] === 'string'
+          ? backgroundElement.style['imageUrl']
+          : typeof backgroundElement?.content?.['imageUrl'] === 'string'
+            ? backgroundElement.content['imageUrl']
+            : null;
+      const aiBackgroundAssetId =
+        typeof backgroundElement?.style?.['aiAssetId'] === 'string'
+          ? backgroundElement.style['aiAssetId']
+          : typeof backgroundElement?.content?.['aiAssetId'] === 'string'
+            ? backgroundElement.content['aiAssetId']
+            : null;
 
       return {
         id: escenario.id,
@@ -94,6 +107,8 @@ export class CasoEditorBuilderService {
         titulo: escenario.titulo,
         situacionTexto: escenario.situacion_texto,
         fondoCodigo: escenario.fondo_codigo,
+        aiBackgroundUrl,
+        aiBackgroundAssetId,
         isFinal: escenario.is_final,
         layout: layout.elements.length > 0 ? layout : buildDefaultLayout(escenario),
         pregunta: pregunta

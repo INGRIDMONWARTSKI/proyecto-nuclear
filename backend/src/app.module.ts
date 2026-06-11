@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AiAssetsModule } from './ai-assets/ai-assets.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { PostgrestModule } from './postgrest/postgrest.module';
@@ -13,6 +14,7 @@ import { UsuariosModule } from './usuarios/usuarios.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    AiAssetsModule,
     PostgrestModule,
     AuthModule,
     RolesModule,

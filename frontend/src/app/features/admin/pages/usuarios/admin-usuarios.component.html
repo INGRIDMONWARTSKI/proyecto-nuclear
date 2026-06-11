@@ -1,7 +1,9 @@
-<section class="siep-page usuarios">
+﻿<section class="siep-page usuarios">
+  <p class="siep-brand" aria-hidden="true">SIEP · Admin</p>
+
   <app-page-header
     title="Usuarios"
-    subtitle="Administra las cuentas, roles y estados de acceso de la plataforma."
+    subtitle="Administra cuentas, roles y accesos de la comunidad académica en SIEP."
     icon="🌿"
   >
     <button actions type="button" class="siep-btn-primary" (click)="abrirCrear()">
@@ -27,7 +29,14 @@
             type="text"
             formControlName="fullName"
             placeholder="Ej. Ana Pérez"
+            [class.is-invalid]="createForm.controls.fullName.touched && createForm.controls.fullName.invalid"
           />
+          @if (createForm.controls.fullName.touched && createForm.controls.fullName.hasError('required')) {
+            <span class="field-error">El nombre es obligatorio.</span>
+          }
+          @if (createForm.controls.fullName.touched && createForm.controls.fullName.hasError('minlength')) {
+            <span class="field-error">El nombre debe tener al menos 3 caracteres.</span>
+          }
         </div>
         <div class="siep-field">
           <label for="create-email">Correo electrónico</label>
@@ -36,7 +45,14 @@
             type="email"
             formControlName="email"
             placeholder="persona@institucion.edu"
+            [class.is-invalid]="createForm.controls.email.touched && createForm.controls.email.invalid"
           />
+          @if (createForm.controls.email.touched && createForm.controls.email.hasError('required')) {
+            <span class="field-error">El correo es obligatorio.</span>
+          }
+          @if (createForm.controls.email.touched && createForm.controls.email.hasError('email')) {
+            <span class="field-error">Ingresa un correo válido.</span>
+          }
         </div>
         <div class="siep-field">
           <label for="create-password">Contraseña</label>
@@ -45,15 +61,29 @@
             type="password"
             formControlName="password"
             placeholder="Mínimo 8 caracteres"
+            [class.is-invalid]="createForm.controls.password.touched && createForm.controls.password.invalid"
           />
+          @if (createForm.controls.password.touched && createForm.controls.password.hasError('required')) {
+            <span class="field-error">La contraseña es obligatoria.</span>
+          }
+          @if (createForm.controls.password.touched && createForm.controls.password.hasError('minlength')) {
+            <span class="field-error">La contraseña debe tener al menos 8 caracteres.</span>
+          }
         </div>
         <div class="siep-field">
           <label for="create-role">Rol</label>
-          <select id="create-role" formControlName="role">
+          <select
+            id="create-role"
+            formControlName="role"
+            [class.is-invalid]="createForm.controls.role.touched && createForm.controls.role.invalid"
+          >
             @for (rol of roles; track rol) {
               <option [value]="rol">{{ roleLabel(rol) }}</option>
             }
           </select>
+          @if (createForm.controls.role.touched && createForm.controls.role.hasError('required')) {
+            <span class="field-error">Selecciona un rol.</span>
+          }
         </div>
         <div class="form-actions">
           <button type="button" class="siep-btn-secondary" (click)="cerrarPanel()">Cancelar</button>
@@ -71,7 +101,18 @@
       <form [formGroup]="editForm" (ngSubmit)="guardarEdicion()" class="form-grid">
         <div class="siep-field">
           <label for="edit-fullName">Nombre completo</label>
-          <input id="edit-fullName" type="text" formControlName="fullName" />
+          <input
+            id="edit-fullName"
+            type="text"
+            formControlName="fullName"
+            [class.is-invalid]="editForm.controls.fullName.touched && editForm.controls.fullName.invalid"
+          />
+          @if (editForm.controls.fullName.touched && editForm.controls.fullName.hasError('required')) {
+            <span class="field-error">El nombre es obligatorio.</span>
+          }
+          @if (editForm.controls.fullName.touched && editForm.controls.fullName.hasError('minlength')) {
+            <span class="field-error">El nombre debe tener al menos 3 caracteres.</span>
+          }
         </div>
         <div class="siep-field">
           <label for="edit-email">Correo electrónico</label>
@@ -80,11 +121,18 @@
         </div>
         <div class="siep-field">
           <label for="edit-role">Rol</label>
-          <select id="edit-role" formControlName="role">
+          <select
+            id="edit-role"
+            formControlName="role"
+            [class.is-invalid]="editForm.controls.role.touched && editForm.controls.role.invalid"
+          >
             @for (rol of roles; track rol) {
               <option [value]="rol">{{ roleLabel(rol) }}</option>
             }
           </select>
+          @if (editForm.controls.role.touched && editForm.controls.role.hasError('required')) {
+            <span class="field-error">Selecciona un rol.</span>
+          }
           @if (esAdminActual(usuario)) {
             <span class="field__hint">No puedes cambiar tu propio rol de administrador.</span>
           }
@@ -142,7 +190,12 @@
               />
             </div>
             <div class="user-row__actions">
-              <button type="button" class="siep-btn-secondary siep-btn--compact" (click)="abrirEditar(usuario)">
+              <button
+                type="button"
+                class="siep-btn-secondary siep-btn--compact"
+                [disabled]="saving()"
+                (click)="abrirEditar(usuario)"
+              >
                 Editar
               </button>
               @if (esAdminActual(usuario) && usuario.isActive) {
@@ -179,4 +232,15 @@
       </ul>
     }
   </section>
+
+  <app-confirm-dialog
+    [open]="confirmOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [confirmLabel]="confirmLabel()"
+    [destructive]="confirmDestructive()"
+    [confirming]="saving()"
+    (confirmed)="confirmarCambioEstado()"
+    (cancelled)="cerrarConfirmacion()"
+  />
 </section>

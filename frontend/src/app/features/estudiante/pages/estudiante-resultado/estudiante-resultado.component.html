@@ -1,62 +1,204 @@
-<section class="siep-page resultado">
+﻿<section class="siep-page resultado">
+
+  <p class="siep-brand" aria-hidden="true">MENTORA · Estudiante</p>
+
+
+
   <app-page-header
-    title="Resultado del caso"
-    subtitle="Revisa tu desempeño y la retroalimentación recibida."
+
+    title="Resultado de tu simulación"
+
+    subtitle="Reflexiona sobre tu desempeño y la retroalimentación recibida en este caso."
+
     icon="🌿"
+
   >
+
     <a actions class="siep-btn-secondary" routerLink="/estudiante/casos">Volver a mis casos</a>
+
   </app-page-header>
 
+
+
   @if (errorMessage()) {
+
     <app-alert-message [message]="errorMessage()!" type="error" />
+
   }
+
+
 
   @if (loading()) {
+
     <app-loading-state message="Cargando resultado..." />
+
   } @else {
+
     @if (resultado(); as r) {
+
       <article class="siep-card score-card">
+
         <div class="score-card__head">
-          <h2>{{ r.caso.titulo }}</h2>
+
+          <div>
+
+            <p class="score-card__eyebrow">Caso completado</p>
+
+            <h2>{{ r.caso.titulo }}</h2>
+
+          </div>
+
           <app-status-badge variant="status" status="success" [label]="r.nivel" />
+
         </div>
-        <div class="score-grid">
-          <p><strong>Puntaje total:</strong> {{ r.puntajeTotal }}</p>
-          <p><strong>Puntaje máximo:</strong> {{ r.puntajeMaximo }}</p>
-          <p><strong>Porcentaje:</strong> {{ r.porcentaje }}%</p>
-          <p><strong>Respondidas:</strong> {{ r.respondidas }} / {{ r.totalPreguntas }}</p>
+
+
+
+        <div class="score-hero" aria-label="Resumen de desempeño">
+
+          <div class="score-hero__metric score-hero__metric--primary">
+
+            <span class="score-hero__label">Tu porcentaje</span>
+
+            <span class="score-hero__value">{{ r.porcentaje }}%</span>
+
+          </div>
+
+          <div class="score-hero__metric">
+
+            <span class="score-hero__label">Puntaje</span>
+
+            <span class="score-hero__value score-hero__value--sm">{{ r.puntajeTotal }} / {{ r.puntajeMaximo }}</span>
+
+          </div>
+
+          <div class="score-hero__metric">
+
+            <span class="score-hero__label">Respuestas</span>
+
+            <span class="score-hero__value score-hero__value--sm">{{ r.respondidas }} / {{ r.totalPreguntas }}</span>
+
+          </div>
+
         </div>
-        <p class="score-card__summary">{{ r.resumen }}</p>
+
+
+
+        <div class="score-card__reflection">
+
+          <h3>Reflexión MENTORA</h3>
+
+          <p>{{ r.resumen }}</p>
+
+        </div>
+
       </article>
 
+
+
       <section class="result-list" aria-label="Respuestas y retroalimentación">
+
+        <header class="result-list__head">
+
+          <h3>Tu recorrido por escenario</h3>
+
+          <p>{{ r.respuestas.length }} {{ r.respuestas.length === 1 ? 'decisión registrada' : 'decisiones registradas' }}</p>
+
+        </header>
+
+
+
         @for (item of r.respuestas; track $index) {
+
           <article class="siep-card result-item">
-            <p class="result-item__row">
-              <span>Pregunta</span>
-              {{ item.pregunta }}
-            </p>
-            <p class="result-item__row">
-              <span>Opción seleccionada</span>
-              {{ item.opcionSeleccionada }}
-            </p>
-            <p class="result-item__row">
-              <span>Puntaje obtenido</span>
-              {{ item.puntajeObtenido }}
-            </p>
-            <p class="result-item__row result-item__row--retro">
-              <span>Retroalimentación</span>
-              {{ item.retroalimentacion || 'Sin retroalimentación' }}
-            </p>
+
+            <span class="result-item__step" aria-hidden="true">{{ $index + 1 }}</span>
+
+            <div class="result-item__body">
+
+              <p class="result-item__row">
+
+                <span>Pregunta</span>
+
+                {{ item.pregunta }}
+
+              </p>
+
+              <p class="result-item__row">
+
+                <span>Tu decisión</span>
+
+                {{ item.opcionSeleccionada }}
+
+              </p>
+
+              <p class="result-item__row">
+
+                <span>Puntaje obtenido</span>
+
+                {{ item.puntajeObtenido }}
+
+              </p>
+
+              <p class="result-item__row result-item__row--retro">
+
+                <span>Retroalimentación</span>
+
+                {{ item.retroalimentacion || 'Sin retroalimentación registrada.' }}
+
+              </p>
+
+            </div>
+
           </article>
+
         }
+
       </section>
 
+
+
       <section class="result-actions">
-        <button class="siep-btn-primary" type="button" (click)="reintentar()">
-          Reintentar caso
+
+        <a class="siep-btn-secondary" routerLink="/estudiante/historial">Ver historial</a>
+
+        <button
+
+          class="siep-btn-primary"
+
+          type="button"
+
+          [disabled]="retrying()"
+
+          (click)="reintentar()"
+
+        >
+
+          {{ retrying() ? 'Iniciando...' : 'Reintentar caso' }}
+
         </button>
+
       </section>
+
+    } @else {
+
+      <app-empty-state
+
+        title="Resultado no disponible"
+
+        message="No pudimos cargar el resultado de esta simulación. Es posible que la sesión aún no haya finalizado o que el enlace no sea válido."
+
+        icon="🌿"
+
+        actionLabel="Volver a mis casos"
+
+        (actionClick)="volverCasos()"
+
+      />
+
     }
+
   }
+
 </section>
+

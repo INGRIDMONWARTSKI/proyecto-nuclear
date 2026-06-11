@@ -1,7 +1,9 @@
-<section class="siep-page">
+﻿<section class="siep-page estudiante-casos">
+  <p class="siep-brand" aria-hidden="true">MENTORA · Estudiante</p>
+
   <app-page-header
-    title="Mis casos"
-    subtitle="Explora los casos asignados y continúa tu entrenamiento psicosocial."
+    title="Casos asignados"
+    subtitle="Explora tus experiencias de simulación y comienza el recorrido asignado por tu profesor."
     icon="🌿"
   />
 
@@ -10,38 +12,86 @@
   }
 
   @if (loading()) {
-    <app-loading-state message="Cargando simulaciones..." />
+    <app-loading-state message="Cargando casos asignados..." />
   } @else if (casos().length === 0) {
     <app-empty-state
       title="Sin casos asignados"
-      message="No hay simulaciones disponibles por el momento. Consulta con tu docente o vuelve más tarde."
+      message="Aún no tienes casos asignados. Consulta con tu docente o vuelve más tarde."
       icon="🌱"
     />
   } @else {
-    <ul class="casos-grid">
+    <p class="estudiante-casos__count" role="status">
+      {{ casos().length }}
+      {{ casos().length === 1 ? 'caso disponible' : 'casos disponibles' }}
+    </p>
+
+    <ul class="estudiante-casos__grid" aria-label="Casos asignados">
       @for (caso of casos(); track caso.id) {
-        <li class="siep-card caso-card">
-          <h3 class="caso-card__title">{{ caso.titulo }}</h3>
-          <p class="caso-card__desc">{{ caso.descripcion || 'Sin descripción.' }}</p>
-          <p class="caso-card__goal">
-            <strong>Objetivo:</strong> {{ caso.objetivoAprendizaje || 'No definido' }}
-          </p>
-          <div class="caso-card__meta">
-            <app-status-badge
-              variant="status"
-              status="success"
-              [label]="caso.totalEscenarios + ' escenarios'"
-            />
-          </div>
-          <button
-            class="siep-btn-primary"
-            type="button"
-            (click)="iniciarSimulacion(caso.id)"
-            [disabled]="startingCasoId() === caso.id"
-          >
-            {{ startingCasoId() === caso.id ? 'Iniciando...' : 'Iniciar simulación' }}
-          </button>
-        </li>
+        @if (resumenDe(caso.id); as resumen) {
+          <li>
+            <article class="caso-card">
+              <span class="caso-card__icon" aria-hidden="true">📚</span>
+
+              <div class="caso-card__body">
+                <h3 class="caso-card__title">{{ caso.titulo }}</h3>
+                <p class="caso-card__desc">{{ caso.descripcion || 'Sin descripción.' }}</p>
+                <p class="caso-card__goal">
+                  <strong>Objetivo:</strong> {{ caso.objetivoAprendizaje || 'No definido' }}
+                </p>
+                <div class="caso-card__meta">
+                  <app-status-badge
+                    variant="status"
+                    [status]="estadoBadge(resumen.estado)"
+                    [label]="estadoLabel(resumen.estado)"
+                  />
+                  <app-status-badge
+                    variant="status"
+                    status="success"
+                    [label]="caso.totalEscenarios + ' escenarios'"
+                  />
+                </div>
+              </div>
+
+              <div class="caso-card__actions">
+                @if (resumen.estado === 'en_progreso' && resumen.sesionActivaId) {
+                  <button
+                    class="siep-btn-primary caso-card__action"
+                    type="button"
+                    (click)="continuarSimulacion(resumen.sesionActivaId)"
+                  >
+                    Continuar simulación
+                  </button>
+                } @else if (resumen.estado === 'finalizado') {
+                  @if (resumen.ultimaSesionCompletadaId) {
+                    <a
+                      class="siep-btn-secondary caso-card__action"
+                      [routerLink]="['/estudiante/resultados', resumen.ultimaSesionCompletadaId]"
+                    >
+                      Ver resultado
+                    </a>
+                  }
+                  <button
+                    class="siep-btn-primary caso-card__action"
+                    type="button"
+                    [disabled]="startingCasoId() === caso.id"
+                    (click)="reintentarCaso(caso.id)"
+                  >
+                    {{ startingCasoId() === caso.id ? 'Iniciando...' : 'Reintentar caso' }}
+                  </button>
+                } @else {
+                  <button
+                    class="siep-btn-primary caso-card__action"
+                    type="button"
+                    [disabled]="startingCasoId() === caso.id"
+                    (click)="iniciarSimulacion(caso.id)"
+                  >
+                    {{ startingCasoId() === caso.id ? 'Iniciando...' : 'Iniciar simulación' }}
+                  </button>
+                }
+              </div>
+            </article>
+          </li>
+        }
       }
     </ul>
   }

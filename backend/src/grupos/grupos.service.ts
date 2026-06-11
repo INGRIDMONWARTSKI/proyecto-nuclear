@@ -230,6 +230,26 @@ export class GruposService {
     };
   }
 
+  async listAvailableStudents(
+    grupoId: string,
+    currentUser: AuthenticatedUser,
+  ): Promise<UsuarioSeguro[]> {
+    const grupo = await this.findGrupoById(grupoId);
+    this.assertCanManageGrupo(grupo, currentUser);
+
+    const membresias = await this.postgrest.select<EstudianteGrupo>(
+      'estudiante_grupo',
+      {
+        filters: { grupoId },
+      },
+    );
+
+    const asignados = new Set(membresias.map((item) => item.estudianteId));
+    const estudiantes = await this.usuariosService.findActiveStudents();
+
+    return estudiantes.filter((estudiante) => !asignados.has(estudiante.id));
+  }
+
   async listStudents(
     grupoId: string,
     currentUser: AuthenticatedUser,

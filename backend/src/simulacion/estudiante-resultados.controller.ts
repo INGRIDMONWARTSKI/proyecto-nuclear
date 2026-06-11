@@ -68,5 +68,15 @@ export class EstudianteHistorialController {
 
   }
 
+
+
+  @Get('sesiones-activas')
+
+  getSesionesActivas(@CurrentUser() currentUser: AuthenticatedUser) {
+
+    return this.sesionesService.findSesionesActivasEstudiante(currentUser);
+
+  }
+
 }
 

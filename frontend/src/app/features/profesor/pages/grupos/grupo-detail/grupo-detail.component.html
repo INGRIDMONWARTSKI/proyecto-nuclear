@@ -9,8 +9,13 @@
           @if (puedeAdministrar()) {
             <a class="siep-btn-secondary" [routerLink]="['editar']">Editar</a>
             @if (g.isActive) {
-              <button class="siep-btn-danger" type="button" (click)="confirmarDesactivar()">
-                Desactivar
+              <button
+                class="siep-btn-danger"
+                type="button"
+                [disabled]="deactivating()"
+                (click)="confirmarDesactivar()"
+              >
+                {{ deactivating() ? 'Desactivando...' : 'Desactivar grupo' }}
               </button>
             }
           }
@@ -35,6 +40,7 @@
       </div>
 
       <app-classroom-scene
+        [grupoNombre]="g.nombre"
         [estudiantes]="estudiantes()"
         [estudiantesDisponibles]="estudiantesDisponibles()"
         [asientos]="asientos()"
@@ -54,12 +60,27 @@
             </button>
           </div>
 
+          @if (sinEstudiantesEnSistema()) {
+            <p class="assign-toolbar__notice">
+              No hay estudiantes registrados en el sistema. Solicita al administrador que cree
+              cuentas con rol Estudiante desde <strong>Admin → Usuarios</strong>.
+            </p>
+          } @else if (todosEstudiantesAsignados()) {
+            <p class="assign-toolbar__notice">
+              Todos los estudiantes disponibles ya están asignados a este grupo.
+            </p>
+          }
+
           @if (showAssignPanel()) {
             <form class="assign-panel" [formGroup]="assignForm" (ngSubmit)="asignarEstudiantes()">
               <div class="siep-field">
                 <label for="estudianteIds">Estudiantes</label>
-                @if (estudiantesPendientes().length === 0) {
-                  <p class="hint">Todos los estudiantes del sistema ya están en este grupo.</p>
+                @if (sinEstudiantesEnSistema()) {
+                  <p class="hint">
+                    Crea estudiantes en el módulo de usuarios antes de asignarlos a este grupo.
+                  </p>
+                } @else if (estudiantesPendientes().length === 0) {
+                  <p class="hint">No quedan estudiantes pendientes por asignar a este grupo.</p>
                 } @else {
                   <div class="student-search">
                     <input
@@ -75,6 +96,7 @@
                       <button
                         type="button"
                         class="siep-btn-secondary siep-btn--compact"
+                        aria-label="Limpiar búsqueda de estudiantes"
                         (click)="limpiarBusquedaAsignacion()"
                       >
                         Limpiar
@@ -113,9 +135,9 @@
               <button
                 class="siep-btn-primary"
                 type="submit"
-                [disabled]="assigning() || estudiantesPendientes().length === 0"
+                [disabled]="assigning() || assignForm.controls.estudianteIds.value.length === 0"
               >
-                {{ assigning() ? 'Asignando...' : 'Confirmar' }}
+                {{ assigning() ? 'Asignando...' : 'Asignar seleccionados' }}
               </button>
             </form>
           }
@@ -136,4 +158,15 @@
       }
     </section>
   }
+
+  <app-confirm-dialog
+    [open]="confirmOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [confirmLabel]="confirmLabel()"
+    [destructive]="confirmDestructive()"
+    [confirming]="removing() || deactivating()"
+    (confirmed)="confirmarAccionDialogo()"
+    (cancelled)="cerrarConfirmacion()"
+  />
 }

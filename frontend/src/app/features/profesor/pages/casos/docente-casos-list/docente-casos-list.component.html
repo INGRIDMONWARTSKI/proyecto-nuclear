@@ -1,7 +1,9 @@
-<section class="siep-page casos-page">
+﻿<section class="siep-page casos-page">
+  <p class="siep-brand" aria-hidden="true">SIEP · Casos</p>
+
   <app-page-header
-    title="Casos de simulacion"
-    subtitle="Organiza, edita y publica experiencias psicologicas construidas por escenas."
+    title="Casos de simulación"
+    subtitle="Organiza, edita y publica experiencias psicológicas construidas por escenas."
     icon="🧩"
   >
     <div actions class="header-actions">
@@ -29,7 +31,7 @@
     <article>
       <span>Archivado</span>
       <strong>{{ totalPorEstado('archived') }}</strong>
-      <p>Casos fuera de circulacion activa.</p>
+      <p>Casos fuera de circulación activa.</p>
     </article>
   </section>
 
@@ -42,7 +44,7 @@
   } @else if (casos().length === 0) {
     <app-empty-state
       title="Sin casos"
-      message="Aun no has creado casos de simulacion. Comienza con tu primera experiencia interactiva."
+      message="Aún no has creado casos de simulación. Comienza con tu primera experiencia interactiva."
       icon="🌱"
       actionLabel="Crear primer caso"
       (actionClick)="irANuevoCaso()"
@@ -61,16 +63,10 @@
           </div>
 
           <h3 class="caso-card__title">{{ caso.titulo }}</h3>
-          <p class="caso-card__desc">{{ caso.descripcion || 'Sin descripcion' }}</p>
-
-          <div class="caso-card__highlights">
-            <span>Escenas interactivas</span>
-            <span>Decision con feedback</span>
-            <span>Mapa narrativo</span>
-          </div>
+          <p class="caso-card__desc">{{ caso.descripcion || 'Sin descripción' }}</p>
 
           <div class="caso-card__actions">
-            <a class="siep-btn-primary" [routerLink]="[caso.id]">Gestionar</a>
+            <a class="siep-btn-primary" [routerLink]="[caso.id]">Abrir caso</a>
             <a class="siep-btn-secondary" [routerLink]="[caso.id, 'canvas']">
               Abrir editor visual
             </a>

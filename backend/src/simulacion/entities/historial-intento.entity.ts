@@ -8,6 +8,13 @@ export interface HistorialIntentoEstudiante {
   fechaFinalizacion: string | null;
 }
 
+export interface SesionActivaEstudiante {
+  sesionId: string;
+  casoId: string;
+  casoTitulo: string;
+  fechaInicio: string;
+}
+
 export interface EvidenciaDocente {
   sesionId: string;
   casoId: string;

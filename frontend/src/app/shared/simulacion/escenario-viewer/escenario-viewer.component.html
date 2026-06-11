@@ -1,52 +1,91 @@
-<section class="siep-card escenario">
+<section class="escenario" aria-label="Escena de simulación">
   <header class="escenario__header">
-    <h2>{{ escenario.titulo }}</h2>
-    <span class="escenario__badge">{{ escenario.fondoCodigo }}</span>
-  </header>
-
-  <p class="escenario__text">{{ escenario.situacionTexto }}</p>
-
-  <article class="escenario__stage" [style.background]="backgroundStyle()">
-    <div class="escenario__backdrop">
-      <div class="escenario__window"></div>
-      <div class="escenario__sofa"></div>
-      <div class="escenario__table"></div>
+    <div class="escenario__titles">
+      <p class="escenario__kicker">Escena del caso</p>
+      <h2 class="escenario__title">{{ escenario.titulo }}</h2>
     </div>
 
-    @for (item of visibleElements(); track item.id) {
-      @if (item.type === 'character') {
-        <div class="stage-character" [ngStyle]="elementStyle(item)">
-          @if (contentText(item, 'dialogo')) {
-            <div class="stage-character__bubble">{{ contentText(item, 'dialogo') }}</div>
-          }
-          <div
-            class="stage-character__avatar"
-            [style.background]="characterGradient(item)"
-          ></div>
-          <div class="stage-character__label">
-            <strong>{{ contentLabel(item, 'nombre') || 'Personaje' }}</strong>
-            <span>
-              {{ contentLabel(item, 'rol') || 'Rol' }}
-              @if (contentLabel(item, 'expresion')) {
-                · {{ contentLabel(item, 'expresion') }}
-              }
-            </span>
+    <span class="escenario__badge" [attr.title]="escenario.fondoCodigo">
+      <span class="escenario__badge-label">Entorno</span>
+      {{ escenario.fondoCodigo.split('_').join(' ') }}
+    </span>
+  </header>
+
+  <div class="escenario__narrative">
+    <p class="escenario__narrative-label">Situación actual</p>
+    <p class="escenario__text">{{ escenario.situacionTexto }}</p>
+  </div>
+
+  <div class="escenario__stage-wrap">
+    <p class="escenario__stage-label">Momento de intervención</p>
+
+    <article class="escenario__stage" [style.background]="backgroundStyle()">
+      <div class="escenario__forest" aria-hidden="true">
+        <div class="escenario__forest-sky"></div>
+        <div class="escenario__forest-trees escenario__forest-trees--back"></div>
+        <div class="escenario__forest-trees escenario__forest-trees--front"></div>
+        <div class="escenario__forest-path"></div>
+        <div class="escenario__forest-mist"></div>
+      </div>
+
+      <div class="escenario__backdrop">
+        <div class="escenario__window"></div>
+        <div class="escenario__sofa"></div>
+        <div class="escenario__table"></div>
+      </div>
+
+      <div class="escenario__practicante" aria-hidden="true">
+        <svg class="escenario__practicante-figure" viewBox="0 0 64 96" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="32" cy="18" rx="11" ry="12" fill="rgba(46, 125, 50, 0.22)" />
+          <path
+            d="M20 34c2-8 10-12 12-12s10 4 12 12v38c0 6-5 10-12 10s-12-4-12-10V34z"
+            fill="rgba(102, 187, 106, 0.35)"
+          />
+          <path
+            d="M14 72c4 8 12 14 18 14s14-6 18-14"
+            fill="none"
+            stroke="rgba(46, 125, 50, 0.28)"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+        </svg>
+      </div>
+
+      @for (item of visibleElements(); track item.id) {
+        @if (item.type === 'character') {
+          <div class="stage-character" [ngStyle]="elementStyle(item)">
+            @if (contentText(item, 'dialogo')) {
+              <div class="stage-character__bubble">{{ contentText(item, 'dialogo') }}</div>
+            }
+            <div
+              class="stage-character__avatar"
+              [style.background]="characterGradient(item)"
+            ></div>
+            <div class="stage-character__label">
+              <strong>{{ contentLabel(item, 'nombre') || 'Personaje' }}</strong>
+              <span>
+                {{ contentLabel(item, 'rol') || 'Rol' }}
+                @if (contentLabel(item, 'expresion')) {
+                  · {{ contentLabel(item, 'expresion') }}
+                }
+              </span>
+            </div>
           </div>
-        </div>
-      } @else if (item.type === 'text' || item.type === 'instruction' || item.type === 'feedback') {
-        <div class="stage-note" [ngStyle]="elementStyle(item)">
-          {{ contentText(item) || contentText(item, 'mensaje') }}
-        </div>
-      } @else if (item.type === 'question') {
-        <div class="stage-question" [ngStyle]="elementStyle(item)">
-          <span>Decision</span>
-          <strong>{{ contentLabel(item, 'enunciado') || escenario.pregunta.enunciado }}</strong>
-        </div>
-      } @else {
-        <div class="stage-object" [ngStyle]="elementStyle(item)">
-          <span>{{ contentLabel(item, 'nombre') || item.type }}</span>
-        </div>
+        } @else if (item.type === 'text' || item.type === 'instruction' || item.type === 'feedback') {
+          <div class="stage-note" [ngStyle]="elementStyle(item)">
+            {{ contentText(item) || contentText(item, 'mensaje') }}
+          </div>
+        } @else if (item.type === 'question') {
+          <div class="stage-question" [ngStyle]="elementStyle(item)">
+            <span>Ahora decide cómo intervenir</span>
+            <strong>{{ contentLabel(item, 'enunciado') || escenario.pregunta.enunciado }}</strong>
+          </div>
+        } @else {
+          <div class="stage-object" [ngStyle]="elementStyle(item)">
+            <span>{{ contentLabel(item, 'nombre') || item.type }}</span>
+          </div>
+        }
       }
-    }
-  </article>
+    </article>
+  </div>
 </section>

@@ -1,47 +1,1539 @@
-.player {
-  min-height: 100%;
+﻿:host {
+
+  display: block;
+
 }
 
-.player-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: var(--siep-space-4);
-  margin-top: var(--siep-space-4);
+
+
+.player {
+
+  position: relative;
+
+  min-height: 100%;
+
+  padding: 0.25rem 0 1.5rem;
+
+  overflow: hidden;
+
+
+
+  &::before {
+
+    content: '';
+
+    position: absolute;
+
+    top: 0;
+
+    bottom: 0;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 100%;
+
+    max-width: 100vw;
+
+    background:
+
+      radial-gradient(ellipse 72% 58% at 10% 0%, rgba(102, 187, 106, 0.16), transparent 68%),
+
+      radial-gradient(ellipse 58% 48% at 92% 6%, rgba(219, 229, 211, 0.52), transparent 65%),
+
+      linear-gradient(180deg, rgba(246, 248, 243, 0.96) 0%, rgba(232, 245, 233, 0.58) 100%);
+
+    pointer-events: none;
+
+    z-index: 0;
+
+  }
+
+
+
+  > * {
+
+    position: relative;
+
+    z-index: 1;
+
+  }
+
 }
+
+
+
+.player__brand {
+
+  margin: 0 0 0.35rem;
+
+  font-family: var(--siep-font-title);
+
+  font-size: 0.68rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.22em;
+
+  text-transform: uppercase;
+
+  color: var(--siep-leaf);
+
+}
+
+
+
+.player__back {
+
+  text-decoration: none;
+
+}
+
+
+
+.player-hero {
+
+  display: grid;
+
+  gap: 0.75rem;
+
+  margin-bottom: 0.25rem;
+
+
+
+  ::ng-deep .siep-page-header {
+
+    margin-bottom: 0;
+
+  }
+
+
+
+  ::ng-deep .siep-page-header h1 {
+
+    font-weight: 800;
+
+    letter-spacing: 0.015em;
+
+    line-height: 1.25;
+
+  }
+
+
+
+  ::ng-deep .siep-page-header__subtitle {
+
+    max-width: 54ch;
+
+    font-size: 0.86rem;
+
+    line-height: 1.45;
+
+  }
+
+}
+
+
+
+.player-hero__progress {
+
+  ::ng-deep .progress {
+
+    margin: 0;
+
+    padding: 0.65rem 0.85rem;
+
+    background: rgba(255, 255, 255, 0.82);
+
+    border: 1px solid rgba(102, 187, 106, 0.22);
+
+    border-radius: 1rem;
+
+    box-shadow: 0 6px 18px rgba(46, 125, 50, 0.06);
+
+  }
+
+
+
+  ::ng-deep .progress__meta {
+
+    font-size: 0.82rem;
+
+  }
+
+
+
+  ::ng-deep .progress__meta strong {
+
+    font-weight: 700;
+
+    color: var(--siep-forest);
+
+  }
+
+
+
+  ::ng-deep .progress__bar {
+
+    height: 8px;
+
+  }
+
+
+
+  ::ng-deep .progress small {
+
+    font-size: 0.74rem;
+
+  }
+
+}
+
+
+
+.player-experience {
+
+  display: grid;
+
+  gap: 1rem;
+
+  margin-top: 1rem;
+
+}
+
+
+
+.player-panel {
+
+  padding: 0.85rem;
+
+  background: rgba(255, 255, 255, 0.9);
+
+  border: 1px solid rgba(102, 187, 106, 0.22);
+
+  border-radius: 1.15rem;
+
+  box-shadow: 0 10px 28px rgba(46, 125, 50, 0.07);
+
+}
+
+
+
+.player-experience__board {
+
+  padding: 0.55rem;
+
+  overflow: hidden;
+
+  app-mentora-scene {
+    display: block;
+    margin-top: 0.35rem;
+  }
+
+}
+
+
+
+.player-experience__decisions {
+
+  padding: 1rem 1.1rem;
+
+}
+
+
+
+.player-feedback {
+
+  margin-top: 1rem;
+
+}
+
+
 
 .player-actions {
-  margin-top: var(--siep-space-4);
+
+  margin-top: 1.25rem;
+
+  padding: 0.85rem 1rem;
+
   display: flex;
+
   justify-content: flex-end;
+
   flex-wrap: wrap;
+
   gap: var(--siep-space-2);
+
+  background: rgba(255, 255, 255, 0.78);
+
+  border: 1px solid rgba(102, 187, 106, 0.18);
+
+  border-radius: 1rem;
+
+  box-shadow: 0 8px 22px rgba(46, 125, 50, 0.06);
+
 }
+
+
 
 .player-complete {
-  margin-top: var(--siep-space-4);
+
+  margin-top: 1rem;
+
   display: grid;
+
   gap: var(--siep-space-3);
 
+  padding: 1.25rem 1.35rem;
+
+  background: rgba(255, 255, 255, 0.92);
+
+  border: 1px solid rgba(102, 187, 106, 0.22);
+
+  border-radius: 1.15rem;
+
+  box-shadow: 0 10px 28px rgba(46, 125, 50, 0.07);
+
+
+
   h2 {
+
     margin: 0;
+
     font-family: var(--siep-font-title);
+
     font-size: 1.1rem;
+
     color: var(--siep-forest);
+
   }
+
+
 
   p {
+
     margin: 0;
+
     color: var(--siep-text-soft);
+
     line-height: 1.5;
+
+  }
+
+}
+
+
+
+/* —— Tablero interactivo MENTORA —— */
+
+
+
+.mentora-board {
+
+  display: grid;
+
+  gap: 0.85rem;
+
+}
+
+
+
+.mentora-board__header {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  gap: 0.75rem;
+
+  flex-wrap: wrap;
+
+}
+
+
+
+.mentora-board__kicker {
+
+  margin: 0 0 0.2rem;
+
+  font-family: var(--siep-font-title);
+
+  font-size: 0.64rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.18em;
+
+  text-transform: uppercase;
+
+  color: var(--siep-leaf);
+
+}
+
+
+
+.mentora-board__title {
+
+  margin: 0;
+
+  font-family: var(--siep-font-title);
+
+  font-size: 1.12rem;
+
+  font-weight: 700;
+
+  line-height: 1.35;
+
+  color: var(--siep-forest);
+
+}
+
+
+
+.mentora-board__badge {
+
+  flex-shrink: 0;
+
+  padding: 0.3rem 0.7rem;
+
+  border-radius: var(--siep-radius-pill);
+
+  font-size: 0.68rem;
+
+  font-weight: 600;
+
+  text-transform: capitalize;
+
+  background: rgba(232, 245, 233, 0.9);
+
+  color: var(--siep-forest);
+
+  border: 1px solid rgba(102, 187, 106, 0.22);
+
+}
+
+
+
+.mentora-board__narrative {
+
+  display: grid;
+
+  gap: 0.35rem;
+
+  padding: 0.75rem 0.9rem;
+
+  border-radius: 0.9rem;
+
+  background: rgba(255, 255, 255, 0.88);
+
+  border: 1px solid rgba(102, 187, 106, 0.16);
+
+  border-left: 3px solid rgba(102, 187, 106, 0.45);
+
+}
+
+
+
+.mentora-board__narrative-label {
+
+  margin: 0;
+
+  font-size: 0.66rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.12em;
+
+  text-transform: uppercase;
+
+  color: var(--siep-text-soft);
+
+}
+
+
+
+.mentora-board__narrative-text {
+
+  margin: 0;
+
+  line-height: 1.55;
+
+  font-size: 0.9rem;
+
+  color: var(--siep-text);
+
+  white-space: pre-wrap;
+
+}
+
+
+
+.mentora-board__arena {
+
+  position: relative;
+
+  min-height: 22rem;
+
+  overflow: hidden;
+
+  border-radius: 1.15rem;
+
+  border: 1px solid rgba(102, 187, 106, 0.28);
+
+  background:
+
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(200, 230, 201, 0.35), transparent 70%),
+
+    linear-gradient(180deg, rgba(232, 245, 233, 0.75) 0%, rgba(241, 248, 233, 0.95) 100%);
+
+  box-shadow:
+
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+
+    0 14px 32px rgba(46, 125, 50, 0.1);
+
+}
+
+
+
+.mentora-board__zones {
+
+  position: absolute;
+
+  inset: 0;
+
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  pointer-events: none;
+
+}
+
+
+
+.mentora-board__zone {
+
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: center;
+
+  padding-bottom: 0.55rem;
+
+  font-size: 0.58rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+
+  opacity: 0.72;
+
+}
+
+
+
+.mentora-board__zone--alert {
+
+  background: linear-gradient(180deg, rgba(255, 224, 178, 0.18) 0%, rgba(255, 183, 77, 0.12) 100%);
+
+  color: #bf360c;
+
+}
+
+
+
+.mentora-board__zone--intervention {
+
+  background: linear-gradient(180deg, rgba(232, 245, 233, 0.35) 0%, rgba(200, 230, 201, 0.2) 100%);
+
+  color: var(--siep-forest);
+
+}
+
+
+
+.mentora-board__zone--reflection {
+
+  background: linear-gradient(180deg, rgba(227, 242, 253, 0.28) 0%, rgba(187, 222, 251, 0.14) 100%);
+
+  color: #1565c0;
+
+}
+
+
+
+.mentora-board__zone--safe {
+
+  background: linear-gradient(180deg, rgba(200, 230, 201, 0.35) 0%, rgba(129, 199, 132, 0.22) 100%);
+
+  color: #1b5e20;
+
+}
+
+
+
+.mentora-board__track {
+
+  position: absolute;
+
+  left: 4%;
+
+  right: 4%;
+
+  top: 58%;
+
+  height: 0;
+
+  pointer-events: none;
+
+}
+
+
+
+.mentora-board__track-line {
+
+  display: block;
+
+  height: 10px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+
+    90deg,
+
+    rgba(255, 183, 77, 0.55) 0%,
+
+    rgba(102, 187, 106, 0.55) 35%,
+
+    rgba(100, 181, 246, 0.45) 62%,
+
+    rgba(76, 175, 80, 0.65) 100%
+
+  );
+
+  box-shadow: 0 4px 14px rgba(46, 125, 50, 0.12);
+
+}
+
+
+
+.mentora-board__nodes {
+
+  position: absolute;
+
+  inset: 0;
+
+  margin: 0;
+
+  padding: 0;
+
+  list-style: none;
+
+  pointer-events: none;
+
+}
+
+
+
+.mentora-board__node {
+
+  position: absolute;
+
+  top: 52%;
+
+  transform: translate(-50%, -50%);
+
+  display: grid;
+
+  justify-items: center;
+
+  gap: 0.35rem;
+
+  min-width: 0;
+
+}
+
+
+
+.mentora-board__node-dot {
+
+  width: 1.1rem;
+
+  height: 1.1rem;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.95);
+
+  border: 3px solid rgba(102, 187, 106, 0.45);
+
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
+
+  transition:
+
+    transform 0.35s ease,
+
+    border-color 0.35s ease,
+
+    box-shadow 0.35s ease;
+
+}
+
+
+
+.mentora-board__node-label {
+
+  max-width: 5.5rem;
+
+  text-align: center;
+
+  font-size: 0.62rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.04em;
+
+  text-transform: uppercase;
+
+  color: var(--siep-forest);
+
+  line-height: 1.2;
+
+}
+
+
+
+.mentora-board__node--active .mentora-board__node-dot {
+
+  transform: scale(1.35);
+
+  border-color: var(--siep-leaf);
+
+  box-shadow: 0 0 0 6px rgba(102, 187, 106, 0.2);
+
+}
+
+
+
+.mentora-board__character {
+
+  position: absolute;
+
+  top: 18%;
+
+  transform: translateX(-50%);
+
+  display: grid;
+
+  justify-items: center;
+
+  gap: 0.25rem;
+
+  width: 5.5rem;
+
+  z-index: 4;
+
+  transition:
+
+    left 1.15s cubic-bezier(0.34, 1.15, 0.48, 1),
+
+    filter 0.45s ease;
+
+  filter: drop-shadow(0 16px 24px rgba(31, 61, 46, 0.18));
+
+}
+
+
+
+.mentora-board__character-shadow {
+
+  position: absolute;
+
+  bottom: 0.15rem;
+
+  width: 3.2rem;
+
+  height: 0.65rem;
+
+  border-radius: 50%;
+
+  background: rgba(46, 125, 50, 0.16);
+
+  filter: blur(2px);
+
+}
+
+
+
+.mentora-board__character-figure {
+
+  display: block;
+
+  width: 100%;
+
+  height: auto;
+
+  position: relative;
+
+  z-index: 1;
+
+}
+
+
+
+.mentora-board__character-tag {
+
+  position: relative;
+
+  z-index: 1;
+
+  padding: 0.15rem 0.55rem;
+
+  border-radius: var(--siep-radius-pill);
+
+  font-size: 0.62rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.06em;
+
+  text-transform: uppercase;
+
+  color: var(--siep-forest);
+
+  background: rgba(255, 255, 255, 0.92);
+
+  border: 1px solid rgba(102, 187, 106, 0.25);
+
+}
+
+
+
+.mentora-board--advance .mentora-board__character {
+
+  filter: drop-shadow(0 18px 28px rgba(46, 125, 50, 0.28));
+
+  animation: mentora-step 0.55s ease 0.15s 2;
+
+}
+
+
+
+.mentora-board--retreat .mentora-board__character {
+
+  filter: drop-shadow(0 12px 20px rgba(191, 54, 12, 0.2));
+
+  animation: mentora-step 0.45s ease 0.1s 2 reverse;
+
+}
+
+
+
+.mentora-board--pause .mentora-board__character {
+
+  animation: mentora-pulse 1.2s ease-in-out 0.2s 2;
+
+}
+
+
+
+.mentora-pistas-nav {
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(205, 232, 181, 0.28);
+  background: rgba(250, 247, 242, 0.82);
+}
+
+.mentora-pistas-nav__title {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #5F7368;
+}
+
+.mentora-pistas-nav__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.mentora-pistas-nav__item {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.7rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.1rem 0.5rem;
+  align-items: center;
+  text-align: left;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(124, 179, 66, 0.22);
+  background: rgba(255, 255, 255, 0.92);
+  color: #102A1D;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    border-color: rgba(124, 179, 66, 0.42);
+    background: rgba(232, 245, 233, 0.45);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7CB342;
+    outline-offset: 2px;
   }
 }
 
-.player .siep-btn-secondary {
-  text-decoration: none;
+.mentora-pistas-nav__item--important {
+  border-color: rgba(240, 178, 122, 0.45);
 }
 
-@media (max-width: 900px) {
-  .player-grid {
+.mentora-pistas-nav__item--selected {
+  border-color: rgba(124, 179, 66, 0.55);
+  background: rgba(205, 232, 181, 0.2);
+}
+
+.mentora-pistas-nav__item--explored {
+  border-color: rgba(129, 199, 132, 0.45);
+}
+
+.mentora-pistas-nav__label {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.mentora-pistas-nav__meta {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 0.72rem;
+  color: rgba(26, 31, 61, 0.68);
+}
+
+.mentora-pistas-nav__status {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7CB342;
+}
+
+@media (min-width: 720px) {
+  .mentora-pistas-nav__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.mentora-exploration {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(205, 232, 181, 0.32);
+  background: linear-gradient(135deg, rgba(45, 27, 78, 0.1), rgba(250, 247, 242, 0.92));
+}
+
+.mentora-exploration--complete {
+  border-color: rgba(129, 199, 132, 0.45);
+  background: linear-gradient(135deg, rgba(129, 199, 132, 0.12), rgba(250, 247, 242, 0.95));
+}
+
+.mentora-exploration__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 1rem;
+}
+
+.mentora-exploration__counter {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(26, 31, 61, 0.82);
+
+  strong {
+    color: #102A1D;
+    font-weight: 800;
+  }
+}
+
+.mentora-exploration__progress {
+  flex: 1 1 140px;
+  max-width: 220px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(45, 27, 78, 0.12);
+  overflow: hidden;
+}
+
+.mentora-exploration__progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7CB342 0%, #CDE8B5 100%);
+  transition: width 0.35s ease;
+}
+
+.mentora-exploration--complete .mentora-exploration__progress-fill {
+  background: linear-gradient(90deg, #9CCC65 0%, #7CB342 100%);
+}
+
+.mentora-exploration__message {
+  margin: 0.5rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #4a3d6b;
+}
+
+.mentora-observation-card {
+  margin-top: 0.85rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(124, 179, 66, 0.28);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(205, 232, 181, 0.22), transparent 42%),
+    linear-gradient(160deg, rgba(45, 27, 78, 0.08) 0%, rgba(250, 247, 242, 0.98) 58%);
+  box-shadow: 0 10px 24px rgba(26, 31, 61, 0.1);
+}
+
+.mentora-observation-card--hint {
+  color: rgba(26, 31, 61, 0.72);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  border-style: dashed;
+  background: rgba(250, 247, 242, 0.72);
+  box-shadow: none;
+}
+
+.mentora-observation-card__header {
+  display: grid;
+  gap: 0.3rem;
+  margin-bottom: 0.55rem;
+}
+
+.mentora-observation-card__category {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #102A1D;
+  background: rgba(205, 232, 181, 0.35);
+}
+
+.mentora-observation-card__title {
+  margin: 0;
+  font-family: var(--siep-font-title);
+  font-size: 1.08rem;
+  color: #102A1D;
+}
+
+.mentora-observation-card__description {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: rgba(26, 31, 61, 0.84);
+}
+
+.mentora-observation-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(124, 179, 66, 0.18);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #5F7368;
+}
+
+.mentora-observation-card__registered {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: rgba(129, 199, 132, 0.22);
+  color: #7CB342;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 640px) {
+  .mentora-exploration__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mentora-exploration__progress {
+    max-width: none;
+  }
+
+  .mentora-observation-card {
+    padding: 0.9rem;
+  }
+}
+
+.mentora-board__consequence {
+  position: relative;
+  margin-top: 0.85rem;
+  z-index: 1;
+
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 0.65rem;
+
+  padding: 0.75rem 0.9rem;
+
+  border-radius: 0.95rem;
+
+  background: rgba(255, 255, 255, 0.94);
+
+  border: 1px solid rgba(102, 187, 106, 0.22);
+
+  box-shadow: 0 12px 28px rgba(46, 125, 50, 0.14);
+
+  animation: mentora-consequence-in 0.45s ease both;
+
+
+
+  strong {
+
+    display: block;
+
+    font-family: var(--siep-font-title);
+
+    font-size: 0.82rem;
+
+    color: var(--siep-forest);
+
+    margin-bottom: 0.15rem;
+
+  }
+
+
+
+  p {
+
+    margin: 0;
+
+    font-size: 0.78rem;
+
+    line-height: 1.45;
+
+    color: var(--siep-text-soft);
+
+  }
+
+}
+
+
+
+.mentora-board__consequence-icon {
+
+  flex-shrink: 0;
+
+  width: 2rem;
+
+  height: 2rem;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 50%;
+
+  font-size: 1rem;
+
+  background: rgba(232, 245, 233, 0.95);
+
+  border: 1px solid rgba(102, 187, 106, 0.25);
+
+}
+
+
+
+.mentora-board--advance .mentora-board__consequence {
+
+  border-color: rgba(76, 175, 80, 0.35);
+
+  background: linear-gradient(135deg, rgba(232, 245, 233, 0.98), rgba(255, 255, 255, 0.96));
+
+}
+
+
+
+.mentora-board--pause .mentora-board__consequence {
+
+  border-color: rgba(100, 181, 246, 0.35);
+
+  background: linear-gradient(135deg, rgba(227, 242, 253, 0.98), rgba(255, 255, 255, 0.96));
+
+}
+
+
+
+.mentora-board--retreat .mentora-board__consequence {
+
+  border-color: rgba(255, 183, 77, 0.45);
+
+  background: linear-gradient(135deg, rgba(255, 243, 224, 0.98), rgba(255, 255, 255, 0.96));
+
+}
+
+
+
+@keyframes mentora-step {
+
+  0%,
+
+  100% {
+
+    transform: translateX(-50%) translateY(0);
+
+  }
+
+
+
+  50% {
+
+    transform: translateX(-50%) translateY(-10px);
+
+  }
+
+}
+
+
+
+@keyframes mentora-pulse {
+
+  0%,
+
+  100% {
+
+    transform: translateX(-50%) scale(1);
+
+  }
+
+
+
+  50% {
+
+    transform: translateX(-50%) scale(1.04);
+
+  }
+
+}
+
+
+
+@keyframes mentora-consequence-in {
+
+  from {
+
+    opacity: 0;
+
+    transform: translateY(12px);
+
+  }
+
+
+
+  to {
+
+    opacity: 1;
+
+    transform: translateY(0);
+
+  }
+
+}
+
+
+
+@media (min-width: 768px) {
+
+  .player-experience {
+
+    gap: 1.15rem;
+
+  }
+
+
+
+  .player-panel {
+
+    padding: 1rem;
+
+  }
+
+
+
+  .player-experience__board {
+
+    padding: 0.75rem;
+
+  }
+
+
+
+  .player-experience__decisions {
+
+    padding: 1.1rem 1.25rem;
+
+  }
+
+
+
+  .mentora-board__arena {
+
+    min-height: 24rem;
+
+  }
+
+
+
+  .mentora-board__character {
+
+    width: 6.25rem;
+
+  }
+
+
+
+  .mentora-board__node-label {
+
+    font-size: 0.68rem;
+
+    max-width: 6.5rem;
+
+  }
+
+}
+
+
+
+@media (min-width: 1024px) {
+
+  .player-experience {
+
     grid-template-columns: 1fr;
+
+    gap: 1.25rem;
+
+    max-width: 960px;
+
+    margin-left: auto;
+
+    margin-right: auto;
+
   }
+
+
+
+  .player-hero__progress {
+
+    max-width: 960px;
+
+    margin-left: auto;
+
+    margin-right: auto;
+
+    width: 100%;
+
+  }
+
+
+
+  .player-actions {
+
+    max-width: 960px;
+
+    margin-left: auto;
+
+    margin-right: auto;
+
+  }
+
+
+
+  .player-feedback {
+
+    max-width: 960px;
+
+    margin-left: auto;
+
+    margin-right: auto;
+
+  }
+
+
+
+  .mentora-board__arena {
+
+    min-height: 26rem;
+
+  }
+
+
+
+  .mentora-board__character {
+
+    width: 7rem;
+
+  }
+
 }
+
+
+
+@media (max-width: 480px) {
+
+  .player-actions {
+
+    justify-content: stretch;
+
+
+
+    .siep-btn-primary {
+
+      width: 100%;
+
+    }
+
+  }
+
+
+
+  .player-hero {
+
+    ::ng-deep .siep-page-header {
+
+      flex-direction: column;
+
+      align-items: flex-start;
+
+      gap: 0.75rem;
+
+    }
+
+
+
+    ::ng-deep .siep-page-header__actions {
+
+      width: 100%;
+
+    }
+
+
+
+    ::ng-deep .siep-page-header__actions .player__back {
+
+      display: inline-flex;
+
+      width: 100%;
+
+      justify-content: center;
+
+    }
+
+  }
+
+
+
+  .mentora-board__arena {
+
+    min-height: 20rem;
+
+  }
+
+
+
+  .mentora-board__character {
+
+    width: 4.75rem;
+
+    top: 20%;
+
+  }
+
+
+
+  .mentora-board__zone {
+
+    font-size: 0.5rem;
+
+    padding-bottom: 0.35rem;
+
+  }
+
+
+
+  .mentora-board__node-label {
+
+    font-size: 0.54rem;
+
+    max-width: 4.2rem;
+
+  }
+
+
+
+  .mentora-board__consequence {
+
+    flex-direction: column;
+
+    gap: 0.45rem;
+
+  }
+
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  .mentora-board__character {
+
+    transition: left 0.01s linear;
+
+    animation: none !important;
+
+  }
+
+
+
+  .mentora-board__consequence {
+
+    animation: none;
+
+  }
+
+}
+
+

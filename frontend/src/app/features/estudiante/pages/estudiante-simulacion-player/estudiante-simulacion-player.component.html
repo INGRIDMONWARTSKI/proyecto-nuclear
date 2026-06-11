@@ -1,39 +1,159 @@
 <section class="siep-page player">
-  <app-page-header
-    title="Entrenamiento psicosocial"
-    subtitle="Lee el escenario, toma una decisión y revisa la retroalimentación formativa."
-    icon="🌿"
-  >
-    <a actions class="siep-btn-secondary" routerLink="/estudiante/casos">Volver</a>
-  </app-page-header>
+
+  <p class="player__brand" aria-hidden="true">SIEP · Simulación</p>
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />
   }
 
+  <header class="player-hero">
+    @if (loading()) {
+      <app-page-header
+        title="Simulación en curso"
+        subtitle="Vive el caso, elige con criterio y aprende de cada decisión."
+        icon="🌿"
+      >
+        <a actions class="siep-btn-secondary player__back" routerLink="/estudiante/casos">Volver</a>
+      </app-page-header>
+    } @else {
+      @if (data(); as state) {
+        <app-page-header
+          [title]="state.escenario?.titulo ?? 'Simulación en curso'"
+          subtitle="Vive el caso, elige con criterio y aprende de cada decisión."
+          icon="🌿"
+        >
+          <a actions class="siep-btn-secondary player__back" routerLink="/estudiante/casos">Volver</a>
+        </app-page-header>
+
+        @if (state.escenario) {
+          <div class="player-hero__progress">
+            <app-simulacion-progress
+              [respondidas]="state.progreso.respondidas"
+              [total]="state.progreso.totalPreguntas"
+            />
+          </div>
+        }
+      }
+    }
+  </header>
+
   @if (loading()) {
     <app-loading-state message="Cargando escenario..." />
   } @else {
     @if (data(); as state) {
-      <app-simulacion-progress
-        [respondidas]="state.progreso.respondidas"
-        [total]="state.progreso.totalPreguntas"
-      />
-
       @if (state.escenario) {
-        <div class="player-grid">
-          <app-escenario-viewer [escenario]="state.escenario" />
+        <div class="player-experience">
+          <section
+            class="player-panel player-experience__board"
+            aria-label="Recorrido interactivo MENTORA"
+          >
+            <div
+              class="mentora-board"
+              [class.mentora-board--idle]="avatarMotion() === 'idle'"
+              [class.mentora-board--advance]="avatarMotion() === 'advance'"
+              [class.mentora-board--pause]="avatarMotion() === 'pause'"
+              [class.mentora-board--retreat]="avatarMotion() === 'retreat'"
+            >
+              <header class="mentora-board__header">
+                <div>
+                  <p class="mentora-board__kicker">Recorrido de intervención</p>
+                  <h2 class="mentora-board__title">{{ state.escenario.titulo }}</h2>
+                </div>
+                <span class="mentora-board__badge">
+                  {{ state.escenario.fondoCodigo.split('_').join(' ') }}
+                </span>
+              </header>
 
-          <app-opciones-respuesta
-            [pregunta]="state.escenario.pregunta"
-            [selectedOpcionId]="selectedOpcion()?.id ?? null"
-            [locked]="feedback() !== null || sending()"
-            (select)="seleccionarOpcion($event)"
-          />
+              <app-mentora-scene
+                [escenario]="state.escenario"
+                [avatarMotion]="avatarMotion()"
+                (hotspotSelected)="onHotspotSelected($event)"
+              />
+
+              <div
+                class="mentora-exploration"
+                [class.mentora-exploration--complete]="exploredCount() >= hotspotTotal()"
+              >
+                <div class="mentora-exploration__header">
+                  <p class="mentora-exploration__counter">
+                    <strong>{{ exploredCount() }}/{{ hotspotTotal() }}</strong>
+                    pistas revisadas
+                  </p>
+                  <div
+                    class="mentora-exploration__progress"
+                    role="progressbar"
+                    [attr.aria-valuenow]="exploredCount()"
+                    [attr.aria-valuemin]="0"
+                    [attr.aria-valuemax]="hotspotTotal()"
+                    [attr.aria-label]="'Pistas revisadas: ' + exploredCount() + ' de ' + hotspotTotal()"
+                  >
+                    <span
+                      class="mentora-exploration__progress-fill"
+                      [style.width.%]="(exploredCount() / hotspotTotal()) * 100"
+                    ></span>
+                  </div>
+                </div>
+                <p class="mentora-exploration__message">{{ explorationPedagogyMessage() }}</p>
+              </div>
+
+              <nav class="mentora-pistas-nav" aria-label="Pistas del escenario">
+                <p class="mentora-pistas-nav__title">Pistas del escenario</p>
+                <ul class="mentora-pistas-nav__list">
+                  @for (pista of hotspotPistas(); track pista.id) {
+                    <li>
+                      <button
+                        type="button"
+                        class="mentora-pistas-nav__item"
+                        [class.mentora-pistas-nav__item--explored]="isHotspotExplored(pista.id)"
+                        [class.mentora-pistas-nav__item--selected]="selectedHotspot()?.id === pista.id"
+                        [class.mentora-pistas-nav__item--important]="pista.important"
+                        (click)="selectHotspotPista(pista)"
+                      >
+                        <span class="mentora-pistas-nav__label">{{ pista.title }}</span>
+                        <span class="mentora-pistas-nav__meta">{{ pista.category }}</span>
+                        @if (isHotspotExplored(pista.id)) {
+                          <span class="mentora-pistas-nav__status">Revisada</span>
+                        }
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </nav>
+
+              @if (selectedHotspot(); as hotspot) {
+                <article class="mentora-observation-card" aria-live="polite">
+                  <header class="mentora-observation-card__header">
+                    <span class="mentora-observation-card__category">{{ hotspot.category }}</span>
+                    <h3 class="mentora-observation-card__title">{{ hotspot.title }}</h3>
+                  </header>
+                  <p class="mentora-observation-card__description">{{ hotspot.description }}</p>
+                  <footer class="mentora-observation-card__footer">
+                    <span class="mentora-observation-card__registered" aria-hidden="true">◎</span>
+                    <span>Pista registrada para tu análisis</span>
+                  </footer>
+                </article>
+              } @else {
+                <p class="mentora-observation-card mentora-observation-card--hint">
+                  Selecciona una pista en la escena o en la lista para ver su detalle.
+                </p>
+              }
+            </div>
+          </section>
+
+          <section class="player-panel player-experience__decisions" aria-label="Opciones de respuesta">
+            <app-opciones-respuesta
+              [pregunta]="state.escenario.pregunta"
+              [selectedOpcionId]="selectedOpcion()?.id ?? null"
+              [locked]="feedback() !== null || sending()"
+              (select)="seleccionarOpcion($event)"
+            />
+          </section>
         </div>
 
         @if (feedback(); as fb) {
-          <app-feedback-panel [feedback]="fb" />
+          <div class="player-feedback">
+            <app-feedback-panel [feedback]="fb" />
+          </div>
         }
 
         <section class="player-actions">
@@ -44,15 +164,15 @@
               [disabled]="!selectedOpcion() || sending()"
               (click)="responder()"
             >
-              {{ sending() ? 'Enviando...' : 'Responder' }}
+              {{ sending() ? 'Enviando...' : 'Confirmar decisión' }}
             </button>
           } @else if (completed()) {
             <button class="siep-btn-primary" type="button" (click)="verResultado()">
-              Ver resultado
+              Ver resultado del recorrido
             </button>
           } @else {
             <button class="siep-btn-primary" type="button" (click)="continuar()">
-              Continuar
+              Continuar recorrido
             </button>
           }
         </section>
@@ -61,7 +181,7 @@
           <h2>La sesión no tiene más escenarios pendientes.</h2>
           <p>Puedes consultar el resultado final para cerrar la simulación.</p>
           <button class="siep-btn-primary" type="button" (click)="verResultado()">
-            Ver resultado
+            Ver resultado del recorrido
           </button>
         </section>
       }

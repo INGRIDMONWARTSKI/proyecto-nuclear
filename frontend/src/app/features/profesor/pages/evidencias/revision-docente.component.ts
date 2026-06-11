@@ -5,6 +5,7 @@ import { getErrorMessage } from '../../../../core/utils/http-error.util';
 import { RevisionSesionDocente } from '../../../simulacion/models/docente/revision-sesion-docente.model';
 import { SimulacionDocenteService } from '../../../simulacion/services/simulacion-docente.service';
 import { AlertMessageComponent } from '../../../../shared/ui/alert-message/alert-message.component';
+import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
 import { LoadingStateComponent } from '../../../../shared/ui/loading-state/loading-state.component';
 import { PageHeaderComponent } from '../../../../shared/ui/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../../shared/ui/status-badge/status-badge.component';
@@ -16,6 +17,7 @@ import { StatusBadgeComponent } from '../../../../shared/ui/status-badge/status-
     RouterLink,
     DatePipe,
     AlertMessageComponent,
+    EmptyStateComponent,
     LoadingStateComponent,
     PageHeaderComponent,
     StatusBadgeComponent,
@@ -64,5 +66,9 @@ export class RevisionDocenteComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  volverEvidencias(): void {
+    void this.router.navigate(['/profesor/evidencias']);
   }
 }

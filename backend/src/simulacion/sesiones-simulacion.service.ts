@@ -17,6 +17,7 @@ import { EscenarioRecord } from './entities/escenario.entity';
 import {
   EvidenciaDocente,
   HistorialIntentoEstudiante,
+  SesionActivaEstudiante,
 } from './entities/historial-intento.entity';
 import { PreguntaDecisionRecord } from './entities/pregunta-decision.entity';
 import { OpcionRespuestaRecord } from './entities/opcion-respuesta.entity';
@@ -97,6 +98,23 @@ export class SesionesSimulacionService {
       throw new ConflictException('El caso no tiene escenarios para simular.');
     }
 
+    const [sesionExistente] = await this.postgrest.select<SesionSimulacionRecord>(
+      'sesiones_simulacion',
+      {
+        filters: {
+          caso_id: caso.id,
+          estudiante_id: currentUser.sub,
+          estado: 'in_progress',
+        },
+        order: 'started_at.desc',
+        limit: 1,
+      },
+    );
+
+    if (sesionExistente) {
+      return this.buildStartResponse(caso, escenarios, sesionExistente.id);
+    }
+
     const preguntas = await this.postgrest.select<PreguntaDecisionRecord>(
       'preguntas_decision',
       {
@@ -117,10 +135,18 @@ export class SesionesSimulacionService {
       { select: '*' },
     );
 
+    return this.buildStartResponse(caso, escenarios, sesion.id);
+  }
+
+  private buildStartResponse(
+    caso: CasoRecord,
+    escenarios: EscenarioRecord[],
+    sesionId: string,
+  ) {
     const primerEscenario = escenarios[0];
 
     return {
-      sesionId: sesion.id,
+      sesionId,
       caso: {
         id: caso.id,
         titulo: caso.titulo,
@@ -167,6 +193,43 @@ export class SesionesSimulacionService {
     if (sesion.estudiante_id !== currentUser.sub) {
       throw new ForbiddenException('No puedes acceder a sesiones de otro estudiante.');
     }
+  }
+
+  async findSesionesActivasEstudiante(
+    currentUser: AuthenticatedUser,
+  ): Promise<SesionActivaEstudiante[]> {
+    this.assertStudentRole(currentUser);
+
+    const sesiones = await this.postgrest.select<SesionSimulacionRecord>(
+      'sesiones_simulacion',
+      {
+        filters: {
+          estudiante_id: currentUser.sub,
+          estado: 'in_progress',
+        },
+        order: 'started_at.desc',
+      },
+    );
+
+    if (sesiones.length === 0) {
+      return [];
+    }
+
+    const casoIds = [...new Set(sesiones.map((sesion) => sesion.caso_id))];
+    const casos = await this.postgrest.select<{ id: string; titulo: string }>(
+      'casos',
+      {
+        filters: { id: casoIds },
+      },
+    );
+    const casoById = new Map(casos.map((caso) => [caso.id, caso]));
+
+    return sesiones.map((sesion) => ({
+      sesionId: sesion.id,
+      casoId: sesion.caso_id,
+      casoTitulo: casoById.get(sesion.caso_id)?.titulo ?? 'Caso',
+      fechaInicio: sesion.started_at,
+    }));
   }
 
   async findHistorialEstudiante(

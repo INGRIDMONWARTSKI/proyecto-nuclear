@@ -1,22 +1,56 @@
 <section
-  class="siep-card feedback"
-  [class.feedback--pedagogica]="feedback.tipo === 'pedagogica'"
-  [class.feedback--correctiva]="feedback.tipo === 'correctiva'"
-  [class.feedback--refuerzo]="feedback.tipo === 'refuerzo'"
+  class="reflexion"
+  [class.reflexion--pedagogica]="tipoModifier() === 'pedagogica'"
+  [class.reflexion--correctiva]="tipoModifier() === 'correctiva'"
+  [class.reflexion--refuerzo]="tipoModifier() === 'refuerzo'"
+  role="status"
+  aria-live="polite"
+  aria-label="Retroalimentación pedagógica MENTORA"
 >
-  <div class="feedback__head">
-    <h3>Retroalimentación inmediata</h3>
-    <span class="feedback__type">{{ feedback.tipo }}</span>
-  </div>
-  <p class="feedback__msg">{{ feedback.mensaje }}</p>
+  <header class="reflexion__head">
+    <div class="reflexion__intro">
+      <span class="reflexion__icon" aria-hidden="true">
+        @if (feedback.tipo === 'refuerzo') {
+          ✦
+        } @else if (feedback.tipo === 'correctiva') {
+          ◎
+        } @else {
+          🌿
+        }
+      </span>
+
+      <div class="reflexion__titles">
+        <p class="reflexion__kicker">Retroalimentación pedagógica</p>
+        <h3 class="reflexion__title">Reflexión MENTORA</h3>
+        <p class="reflexion__subtitle">
+          Analiza la consecuencia de tu intervención y fortalece tu criterio profesional.
+        </p>
+      </div>
+    </div>
+
+    <span class="reflexion__badge">
+      <span class="reflexion__badge-label">Tipo</span>
+      <span class="reflexion__badge-value">{{ tipoLabel() }}</span>
+    </span>
+  </header>
+
+  <article class="reflexion__narrative">
+    <p class="reflexion__narrative-label">{{ reflectionHeading() }}</p>
+    <p class="reflexion__msg">{{ feedback.mensaje }}</p>
+  </article>
+
   @if (feedback.referenciaTeorica) {
-    <p class="feedback__ref">
-      <strong>Referencia teórica:</strong> {{ feedback.referenciaTeorica }}
-    </p>
+    <aside class="reflexion__ref">
+      <span class="reflexion__ref-label">Referencia teórica</span>
+      <p class="reflexion__ref-text">{{ feedback.referenciaTeorica }}</p>
+    </aside>
   }
+
   @if (feedback.puntajeObtenido !== undefined) {
-    <p class="feedback__score">
-      <strong>Puntaje obtenido:</strong> {{ feedback.puntajeObtenido }}
-    </p>
+    <footer class="reflexion__score">
+      <span class="reflexion__score-label">Puntaje de la intervención</span>
+      <span class="reflexion__score-value">{{ feedback.puntajeObtenido }}</span>
+      <span class="reflexion__score-hint">Registro formativo de tu decisión en el caso</span>
+    </footer>
   }
 </section>

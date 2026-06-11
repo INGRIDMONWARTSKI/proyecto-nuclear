@@ -1,44 +1,166 @@
-.casos-grid {
+﻿:host {
+  display: block;
+}
+
+.estudiante-casos {
+  position: relative;
+  padding: 0.25rem 0 1.25rem;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    background:
+      radial-gradient(ellipse 65% 50% at 12% 0%, var(--siep-glow-soft), transparent 70%),
+      radial-gradient(ellipse 55% 45% at 88% 8%, var(--siep-mist), transparent 65%),
+      linear-gradient(180deg, var(--siep-surface) 0%, var(--siep-success-bg) 100% 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  ::ng-deep .siep-page-header {
+    margin-bottom: 1rem;
+  }
+
+  ::ng-deep .siep-page-header h1 {
+    font-weight: 800;
+    letter-spacing: 0.015em;
+  }
+
+  ::ng-deep .siep-page-header__subtitle {
+    max-width: 54ch;
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+}
+
+.estudiante-casos__brand {
+  margin: 0 0 0.35rem;
+  font-family: var(--siep-font-title);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--siep-leaf);
+}
+
+.estudiante-casos__count {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--siep-text-soft);
+}
+
+.estudiante-casos__grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--siep-space-5);
+  gap: 0.75rem;
 }
 
 .caso-card {
   display: flex;
   flex-direction: column;
-  gap: var(--siep-space-3);
-  margin: 0;
-  padding: var(--siep-space-5);
+  gap: 0.65rem;
+  height: 100%;
+  padding: 1rem 1.1rem;
+  background: var(--siep-white);
+  border: 1px solid var(--siep-border);
+  border-radius: var(--siep-radius-lg);
+  box-shadow: var(--siep-shadow-sm);
+  animation: siep-fade-up 0.5s ease both;
+  transition:
+    transform var(--siep-transition-spring),
+    box-shadow var(--siep-transition-base),
+    border-color var(--siep-transition-base);
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: var(--siep-leaf);
+    box-shadow: 0 0 22px var(--siep-glow-soft), var(--siep-shadow-sm);
+  }
+}
+
+.caso-card__icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.05rem;
+  background: linear-gradient(
+    145deg,
+    var(--siep-border) 0%,
+    var(--siep-white) 100%
+  );
+  border: 1px solid var(--siep-border);
+}
+
+.caso-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex: 1;
 }
 
 .caso-card__title {
   margin: 0;
   font-family: var(--siep-font-title);
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--siep-forest);
+  line-height: 1.25;
 }
 
 .caso-card__desc,
 .caso-card__goal {
   margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: 0.84rem;
+  line-height: 1.45;
   color: var(--siep-text-soft);
 }
 
 .caso-card__goal strong {
   color: var(--siep-text);
+  font-weight: 600;
 }
 
 .caso-card__meta {
   margin-top: auto;
+  padding-top: 0.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
-.caso-card .siep-btn-primary {
+.caso-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.15rem;
+}
+
+.caso-card__action {
   width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+@media (max-width: 560px) {
+  .estudiante-casos__grid {
+    grid-template-columns: 1fr;
+  }
 }

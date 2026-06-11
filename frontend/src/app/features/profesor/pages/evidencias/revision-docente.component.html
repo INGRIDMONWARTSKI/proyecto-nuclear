@@ -1,7 +1,9 @@
-<section class="siep-page revision">
+﻿<section class="siep-page revision">
+  <p class="siep-brand" aria-hidden="true">MENTORA · Profesor</p>
+
   <app-page-header
     title="Revisión del intento"
-    subtitle="Modo revisión · solo lectura"
+    subtitle="Modo lectura para acompañar el aprendizaje: consulta decisiones, puntaje y retroalimentación del estudiante."
     icon="🌿"
   >
     <a actions class="siep-btn-secondary" routerLink="/profesor/evidencias">
@@ -18,79 +20,112 @@
   } @else {
     @if (revision(); as r) {
       <div class="revision-panel">
-        <article class="siep-card revision-card">
-          <div class="revision-card__head">
-            <h2>{{ r.caso.titulo }}</h2>
-            <app-status-badge variant="status" status="pending" label="Solo lectura" />
-          </div>
+        <div class="revision-panel__summary">
+          <article class="siep-card revision-card">
+            <div class="revision-card__head">
+              <h2>{{ r.caso.titulo }}</h2>
+              <app-status-badge variant="status" status="pending" label="Solo lectura" />
+            </div>
 
-          <h3 class="revision-card__section-title">Información del estudiante</h3>
-          <dl class="revision-grid">
-            <div>
-              <dt>Estudiante</dt>
-              <dd>{{ r.estudiante.nombre }}</dd>
+            <h3 class="revision-card__section-title">Información del estudiante</h3>
+            <div class="revision-student">
+              <span class="revision-student__avatar" aria-hidden="true">
+                {{ r.estudiante.nombre.charAt(0).toUpperCase() }}
+              </span>
+              <dl class="revision-grid revision-grid--student">
+                <div>
+                  <dt>Estudiante</dt>
+                  <dd>{{ r.estudiante.nombre }}</dd>
+                </div>
+                <div>
+                  <dt>Correo</dt>
+                  <dd>{{ r.estudiante.email }}</dd>
+                </div>
+                <div>
+                  <dt>Inicio</dt>
+                  <dd>{{ r.fechaInicio | date: 'medium' }}</dd>
+                </div>
+                <div>
+                  <dt>Finalización</dt>
+                  <dd>
+                    @if (r.fechaFinalizacion) {
+                      {{ r.fechaFinalizacion | date: 'medium' }}
+                    } @else {
+                      —
+                    }
+                  </dd>
+                </div>
+              </dl>
             </div>
-            <div>
-              <dt>Correo</dt>
-              <dd>{{ r.estudiante.email }}</dd>
-            </div>
-            <div>
-              <dt>Inicio</dt>
-              <dd>{{ r.fechaInicio | date: 'medium' }}</dd>
-            </div>
-            <div>
-              <dt>Finalización</dt>
-              <dd>
-                @if (r.fechaFinalizacion) {
-                  {{ r.fechaFinalizacion | date: 'medium' }}
-                } @else {
-                  —
-                }
-              </dd>
-            </div>
-          </dl>
-        </article>
+          </article>
 
-        <article class="siep-card revision-card">
-          <h3 class="revision-card__section-title">Resultado</h3>
-          <div class="revision-score-grid">
-            <p><strong>Puntaje total:</strong> {{ r.puntajeTotal }}</p>
-            <p><strong>Puntaje máximo:</strong> {{ r.puntajeMaximo }}</p>
-            <p><strong>Porcentaje:</strong> {{ r.porcentaje }}%</p>
-            <p class="revision-score-grid__nivel">
-              <strong>Nivel:</strong>
-              <app-status-badge variant="status" status="success" [label]="r.nivel" />
-            </p>
-            <p><strong>Respondidas:</strong> {{ r.respondidas }} / {{ r.totalPreguntas }}</p>
-          </div>
-          <p class="revision-card__resumen">{{ r.resumen }}</p>
-        </article>
+          <article class="siep-card revision-card revision-card--result">
+            <h3 class="revision-card__section-title">Resultado</h3>
+            <div class="revision-score-grid">
+              <div class="revision-score-item">
+                <span class="revision-score-item__label">Puntaje total</span>
+                <span class="revision-score-item__value">{{ r.puntajeTotal }}</span>
+              </div>
+              <div class="revision-score-item">
+                <span class="revision-score-item__label">Puntaje máximo</span>
+                <span class="revision-score-item__value">{{ r.puntajeMaximo }}</span>
+              </div>
+              <div class="revision-score-item">
+                <span class="revision-score-item__label">Porcentaje</span>
+                <span class="revision-score-item__value">{{ r.porcentaje }}%</span>
+              </div>
+              <div class="revision-score-item revision-score-item--nivel">
+                <span class="revision-score-item__label">Nivel</span>
+                <app-status-badge variant="status" status="success" [label]="r.nivel" />
+              </div>
+              <div class="revision-score-item">
+                <span class="revision-score-item__label">Respondidas</span>
+                <span class="revision-score-item__value">{{ r.respondidas }} / {{ r.totalPreguntas }}</span>
+              </div>
+            </div>
+            <p class="revision-card__resumen">{{ r.resumen }}</p>
+          </article>
+        </div>
 
         <section class="revision-respuestas" aria-label="Respuestas del estudiante">
-          <h3 class="revision-respuestas__title">Respuestas y retroalimentación</h3>
+          <header class="revision-respuestas__head">
+            <h3>Respuestas y retroalimentación</h3>
+            <p>{{ r.respuestas.length }} {{ r.respuestas.length === 1 ? 'decisión registrada' : 'decisiones registradas' }}</p>
+          </header>
 
           @for (item of r.respuestas; track $index) {
-            <article class="siep-card revision-card revision-card--answer">
-              <p class="revision-answer__pregunta">
-                <span>Pregunta</span>
-                {{ item.pregunta }}
-              </p>
-              <p class="revision-answer__opcion">
-                <span>Opción seleccionada</span>
-                {{ item.opcionSeleccionada }}
-              </p>
-              <p class="revision-answer__puntaje">
-                <span>Puntaje obtenido</span>
-                {{ item.puntajeObtenido }}
-              </p>
-              <p class="revision-answer__retro">
-                <span>Retroalimentación</span>
-                {{ item.retroalimentacion || 'Sin retroalimentación registrada.' }}
-              </p>
+            <article class="revision-card revision-card--answer">
+              <span class="revision-card__step" aria-hidden="true">{{ $index + 1 }}</span>
+              <div class="revision-card__answer-body">
+                <p class="revision-answer__pregunta">
+                  <span>Pregunta</span>
+                  {{ item.pregunta }}
+                </p>
+                <p class="revision-answer__opcion">
+                  <span>Opción seleccionada</span>
+                  {{ item.opcionSeleccionada }}
+                </p>
+                <p class="revision-answer__puntaje">
+                  <span>Puntaje obtenido</span>
+                  {{ item.puntajeObtenido }}
+                </p>
+                <p class="revision-answer__retro">
+                  <span>Retroalimentación</span>
+                  {{ item.retroalimentacion || 'Sin retroalimentación registrada.' }}
+                </p>
+              </div>
             </article>
           }
         </section>
       </div>
+    } @else {
+      <app-empty-state
+        title="Revisión no disponible"
+        message="No se encontró el intento solicitado, aún no está listo para revisión o no tienes permiso para consultarlo."
+        icon="🌿"
+        actionLabel="Volver a evidencias"
+        (actionClick)="volverEvidencias()"
+      />
     }
   }
 </section>

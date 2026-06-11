@@ -1,4 +1,4 @@
-/* SIEP / PsychoSim — Componentes reutilizables */
+/* MENTORA — Componentes reutilizables (clases siep-*) */
 
 /* —— Página —— */
 .siep-page {
@@ -28,7 +28,7 @@
     flex-shrink: 0;
     font-size: 1.75rem;
     line-height: 1;
-    filter: drop-shadow(0 2px 6px rgba(102, 187, 106, 0.35));
+    filter: drop-shadow(0 2px 6px var(--siep-glow-soft));
   }
 
   h1 {
@@ -79,7 +79,7 @@
   align-items: center;
   gap: var(--siep-space-3);
   padding: var(--siep-space-4);
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 252, 247, 0.88);
   border: 1px solid var(--siep-border);
   border-radius: var(--siep-radius-lg);
   box-shadow: var(--siep-shadow-sm);
@@ -134,13 +134,13 @@
   &:hover:not(:disabled) {
     transform: translateY(-3px);
     background: var(--siep-leaf-hover);
-    box-shadow: 0 14px 40px rgba(46, 125, 50, 0.5), 0 0 32px var(--siep-glow-soft);
+    box-shadow: 0 14px 40px rgba(124, 179, 66, 0.4), 0 0 32px var(--siep-glow-soft);
   }
 
   &:active:not(:disabled) {
     transform: translateY(1px);
     background: var(--siep-leaf-active);
-    box-shadow: 0 4px 16px rgba(46, 125, 50, 0.35);
+    box-shadow: 0 4px 16px rgba(124, 179, 66, 0.32);
   }
 }
 
@@ -195,24 +195,24 @@
 
 .siep-badge-role {
   @extend .siep-badge;
-  background: rgba(102, 187, 106, 0.14);
+  background: var(--siep-success-bg);
   color: var(--siep-leaf);
   border: 1px solid var(--siep-border);
 
   &--admin {
-    background: rgba(255, 183, 77, 0.18);
-    color: #e65100;
-    border-color: rgba(255, 183, 77, 0.35);
+    background: var(--siep-warning-bg);
+    color: #8a6a1f;
+    border-color: var(--siep-warning-border);
   }
 
   &--profesor {
-    background: rgba(102, 187, 106, 0.14);
+    background: var(--siep-success-bg);
     color: var(--siep-leaf);
   }
 
   &--estudiante {
-    background: rgba(129, 199, 132, 0.2);
-    color: #1b5e20;
+    background: var(--siep-success-bg);
+    color: var(--siep-forest);
   }
 }
 
@@ -266,24 +266,35 @@
   &__icon {
     font-size: 2rem;
     line-height: 1;
-    filter: drop-shadow(0 4px 12px rgba(102, 187, 106, 0.25));
+    filter: drop-shadow(0 4px 12px var(--siep-glow-soft));
   }
 
   &__title {
     margin: 0;
     font-family: var(--siep-font-title);
-    font-size: 1.05rem;
-    font-weight: 600;
+    font-size: 1.08rem;
+    font-weight: 700;
     color: var(--siep-forest);
   }
 
   &__message {
     margin: 0;
-    max-width: 36ch;
-    font-size: 0.88rem;
+    max-width: 42ch;
+    font-size: 0.9rem;
     line-height: 1.55;
     color: var(--siep-text-soft);
   }
+}
+
+/* —— Marca de página MENTORA —— */
+.siep-brand {
+  margin: 0 0 0.35rem;
+  font-family: var(--siep-font-title);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--siep-leaf);
 }
 
 /* —— Alertas —— */

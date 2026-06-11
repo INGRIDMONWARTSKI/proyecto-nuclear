@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { Grupo } from '../../../../core/models/grupo.model';
 import { getErrorMessage } from '../../../../core/utils/http-error.util';
@@ -30,6 +31,7 @@ import { StatusBadgeComponent } from '../../../../shared/ui/status-badge/status-
 export class DocenteAsignacionesComponent implements OnInit {
   private readonly simulacionService = inject(SimulacionDocenteService);
   private readonly gruposService = inject(GruposService);
+  private readonly router = inject(Router);
 
   protected readonly loadingCasos = signal(true);
   protected readonly loadingGrupos = signal(true);
@@ -39,6 +41,7 @@ export class DocenteAsignacionesComponent implements OnInit {
   protected readonly successMessage = signal<string | null>(null);
 
   protected readonly casosPublicados = signal<CasoDocente[]>([]);
+  protected readonly casosBorrador = signal(0);
   protected readonly grupos = signal<Grupo[]>([]);
   protected readonly selectedCasoId = signal<string | null>(null);
 
@@ -70,6 +73,9 @@ export class DocenteAsignacionesComponent implements OnInit {
       next: (casos) => {
         this.casosPublicados.set(
           casos.filter((caso) => caso.estado === 'published'),
+        );
+        this.casosBorrador.set(
+          casos.filter((caso) => caso.estado === 'draft').length,
         );
         this.loadingCasos.set(false);
       },
@@ -141,6 +147,23 @@ export class DocenteAsignacionesComponent implements OnInit {
     }
     this.seleccion.set(actual);
     this.successMessage.set(null);
+  }
+
+  irACasos(): void {
+    void this.router.navigate(['/profesor/casos']);
+  }
+
+  irAGrupos(): void {
+    void this.router.navigate(['/profesor/grupos']);
+  }
+
+  mensajeSinCasosPublicados(): string {
+    const borradores = this.casosBorrador();
+    if (borradores > 0) {
+      return `Tienes ${borradores} ${borradores === 1 ? 'caso en borrador' : 'casos en borrador'}. Publícalo desde la gestión del caso antes de asignarlo a tus grupos.`;
+    }
+
+    return 'Crea un caso y publícalo desde la gestión del caso antes de asignarlo a tus grupos académicos.';
   }
 
   guardar() {

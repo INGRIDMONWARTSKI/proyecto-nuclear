@@ -1,7 +1,9 @@
-<section class="siep-page evidencias">
+﻿<section class="siep-page evidencias">
+  <p class="siep-brand" aria-hidden="true">MENTORA · Profesor</p>
+
   <app-page-header
-    title="Evidencias"
-    subtitle="Consulta los intentos finalizados y revisa el desempeño de tus estudiantes."
+    title="Evidencias de aprendizaje"
+    subtitle="Consulta intentos finalizados, decisiones y resultados de tus estudiantes en MENTORA."
     icon="🌿"
   />
 
@@ -14,16 +16,25 @@
   } @else if (evidencias().length === 0) {
     <app-empty-state
       title="No hay intentos finalizados registrados"
-      message="Cuando los estudiantes completen simulaciones asignadas a tus grupos, podrás consultarlas aquí."
+      message="Cuando tus estudiantes finalicen casos asignados a tus grupos, sus intentos aparecerán aquí para revisión."
       icon="📂"
       actionLabel="Ir a asignaciones"
       (actionClick)="irAAsignaciones()"
     />
   } @else {
+    <p class="evidencias__count" role="status">
+      {{ evidencias().length }}
+      {{ evidencias().length === 1 ? 'intento registrado' : 'intentos registrados' }}
+    </p>
+
     <ul class="evidencias__list" aria-label="Evidencias de intentos">
       @for (evidencia of evidencias(); track evidencia.sesionId) {
         <li>
-          <article class="siep-card-row evidencia-card">
+          <article class="evidencia-card">
+            <span class="evidencia-card__avatar" aria-hidden="true">
+              {{ evidencia.estudianteNombre.charAt(0).toUpperCase() }}
+            </span>
+
             <div class="evidencia-card__main">
               <div class="evidencia-card__title-row">
                 <h2>{{ evidencia.casoTitulo }}</h2>

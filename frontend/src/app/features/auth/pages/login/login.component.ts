@@ -12,12 +12,6 @@ interface DemoAccount {
   password: string;
 }
 
-interface StoryCard {
-  title: string;
-  description: string;
-  icon: 'cases' | 'decisions' | 'feedback';
-}
-
 interface Pillar {
   label: string;
   icon: string;
@@ -70,6 +64,9 @@ export class LoginComponent implements OnInit, OnDestroy {
   protected readonly btnPressed = signal(false);
   protected readonly activeTipIndex = signal(0);
   protected readonly tipVisible = signal(true);
+  protected readonly showRecoverModal = signal(false);
+  protected readonly recoverEmail = signal('');
+  protected readonly recoverNotice = signal<string | null>(null);
 
   protected readonly floatingLeaves: FloatingLeaf[] = [
     { id: 1, top: '6%', left: '4%', size: 28, delay: 0, duration: 18, variant: 1, depth: 6 },
@@ -86,24 +83,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     { id: 'sprout', label: 'Decisión consciente', icon: 'sprout', delay: 0 },
     { id: 'heart', label: 'Empatía clínica', icon: 'heart', delay: -8 },
     { id: 'brain', label: 'Reflexión', icon: 'brain', delay: -16 },
-  ];
-
-  protected readonly storyCards: StoryCard[] = [
-    {
-      title: 'Casos reales',
-      description: 'Explora situaciones clínicas guiadas paso a paso.',
-      icon: 'cases',
-    },
-    {
-      title: 'Decisiones conscientes',
-      description: 'Elige rutas y analiza el impacto de cada acción.',
-      icon: 'decisions',
-    },
-    {
-      title: 'Retroalimentación',
-      description: 'Recibe orientación pedagógica inmediata.',
-      icon: 'feedback',
-    },
   ];
 
   protected readonly pillars: Pillar[] = [
@@ -137,24 +116,24 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   protected readonly dailyTips: DailyTip[] = [
     {
-      title: 'Consejo del momento',
-      message: 'Cada decisión consciente fortalece la empatía y el criterio clínico.',
+      title: 'Hoja MENTORA',
+      message:
+        'Observa el contexto antes de responder: una buena intervención empieza por escuchar.',
     },
     {
-      title: 'Tip de práctica',
-      message: 'Observa el contexto antes de responder: una buena intervención empieza por escuchar.',
+      title: 'Hoja MENTORA',
+      message:
+        'Antes de responder, observa el contexto, identifica señales de riesgo y elige una intervención ética.',
     },
     {
-      title: 'Frase del simulador',
-      message: 'Aprender con casos te ayuda a conectar teoría, emoción y acción profesional.',
+      title: 'Hoja MENTORA',
+      message:
+        'Aprender con casos te ayuda a conectar teoría, emoción y acción profesional.',
     },
     {
-      title: 'Enfoque PsychoSim',
-      message: 'Reflexionar después de cada escenario mejora tu juicio para futuras decisiones.',
-    },
-    {
-      title: 'Recordatorio útil',
-      message: 'La retroalimentación inmediata convierte cada intento en una oportunidad de crecimiento.',
+      title: 'Hoja MENTORA',
+      message:
+        'Reflexionar después de cada escenario mejora tu juicio para futuras decisiones.',
     },
   ];
 
@@ -220,6 +199,41 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   togglePassword() {
     this.showPassword.update((value) => !value);
+  }
+
+  openRecoverPassword() {
+    this.recoverNotice.set(null);
+    this.showRecoverModal.set(true);
+  }
+
+  closeRecoverPassword() {
+    this.showRecoverModal.set(false);
+    this.recoverNotice.set(null);
+  }
+
+  onRecoverEmailInput(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.recoverEmail.set(value);
+    this.recoverNotice.set(null);
+  }
+
+  requestPasswordRecovery() {
+    const email = this.recoverEmail().trim();
+
+    if (!email) {
+      this.recoverNotice.set('Ingresa tu correo institucional para continuar.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.recoverNotice.set('Ingresa un correo institucional válido.');
+      return;
+    }
+
+    // Preparado para conectar con el endpoint de recuperación cuando esté disponible.
+    this.recoverNotice.set(
+      'El envío de instrucciones estará disponible cuando se implemente el servicio de recuperación en el servidor.',
+    );
   }
 
   onPageMove(event: MouseEvent) {

@@ -1,48 +1,48 @@
-/* SIEP / PsychoSim — Design tokens (referencia: login) */
+/* MENTORA — tokens globales (plataforma académica) */
 
 :root {
   /* —— Colores principales —— */
-  --siep-forest: #1f3d2e;
-  --siep-leaf: #2e7d32;
-  --siep-leaf-hover: #388e3c;
-  --siep-leaf-active: #1b5e20;
-  --siep-sage: #66bb6a;
+  --siep-forest: #2f5d34;
+  --siep-leaf: #7cb342;
+  --siep-leaf-hover: #689f38;
+  --siep-leaf-active: #2f5d34;
+  --siep-sage: #9ccc65;
 
   /* —— Secundarios y superficies —— */
-  --siep-cream: #dbe5d3;
-  --siep-mist: rgba(219, 229, 211, 0.55);
-  --siep-surface: #f6f8f3;
-  --siep-white: #ffffff;
-  --siep-input-bg: #f6f8f3;
-  --siep-accent-admin: #ffb74d;
+  --siep-cream: #cde8b5;
+  --siep-mist: rgba(241, 248, 233, 0.55);
+  --siep-surface: #fafcf7;
+  --siep-white: #fffcf7;
+  --siep-input-bg: #fafcf7;
+  --siep-accent-admin: #f3c96b;
 
   /* —— Texto —— */
-  --siep-text: #1f3d2e;
-  --siep-text-soft: #5a7268;
+  --siep-text: #102a1d;
+  --siep-text-soft: #5f7368;
   --siep-text-placeholder: #94a89a;
 
   /* —— Estados —— */
-  --siep-success: #2e7d32;
-  --siep-success-bg: #e8f5e9;
-  --siep-success-border: #a5d6a7;
+  --siep-success: #7cb342;
+  --siep-success-bg: #f1f8e9;
+  --siep-success-border: #cde8b5;
   --siep-error: #e57373;
-  --siep-error-bg: #fff0f0;
+  --siep-error-bg: #fce8e8;
   --siep-error-border: #f5d0d0;
-  --siep-error-text: #8b3a3a;
-  --siep-warning: #f9a825;
-  --siep-warning-bg: #fff8e1;
-  --siep-warning-border: #ffe082;
+  --siep-error-text: #a33a3a;
+  --siep-warning: #f3c96b;
+  --siep-warning-bg: rgba(243, 201, 107, 0.18);
+  --siep-warning-border: rgba(243, 201, 107, 0.45);
 
   /* —— Efectos —— */
-  --siep-glow: rgba(102, 187, 106, 0.45);
-  --siep-glow-soft: rgba(102, 187, 106, 0.28);
-  --siep-shadow-card: 0 28px 64px rgba(31, 61, 46, 0.1);
-  --siep-shadow-sm: 0 8px 24px rgba(31, 61, 46, 0.07);
-  --siep-shadow-btn: 0 10px 32px rgba(46, 125, 50, 0.42);
+  --siep-glow: rgba(124, 179, 66, 0.45);
+  --siep-glow-soft: rgba(124, 179, 66, 0.2);
+  --siep-shadow-card: 0 28px 64px rgba(16, 42, 29, 0.1);
+  --siep-shadow-sm: 0 8px 24px rgba(16, 42, 29, 0.07);
+  --siep-shadow-btn: 0 10px 32px rgba(124, 179, 66, 0.35);
 
   /* —— Bordes —— */
-  --siep-border: rgba(102, 187, 106, 0.28);
-  --siep-border-soft: var(--siep-cream);
+  --siep-border: #cde8b5;
+  --siep-border-soft: #cde8b5;
 
   /* —— Radios —— */
   --siep-radius-sm: 12px;
@@ -64,7 +64,7 @@
   --siep-font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
 
   /* —— Focus —— */
-  --siep-focus-ring: 0 0 0 3px rgba(102, 187, 106, 0.22);
+  --siep-focus-ring: 0 0 0 3px rgba(124, 179, 66, 0.22);
   --siep-focus-glow: 0 0 28px var(--siep-glow-soft);
 
   /* —— Transiciones —— */
@@ -74,7 +74,7 @@
 
   /* —— Alias legacy (compatibilidad con estilos existentes) —— */
   --color-bg: var(--siep-surface);
-  --color-bg-alt: #e8f0e4;
+  --color-bg-alt: #f1f8e9;
   --color-surface: var(--siep-white);
   --color-primary: var(--siep-leaf);
   --color-primary-hover: var(--siep-leaf-hover);

@@ -1,7 +1,9 @@
-<section class="siep-page asignaciones">
+﻿<section class="siep-page asignaciones">
+  <p class="siep-brand" aria-hidden="true">SIEP · Asignaciones</p>
+
   <app-page-header
     title="Asignaciones"
-    subtitle="Asocia casos publicados con grupos académicos para controlar el acceso de los estudiantes."
+    subtitle="Vincula casos publicados con grupos académicos para habilitar el acceso de tus estudiantes."
     icon="🌿"
   />
 
@@ -20,8 +22,10 @@
       } @else if (casosPublicados().length === 0) {
         <app-empty-state
           title="Sin casos publicados"
-          message="Publica un caso para poder asignarlo a tus grupos académicos."
+          [message]="mensajeSinCasosPublicados()"
           icon="🌱"
+          actionLabel="Ir a mis casos"
+          (actionClick)="irACasos()"
         />
       } @else {
         <ul class="caso-list">
@@ -58,8 +62,10 @@
       } @else if (grupos().length === 0) {
         <app-empty-state
           title="Sin grupos activos"
-          message="No tienes grupos académicos activos. Crea un grupo para poder asignarlo."
+          message="No tienes grupos académicos activos. Crea un grupo para poder asignarlo a este caso."
           icon="🌱"
+          actionLabel="Ir a grupos"
+          (actionClick)="irAGrupos()"
         />
       } @else {
         <ul class="grupo-list">

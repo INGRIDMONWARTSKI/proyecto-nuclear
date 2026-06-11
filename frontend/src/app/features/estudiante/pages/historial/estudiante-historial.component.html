@@ -1,7 +1,9 @@
-<section class="siep-page historial">
+﻿<section class="siep-page historial">
+  <p class="siep-brand" aria-hidden="true">MENTORA · Estudiante</p>
+
   <app-page-header
-    title="Historial"
-    subtitle="Consulta tus intentos finalizados y revisa tu retroalimentación."
+    title="Historial de simulaciones"
+    subtitle="Consulta tus intentos finalizados, puntajes y retroalimentación en MENTORA."
     icon="🌿"
   />
 
@@ -14,7 +16,7 @@
   } @else if (intentos().length === 0) {
     <app-empty-state
       title="Aún no tienes intentos finalizados"
-      message="Cuando completes una simulación, aparecerá aquí para que puedas consultar tu resultado."
+      message="Cuando completes un caso asignado, tu intento aparecerá aquí con su resultado y reflexión."
       icon="📋"
       actionLabel="Ir a mis casos"
       (actionClick)="irACasos()"
@@ -49,9 +51,9 @@
                     }
                   </dd>
                 </div>
-                <div>
+                <div class="historial-card__score">
                   <dt>Puntaje</dt>
-                  <dd>{{ intento.puntajeTotal }}</dd>
+                  <dd>{{ intento.puntajeTotal }} pts</dd>
                 </div>
               </dl>
             </div>

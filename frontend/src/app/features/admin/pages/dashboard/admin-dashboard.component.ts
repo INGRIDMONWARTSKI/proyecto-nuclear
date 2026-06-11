@@ -134,8 +134,8 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  irAUsuarios(): void {
-    void this.router.navigate(['/admin/usuarios']);
+  irANuevoUsuario(): void {
+    void this.router.navigate(['/admin/usuarios'], { queryParams: { crear: '1' } });
   }
 
   roleBadgeKey(role: Role): SiepRoleBadge {

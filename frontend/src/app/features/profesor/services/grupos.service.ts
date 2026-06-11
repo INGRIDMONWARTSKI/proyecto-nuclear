@@ -39,6 +39,12 @@ export class GruposService {
     return this.http.get<Usuario[]>(`${this.baseUrl}/${grupoId}/estudiantes`);
   }
 
+  listarEstudiantesDisponibles(grupoId: string) {
+    return this.http.get<Usuario[]>(
+      `${this.baseUrl}/${grupoId}/estudiantes-disponibles`,
+    );
+  }
+
   asignarEstudiantes(grupoId: string, payload: AsignarEstudiantesPayload) {
     return this.http.post<Usuario[]>(
       `${this.baseUrl}/${grupoId}/estudiantes`,

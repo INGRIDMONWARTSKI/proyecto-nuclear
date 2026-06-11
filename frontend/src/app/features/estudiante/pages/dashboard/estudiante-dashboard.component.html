@@ -1,0 +1,73 @@
+﻿<section class="siep-page estudiante-dashboard">
+  <p class="siep-brand" aria-hidden="true">MENTORA · Estudiante</p>
+
+  <app-page-header
+    title="Panel del estudiante"
+    subtitle="Accede a tus casos asignados, continúa tus simulaciones y revisa tu progreso en MENTORA."
+    icon="🌿"
+  />
+
+  <section class="siep-card estudiante-dashboard__quick" aria-label="Accesos rápidos">
+    <header class="estudiante-dashboard__section-head">
+      <h2>Accesos rápidos</h2>
+      <p>Ingresa a tus casos asignados para iniciar o continuar una experiencia de simulación.</p>
+    </header>
+
+    <div class="estudiante-dashboard__grid">
+      <a routerLink="/estudiante/casos" class="estudiante-dashboard__action">
+        <span class="estudiante-dashboard__action-icon" aria-hidden="true">📚</span>
+        <span class="estudiante-dashboard__action-title">Casos asignados</span>
+        <span class="estudiante-dashboard__action-desc">Consulta los casos disponibles para tu grupo.</span>
+      </a>
+
+      <a
+        [routerLink]="continuarLink()"
+        class="estudiante-dashboard__action"
+        [class.estudiante-dashboard__action--muted]="!sesionActivaReciente()"
+      >
+        <span class="estudiante-dashboard__action-icon" aria-hidden="true">▶</span>
+        <span class="estudiante-dashboard__action-title">{{ continuarTitulo() }}</span>
+        <span class="estudiante-dashboard__action-desc">{{ continuarDesc() }}</span>
+      </a>
+
+      <a routerLink="/estudiante/historial" class="estudiante-dashboard__action">
+        <span class="estudiante-dashboard__action-icon" aria-hidden="true">🕐</span>
+        <span class="estudiante-dashboard__action-title">Historial de simulaciones</span>
+        <span class="estudiante-dashboard__action-desc">
+          Consulta intentos finalizados, puntajes y retroalimentación.
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <section class="siep-card estudiante-dashboard__guide" aria-label="Cómo usar SIEP">
+    <header class="estudiante-dashboard__section-head">
+      <h2>Cómo usar MENTORA</h2>
+      <p>Un recorrido breve para aprovechar tus simulaciones psicosociales.</p>
+    </header>
+
+    <ul class="estudiante-dashboard__steps">
+      <li class="estudiante-dashboard__step">
+        <span class="estudiante-dashboard__step-icon" aria-hidden="true">1</span>
+        <div>
+          <strong>Elige un caso</strong>
+          <p>Ingresa a casos asignados y selecciona la simulación que quieres desarrollar.</p>
+        </div>
+      </li>
+      <li class="estudiante-dashboard__step">
+        <span class="estudiante-dashboard__step-icon" aria-hidden="true">2</span>
+        <div>
+          <strong>Toma decisiones</strong>
+          <p>Avanza por escenarios, responde con calma y recibe retroalimentación inmediata.</p>
+        </div>
+      </li>
+      <li class="estudiante-dashboard__step">
+        <span class="estudiante-dashboard__step-icon" aria-hidden="true">3</span>
+        <div>
+          <strong>Revisa tu progreso</strong>
+          <p>Consulta tu historial para ver resultados y aprender de cada intento.</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+</section>

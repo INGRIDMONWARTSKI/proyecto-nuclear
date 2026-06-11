@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AuthResponse, AuthSession, LoginPayload } from '../models/auth.model';
 import { Role } from '../models/role.enum';
 import { Usuario } from '../models/usuario.model';
+import { isJwtExpired } from '../utils/jwt.util';
 
 const SESSION_KEY = 'nuclear.auth.session';
 
@@ -59,6 +60,34 @@ export class AuthService {
 
   getToken(): string | null {
     return this.sessionSignal()?.accessToken ?? null;
+  }
+
+  getValidToken(): string | null {
+    const token = this.getToken();
+    if (!token || this.isSessionExpired()) {
+      return null;
+    }
+
+    return token;
+  }
+
+  isSessionExpired(): boolean {
+    const token = this.getToken();
+    if (!token) {
+      return true;
+    }
+
+    return isJwtExpired(token);
+  }
+
+  hasValidSession(): boolean {
+    return this.isAuthenticated() && !this.isSessionExpired();
+  }
+
+  invalidateLocalSession(): void {
+    localStorage.removeItem(SESSION_KEY);
+    this.sessionSignal.set(null);
+    void this.router.navigate(['/login']);
   }
 
   hasRole(...roles: Role[]): boolean {
@@ -117,7 +146,13 @@ export class AuthService {
     }
 
     try {
-      return JSON.parse(raw) as AuthSession;
+      const session = JSON.parse(raw) as AuthSession;
+      if (isJwtExpired(session.accessToken)) {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+
+      return session;
     } catch {
       localStorage.removeItem(SESSION_KEY);
       return null;

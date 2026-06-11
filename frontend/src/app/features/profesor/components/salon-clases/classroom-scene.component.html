@@ -16,8 +16,8 @@
 
       <div class="chalkboard" aria-hidden="true">
         <div class="chalkboard__frame">
-          <span class="chalkboard__title">{{ estudiantes().length }} estudiantes</span>
-          <span class="chalkboard__sub">Psicología Social</span>
+          <span class="chalkboard__title">{{ tituloPizarra() }}</span>
+          <span class="chalkboard__sub">{{ subtituloPizarra() }} · {{ estudiantes().length }} estudiantes</span>
         </div>
       </div>
 
@@ -118,7 +118,7 @@
       <h3>Asignar a pupitre</h3>
       <p class="info-panel__hint">Selecciona un estudiante.</p>
       @if (disponiblesParaAsignar().length === 0) {
-        <p class="info-panel__empty">No hay estudiantes pendientes. Usa la asignación múltiple.</p>
+        <p class="info-panel__empty">{{ mensajeSinPendientes() }}</p>
       } @else {
         <div class="assign-search">
           <input
@@ -130,7 +130,12 @@
             aria-label="Buscar estudiante"
           />
           @if (busquedaAsignar()) {
-            <button type="button" class="assign-search__clear" (click)="limpiarBusquedaAsignar()">
+            <button
+              type="button"
+              class="assign-search__clear"
+              aria-label="Limpiar búsqueda"
+              (click)="limpiarBusquedaAsignar()"
+            >
               Limpiar
             </button>
           }

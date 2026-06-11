@@ -1039,7 +1039,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     const rol = this.contentLabel(element, 'rol').toLowerCase();
 
     if (avatar.includes('therapist') || rol.includes('psico')) {
-      return 'linear-gradient(180deg, #c8e6c9 0%, #81c784 100%)';
+      return 'linear-gradient(180deg, #CDE8B5 0%, #7CB342 100%)';
     }
 
     if (rol.includes('familiar')) {

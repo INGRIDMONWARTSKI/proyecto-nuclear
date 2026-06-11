@@ -1,17 +1,42 @@
-<section class="siep-card opciones">
-  <h3>{{ pregunta.enunciado }}</h3>
-  <ul class="opciones__list">
+<section class="intervenciones" aria-label="Opciones de intervención">
+  <header class="intervenciones__head">
+    <p class="intervenciones__kicker">Decisión profesional</p>
+    <h3 class="intervenciones__title">Elige tu intervención</h3>
+    <div class="intervenciones__contexto">
+      <p class="intervenciones__contexto-label">Situación a intervenir</p>
+      <p class="intervenciones__contexto-texto">{{ pregunta.enunciado }}</p>
+    </div>
+  </header>
+
+  <ul class="intervenciones__list">
     @for (opcion of pregunta.opciones; track opcion.id) {
       <li>
         <button
           type="button"
-          class="opcion-btn"
-          [class.opcion-btn--selected]="selectedOpcionId === opcion.id"
+          class="intervencion-card"
+          [class.intervencion-card--selected]="selectedOpcionId === opcion.id"
+          [class.intervencion-card--locked]="locked"
+          [attr.aria-pressed]="selectedOpcionId === opcion.id"
+          [attr.aria-label]="'Intervención ' + opcion.orden + ': ' + opcion.texto"
           [disabled]="locked"
           (click)="onSelect(opcion)"
         >
-          <span class="opcion-btn__order">{{ opcion.orden }}.</span>
-          <span>{{ opcion.texto }}</span>
+          <span class="intervencion-card__marker" aria-hidden="true">
+            <span class="intervencion-card__marker-index">{{ opcion.orden }}</span>
+          </span>
+
+          <span class="intervencion-card__body">
+            <span class="intervencion-card__tag">Acción profesional</span>
+            <span class="intervencion-card__texto">{{ opcion.texto }}</span>
+          </span>
+
+          <span class="intervencion-card__status" aria-hidden="true">
+            @if (selectedOpcionId === opcion.id) {
+              Seleccionada
+            } @else {
+              Elegir
+            }
+          </span>
         </button>
       </li>
     }

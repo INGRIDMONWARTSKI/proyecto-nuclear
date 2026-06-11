@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Role } from '../../../../core/models/role.enum';
 import { Usuario } from '../../../../core/models/usuario.model';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -9,6 +10,7 @@ import { AlertMessageComponent } from '../../../../shared/ui/alert-message/alert
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
 import { LoadingStateComponent } from '../../../../shared/ui/loading-state/loading-state.component';
 import { PageHeaderComponent } from '../../../../shared/ui/page-header/page-header.component';
+import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog.component';
 import {
   SiepRoleBadge,
   StatusBadgeComponent,
@@ -26,6 +28,7 @@ type PanelMode = 'none' | 'create' | 'edit';
     LoadingStateComponent,
     PageHeaderComponent,
     StatusBadgeComponent,
+    ConfirmDialogComponent,
   ],
   templateUrl: './admin-usuarios.component.html',
   styleUrl: './admin-usuarios.component.scss',
@@ -34,6 +37,8 @@ export class AdminUsuariosComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly usuariosApi = inject(UsuariosApiService);
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly Role = Role;
   protected readonly roles = [Role.ADMIN, Role.PROFESOR, Role.ESTUDIANTE];
@@ -46,6 +51,13 @@ export class AdminUsuariosComponent implements OnInit {
 
   protected readonly panelMode = signal<PanelMode>('none');
   protected readonly editingUsuario = signal<Usuario | null>(null);
+  protected readonly confirmOpen = signal(false);
+  protected readonly confirmTitle = signal('');
+  protected readonly confirmMessage = signal('');
+  protected readonly confirmLabel = signal('Confirmar');
+  protected readonly confirmDestructive = signal(true);
+
+  private usuarioPendienteEstado: Usuario | null = null;
 
   protected readonly currentUserId = computed(
     () => this.authService.user()?.id ?? null,
@@ -65,6 +77,17 @@ export class AdminUsuariosComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarUsuarios();
+    this.route.queryParamMap.subscribe((params) => {
+      if (params.get('crear') === '1') {
+        this.abrirCrear();
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { crear: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      }
+    });
   }
 
   cargarUsuarios() {
@@ -195,14 +218,40 @@ export class AdminUsuariosComponent implements OnInit {
     }
 
     if (usuario.isActive) {
-      const confirmar = window.confirm(
-        `¿Desactivar a ${usuario.fullName}? No podrá iniciar sesión, pero su historial académico se conserva.`,
+      this.usuarioPendienteEstado = usuario;
+      this.confirmTitle.set('Desactivar usuario');
+      this.confirmMessage.set(
+        `¿Desactivar a ${usuario.fullName}? No podrá iniciar sesión, pero su historial académico se conservará.`,
       );
-      if (!confirmar) {
-        return;
-      }
+      this.confirmLabel.set('Desactivar');
+      this.confirmDestructive.set(true);
+      this.confirmOpen.set(true);
+      return;
     }
 
+    this.ejecutarCambiarEstado(usuario);
+  }
+
+  confirmarCambioEstado(): void {
+    const usuario = this.usuarioPendienteEstado;
+    if (!usuario) {
+      this.cerrarConfirmacion();
+      return;
+    }
+
+    this.ejecutarCambiarEstado(usuario);
+  }
+
+  cerrarConfirmacion(): void {
+    if (this.saving()) {
+      return;
+    }
+
+    this.confirmOpen.set(false);
+    this.usuarioPendienteEstado = null;
+  }
+
+  private ejecutarCambiarEstado(usuario: Usuario) {
     this.saving.set(true);
     this.errorMessage.set(null);
     this.successMessage.set(null);
@@ -212,6 +261,7 @@ export class AdminUsuariosComponent implements OnInit {
       .subscribe({
         next: () => {
           this.saving.set(false);
+          this.cerrarConfirmacion();
           this.successMessage.set(
             usuario.isActive
               ? 'Usuario desactivado correctamente.'

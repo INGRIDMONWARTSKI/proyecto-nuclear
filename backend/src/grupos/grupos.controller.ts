@@ -35,16 +35,30 @@ export class GruposController {
   }
 
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
   findAll(@CurrentUser() currentUser: AuthenticatedUser) {
     return this.gruposService.findAll(currentUser);
   }
 
   @Get(':id/estudiantes')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
   listStudents(
     @Param('id') id: string,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
     return this.gruposService.listStudents(id, currentUser);
+  }
+
+  @Get(':id/estudiantes-disponibles')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
+  listAvailableStudents(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.gruposService.listAvailableStudents(id, currentUser);
   }
 
   @Post(':id/estudiantes')
@@ -74,6 +88,8 @@ export class GruposController {
   }
 
   @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.PROFESOR)
   findOne(
     @Param('id') id: string,
     @CurrentUser() currentUser: AuthenticatedUser,

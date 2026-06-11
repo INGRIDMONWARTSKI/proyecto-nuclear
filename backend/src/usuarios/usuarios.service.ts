@@ -146,6 +146,15 @@ export class UsuariosService {
     return usuarios.map((usuario) => this.sanitizeUser(usuario));
   }
 
+  async findActiveStudents(): Promise<UsuarioSeguro[]> {
+    const usuarios = await this.postgrest.select<Usuario>('usuarios', {
+      filters: { role: Role.ESTUDIANTE, isActive: true },
+      order: 'fullName.asc',
+    });
+
+    return usuarios.map((usuario) => this.sanitizeUser(usuario));
+  }
+
   async findById(id: string): Promise<Usuario> {
     const [usuario] = await this.postgrest.select<Usuario>('usuarios', {
       filters: { id },

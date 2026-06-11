@@ -13,6 +13,7 @@ import {
 } from '../models/respuesta-submit.model';
 import { ResultadoSimulacion } from '../models/resultado-simulacion.model';
 import { HistorialIntento } from '../models/historial-intento.model';
+import { SesionActiva } from '../models/sesion-activa.model';
 
 @Injectable({ providedIn: 'root' })
 export class SimulacionEstudianteService {
@@ -55,5 +56,9 @@ export class SimulacionEstudianteService {
 
   listarHistorial() {
     return this.http.get<HistorialIntento[]>(`${this.baseUrl}/historial`);
+  }
+
+  listarSesionesActivas() {
+    return this.http.get<SesionActiva[]>(`${this.baseUrl}/sesiones-activas`);
   }
 }

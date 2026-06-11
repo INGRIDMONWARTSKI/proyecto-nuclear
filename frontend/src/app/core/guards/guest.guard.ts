@@ -7,7 +7,10 @@ export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (!authService.isAuthenticated()) {
+  if (!authService.hasValidSession()) {
+    if (authService.isAuthenticated() && authService.isSessionExpired()) {
+      authService.invalidateLocalSession();
+    }
     return true;
   }
 

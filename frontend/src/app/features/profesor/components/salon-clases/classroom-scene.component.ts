@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+﻿import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { Usuario } from '../../../../core/models/usuario.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { classroomAnimations } from './classroom.animations';
@@ -24,6 +24,7 @@ export class ClassroomSceneComponent {
 
   readonly estudiantes = input<Usuario[]>([]);
   readonly estudiantesDisponibles = input<Usuario[]>([]);
+  readonly grupoNombre = input<string | null>(null);
   readonly puedeAdministrar = input(false);
   readonly grupoActivo = input(true);
   readonly loadingSalon = input(false);
@@ -39,6 +40,16 @@ export class ClassroomSceneComponent {
   readonly assignRequested = output<{ estudianteId: string; deskIndex: number }>();
 
   protected readonly buildAvatarStyle = buildAvatarStyle;
+
+  protected readonly tituloPizarra = computed(() => {
+    const nombre = this.grupoNombre()?.trim();
+    return nombre || 'Grupo académico';
+  });
+
+  protected readonly subtituloPizarra = computed(() => {
+    const nombre = this.grupoNombre()?.trim();
+    return nombre ? 'Simulación psicosocial' : 'Espacio de práctica guiada';
+  });
 
   private readonly estudiantesPorId = computed(() => {
     const map = new Map<string, Usuario>();
@@ -71,6 +82,18 @@ export class ClassroomSceneComponent {
       this.busquedaAsignar(),
     ),
   );
+
+  readonly mensajeSinPendientes = computed(() => {
+    if (this.disponiblesParaAsignar().length > 0) {
+      return '';
+    }
+
+    if (this.estudiantes().length > 0) {
+      return 'Todos los estudiantes disponibles ya están en este grupo.';
+    }
+
+    return 'No hay estudiantes registrados en el sistema. Solicita al administrador que cree cuentas con rol Estudiante.';
+  });
 
   onDeskClick(slot: DeskSlot) {
     if (!this.grupoActivo()) {

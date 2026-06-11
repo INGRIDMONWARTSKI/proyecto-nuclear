@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { legacyGruposRedirectGuard } from './core/guards/legacy-grupos-redirect.guard';
+import { legacySimulacionRedirectGuard } from './core/guards/legacy-simulacion-redirect.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { Role } from './core/models/role.enum';
 
@@ -58,56 +60,122 @@ export const routes: Routes = [
       ),
   },
 
-  // Compatibilidad temporal — redirecciones legacy
-  { path: 'grupos', redirectTo: 'profesor/grupos', pathMatch: 'full' },
-  { path: 'grupos/nuevo', redirectTo: 'profesor/grupos/nuevo', pathMatch: 'full' },
-  { path: 'grupos/:id/editar', redirectTo: 'profesor/grupos/:id/editar', pathMatch: 'full' },
-  { path: 'grupos/:id', redirectTo: 'profesor/grupos/:id', pathMatch: 'full' },
+  // Compatibilidad temporal — redirecciones legacy sensibles al rol
   {
-    path: 'simulacion/docente/casos',
-    redirectTo: 'profesor/casos',
-    pathMatch: 'full',
+    path: 'grupos/nuevo',
+    canActivate: [legacyGruposRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
   },
+  {
+    path: 'grupos/:id/editar',
+    canActivate: [legacyGruposRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
+  },
+  {
+    path: 'grupos/:id',
+    canActivate: [legacyGruposRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
+  },
+  {
+    path: 'grupos',
+    canActivate: [legacyGruposRedirectGuard],
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
+  },
+  // Compatibilidad temporal — redirecciones legacy simulación sensibles al rol
   {
     path: 'simulacion/docente/casos/nuevo',
-    redirectTo: 'profesor/casos/nuevo',
-    pathMatch: 'full',
-  },
-  {
-    path: 'simulacion/docente/casos/:casoId/editar',
-    redirectTo: 'profesor/casos/:casoId/editar',
-    pathMatch: 'full',
-  },
-  {
-    path: 'simulacion/docente/casos/:casoId',
-    redirectTo: 'profesor/casos/:casoId',
-    pathMatch: 'full',
+    canActivate: [legacySimulacionRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
   },
   {
     path: 'simulacion/docente/casos/:casoId/escenarios/nuevo',
-    redirectTo: 'profesor/casos/:casoId/escenarios/nuevo',
-    pathMatch: 'full',
+    canActivate: [legacySimulacionRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
   },
   {
-    path: 'simulacion/docente/escenarios/:escenarioId/editar',
-    redirectTo: 'profesor/escenarios/:escenarioId/editar',
+    path: 'simulacion/docente/casos/:casoId/editar',
+    canActivate: [legacySimulacionRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
+  },
+  {
+    path: 'simulacion/docente/casos/:casoId',
+    canActivate: [legacySimulacionRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
+  },
+  {
+    path: 'simulacion/docente/casos',
+    canActivate: [legacySimulacionRedirectGuard],
     pathMatch: 'full',
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
   },
   {
     path: 'simulacion/docente/escenarios/:escenarioId/configurar',
-    redirectTo: 'profesor/escenarios/:escenarioId/decision',
-    pathMatch: 'full',
+    canActivate: [legacySimulacionRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
   },
-  { path: 'simulacion/casos', redirectTo: 'estudiante/casos', pathMatch: 'full' },
+  {
+    path: 'simulacion/docente/escenarios/:escenarioId/editar',
+    canActivate: [legacySimulacionRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
+  },
   {
     path: 'simulacion/sesiones/:sesionId/resultado',
-    redirectTo: 'estudiante/resultados/:sesionId',
-    pathMatch: 'full',
+    canActivate: [legacySimulacionRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
   },
   {
     path: 'simulacion/sesiones/:sesionId',
-    redirectTo: 'estudiante/sesiones/:sesionId',
+    canActivate: [legacySimulacionRedirectGuard],
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
+  },
+  {
+    path: 'simulacion/casos',
+    canActivate: [legacySimulacionRedirectGuard],
     pathMatch: 'full',
+    loadComponent: () =>
+      import('./core/components/legacy-redirect.component').then(
+        (m) => m.LegacyRedirectComponent,
+      ),
   },
 
   { path: '**', redirectTo: 'login', pathMatch: 'full' },

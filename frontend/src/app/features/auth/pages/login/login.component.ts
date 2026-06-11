@@ -1,6 +1,6 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { NgStyle } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -65,8 +65,10 @@ export class LoginComponent implements OnInit, OnDestroy {
   protected readonly activeTipIndex = signal(0);
   protected readonly tipVisible = signal(true);
   protected readonly showRecoverModal = signal(false);
-  protected readonly recoverEmail = signal('');
   protected readonly recoverNotice = signal<string | null>(null);
+  protected readonly recoverError = signal<string | null>(null);
+  protected readonly recoverLoading = signal(false);
+  protected readonly recoverStep = signal<'request' | 'verify'>('request');
 
   protected readonly floatingLeaves: FloatingLeaf[] = [
     { id: 1, top: '6%', left: '4%', size: 28, delay: 0, duration: 18, variant: 1, depth: 6 },
@@ -80,15 +82,15 @@ export class LoginComponent implements OnInit, OnDestroy {
   ];
 
   protected readonly orbitIcons: OrbitalIcon[] = [
-    { id: 'sprout', label: 'Decisión consciente', icon: 'sprout', delay: 0 },
-    { id: 'heart', label: 'Empatía clínica', icon: 'heart', delay: -8 },
-    { id: 'brain', label: 'Reflexión', icon: 'brain', delay: -16 },
+    { id: 'sprout', label: 'Decision consciente', icon: 'sprout', delay: 0 },
+    { id: 'heart', label: 'Empatia clinica', icon: 'heart', delay: -8 },
+    { id: 'brain', label: 'Reflexion', icon: 'brain', delay: -16 },
   ];
 
   protected readonly pillars: Pillar[] = [
     { label: 'Experiencias inmersivas', icon: '🧠' },
     { label: 'Aprendizaje significativo', icon: '💬' },
-    { label: 'Empatía y ciencia', icon: '🌸' },
+    { label: 'Empatia y ciencia', icon: '🌸' },
     { label: 'Desarrollo profesional', icon: '📈' },
     { label: 'Seguridad y privacidad', icon: '🛡' },
   ];
@@ -118,28 +120,39 @@ export class LoginComponent implements OnInit, OnDestroy {
     {
       title: 'Hoja MENTORA',
       message:
-        'Observa el contexto antes de responder: una buena intervención empieza por escuchar.',
+        'Observa el contexto antes de responder: una buena intervencion empieza por escuchar.',
     },
     {
       title: 'Hoja MENTORA',
       message:
-        'Antes de responder, observa el contexto, identifica señales de riesgo y elige una intervención ética.',
+        'Antes de responder, observa el contexto, identifica senales de riesgo y elige una intervencion etica.',
     },
     {
       title: 'Hoja MENTORA',
       message:
-        'Aprender con casos te ayuda a conectar teoría, emoción y acción profesional.',
+        'Aprender con casos te ayuda a conectar teoria, emocion y accion profesional.',
     },
     {
       title: 'Hoja MENTORA',
       message:
-        'Reflexionar después de cada escenario mejora tu juicio para futuras decisiones.',
+        'Reflexionar despues de cada escenario mejora tu juicio para futuras decisiones.',
     },
   ];
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
+  });
+
+  protected readonly recoverRequestForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+  });
+
+  protected readonly recoverVerifyForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+    newPassword: ['', [Validators.required, Validators.minLength(8)]],
+    confirmPassword: ['', [Validators.required, Validators.minLength(8)]],
   });
 
   ngOnInit() {
@@ -202,38 +215,106 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   openRecoverPassword() {
+    this.recoverRequestForm.reset({ email: '' });
+    this.recoverVerifyForm.reset({
+      email: '',
+      code: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+    this.recoverStep.set('request');
     this.recoverNotice.set(null);
+    this.recoverError.set(null);
     this.showRecoverModal.set(true);
   }
 
   closeRecoverPassword() {
     this.showRecoverModal.set(false);
     this.recoverNotice.set(null);
-  }
-
-  onRecoverEmailInput(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.recoverEmail.set(value);
-    this.recoverNotice.set(null);
+    this.recoverError.set(null);
+    this.recoverLoading.set(false);
+    this.recoverStep.set('request');
   }
 
   requestPasswordRecovery() {
-    const email = this.recoverEmail().trim();
-
-    if (!email) {
-      this.recoverNotice.set('Ingresa tu correo institucional para continuar.');
+    if (this.recoverRequestForm.invalid) {
+      this.recoverRequestForm.markAllAsTouched();
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      this.recoverNotice.set('Ingresa un correo institucional válido.');
+    const email = this.recoverRequestForm.controls.email.value.trim();
+    this.recoverLoading.set(true);
+    this.recoverNotice.set(null);
+    this.recoverError.set(null);
+
+    this.authService.forgotPassword({ email }).subscribe({
+      next: (response) => {
+        this.recoverLoading.set(false);
+        this.recoverNotice.set(response.message);
+        this.recoverStep.set('verify');
+        this.recoverVerifyForm.patchValue({
+          email,
+          code: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+      },
+      error: () => {
+        this.recoverLoading.set(false);
+        this.recoverError.set(
+          'No fue posible enviar el codigo de verificacion en este momento.',
+        );
+      },
+    });
+  }
+
+  submitRecoveryCode() {
+    if (this.recoverVerifyForm.invalid) {
+      this.recoverVerifyForm.markAllAsTouched();
       return;
     }
 
-    // Preparado para conectar con el endpoint de recuperación cuando esté disponible.
-    this.recoverNotice.set(
-      'El envío de instrucciones estará disponible cuando se implemente el servicio de recuperación en el servidor.',
-    );
+    const payload = this.recoverVerifyForm.getRawValue();
+
+    if (payload.newPassword !== payload.confirmPassword) {
+      this.recoverError.set('Las contrasenas no coinciden.');
+      return;
+    }
+
+    this.recoverLoading.set(true);
+    this.recoverNotice.set(null);
+    this.recoverError.set(null);
+
+    this.authService
+      .resetPassword({
+        email: payload.email.trim(),
+        code: payload.code.trim(),
+        newPassword: payload.newPassword,
+      })
+      .subscribe({
+        next: (response) => {
+          this.recoverLoading.set(false);
+          this.recoverNotice.set(response.message);
+          window.setTimeout(() => this.closeRecoverPassword(), 1200);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.recoverLoading.set(false);
+          const message = Array.isArray(error.error?.message)
+            ? error.error.message.join(' ')
+            : error.error?.message;
+          this.recoverError.set(
+            message || 'No fue posible restablecer la contrasena.',
+          );
+        },
+      });
+  }
+
+  volverASolicitarCodigo() {
+    const email = this.recoverVerifyForm.controls.email.value;
+    this.recoverStep.set('request');
+    this.recoverNotice.set(null);
+    this.recoverError.set(null);
+    this.recoverRequestForm.patchValue({ email });
   }
 
   onPageMove(event: MouseEvent) {
@@ -280,7 +361,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   private resolveLoginError(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 0) {
-        return 'No hay conexión con el servidor. Verifica que el backend esté activo.';
+        return 'No hay conexion con el servidor. Verifica que el backend este activo.';
       }
 
       const body = error.error as { message?: string | string[] };
@@ -296,14 +377,14 @@ export class LoginComponent implements OnInit, OnDestroy {
         lower.includes('conectar con el servidor') ||
         lower.includes('comunicarse con')
       ) {
-        return 'No hay conexión con el servidor. Verifica que el backend esté activo.';
+        return 'No hay conexion con el servidor. Verifica que el backend este activo.';
       }
 
       if (error.status === 401 || error.status === 403) {
-        return 'No pudimos iniciar sesión. Verifica tus credenciales.';
+        return 'No pudimos iniciar sesion. Verifica tus credenciales.';
       }
     }
 
-    return 'No pudimos iniciar sesión. Verifica tus credenciales.';
+    return 'No pudimos iniciar sesion. Verifica tus credenciales.';
   }
 }

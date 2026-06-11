@@ -7,6 +7,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dbContainer = 'proyecto-nuclear-db-1';
 const sqlFiles = [
   'database/persona-1-auth.sql',
+  'database/persona-1-auth-recovery.sql',
   'database/persona-2-grupos.sql',
   'database/persona-3-simulacion.sql',
 ];
@@ -48,9 +49,34 @@ function tableExists() {
   return check.stdout.trim() === 't';
 }
 
+function recoveryTableExists() {
+  const check = spawnSync(
+    'docker',
+    [
+      'exec',
+      dbContainer,
+      'psql',
+      '-U',
+      'postgres',
+      '-d',
+      'nuclear',
+      '-tAc',
+      "SELECT to_regclass('public.password_reset_tokens') IS NOT NULL;",
+    ],
+    { encoding: 'utf8', shell: true },
+  );
+
+  if (check.status !== 0) {
+    console.warn('[db-init] No se pudo verificar la tabla password_reset_tokens. Aplicando esquema...');
+    return false;
+  }
+
+  return check.stdout.trim() === 't';
+}
+
 console.log('[db-init] Verificando esquema PostgreSQL...');
 
-if (!tableExists()) {
+if (!tableExists() || !recoveryTableExists()) {
   console.log('[db-init] Aplicando SQL base...');
 
   for (const file of sqlFiles) {

@@ -14,6 +14,13 @@ POSTGREST_URL=http://localhost:3001
 POSTGREST_SCHEMA=public
 GEMINI_API_KEY=tu-api-key
 GEMINI_MODEL=gemini-2.5-flash
+FRONTEND_URL=http://localhost:4200
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=tu-cuenta@gmail.com
+SMTP_PASS=tu-app-password-sin-espacios
+SMTP_FROM="MENTORA <tu-cuenta@gmail.com>"
 # GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models
 # POSTGREST_API_KEY=
 ADMIN_EMAIL=admin@nuclear.local
@@ -43,6 +50,15 @@ npm run db:seed
 
 ```bash
 npm run start:dev
+
+## Gmail SMTP
+
+Para Gmail usa una contrasena de aplicacion, no tu contrasena normal.
+
+- Activa verificacion en dos pasos en tu cuenta de Google.
+- Genera una App Password desde tu cuenta de Google.
+- Guarda esa clave en `SMTP_PASS` sin espacios.
+- Usa `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587` y `SMTP_SECURE=false`.
 ```
 
 ## Notas
@@ -71,6 +87,8 @@ Los endpoints existentes en el codigo son:
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 

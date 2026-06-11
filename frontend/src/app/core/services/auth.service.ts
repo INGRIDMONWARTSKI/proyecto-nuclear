@@ -3,7 +3,15 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, AuthSession, LoginPayload } from '../models/auth.model';
+import {
+  AuthResponse,
+  AuthSession,
+  ForgotPasswordPayload,
+  ForgotPasswordResponse,
+  LoginPayload,
+  ResetPasswordPayload,
+  ResetPasswordResponse,
+} from '../models/auth.model';
 import { Role } from '../models/role.enum';
 import { Usuario } from '../models/usuario.model';
 import { isJwtExpired } from '../utils/jwt.util';
@@ -25,6 +33,20 @@ export class AuthService {
     return this.http
       .post<AuthResponse>(`${environment.apiUrl}/auth/login`, payload)
       .pipe(tap((response) => this.persistSession(response)));
+  }
+
+  forgotPassword(payload: ForgotPasswordPayload) {
+    return this.http.post<ForgotPasswordResponse>(
+      `${environment.apiUrl}/auth/forgot-password`,
+      payload,
+    );
+  }
+
+  resetPassword(payload: ResetPasswordPayload) {
+    return this.http.post<ResetPasswordResponse>(
+      `${environment.apiUrl}/auth/reset-password`,
+      payload,
+    );
   }
 
   logout() {

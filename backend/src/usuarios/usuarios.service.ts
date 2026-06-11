@@ -192,6 +192,23 @@ export class UsuariosService {
     );
   }
 
+  async updatePassword(id: string, password: string): Promise<void> {
+    const passwordHash = await bcrypt.hash(password, 10);
+    const usuario = await this.findById(id);
+
+    await this.postgrest.update<Usuario>(
+      'usuarios',
+      {
+        passwordHash,
+        tokenVersion: usuario.tokenVersion + 1,
+      },
+      {
+        filters: { id },
+        select: 'id',
+      },
+    );
+  }
+
   sanitizeUser(usuario: Usuario): UsuarioSeguro {
     const { passwordHash, ...usuarioSeguro } = usuario;
     return usuarioSeguro;

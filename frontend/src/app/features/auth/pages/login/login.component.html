@@ -356,31 +356,104 @@
       ></button>
       <div class="recover-modal__panel">
         <h3 id="recover-title">Recuperar contraseña</h3>
-        <p class="recover-modal__intro">
-          Ingresa tu correo institucional para recibir instrucciones de recuperación.
-        </p>
-        <label class="recover-modal__field" for="recover-email">
-          <span>Correo institucional</span>
-          <input
-            id="recover-email"
-            type="email"
-            [value]="recoverEmail()"
-            (input)="onRecoverEmailInput($event)"
-            placeholder="tu@institucion.edu"
-            autocomplete="email"
-          />
-        </label>
+        @if (recoverStep() === 'request') {
+          <p class="recover-modal__intro">
+            Ingresa tu correo institucional para enviarte un código de verificación.
+          </p>
+          <form [formGroup]="recoverRequestForm">
+            <label class="recover-modal__field" for="recover-email">
+              <span>Correo institucional</span>
+              <input
+                id="recover-email"
+                type="email"
+                formControlName="email"
+                placeholder="tu@institucion.edu"
+                autocomplete="email"
+              />
+            </label>
+          </form>
+        } @else {
+          <p class="recover-modal__intro">
+            Escribe el código recibido en tu correo y define una nueva contraseña.
+          </p>
+          <form [formGroup]="recoverVerifyForm">
+            <label class="recover-modal__field" for="recover-email-verify">
+              <span>Correo institucional</span>
+              <input
+                id="recover-email-verify"
+                type="email"
+                formControlName="email"
+                placeholder="tu@institucion.edu"
+                autocomplete="email"
+              />
+            </label>
+            <label class="recover-modal__field" for="recover-code">
+              <span> Código de verificación</span>
+              <input
+                id="recover-code"
+                type="text"
+                formControlName="code"
+                placeholder="123456"
+                maxlength="6"
+                autocomplete="one-time-code"
+              />
+            </label>
+            <label class="recover-modal__field" for="recover-password">
+              <span>Nueva contraseña</span>
+              <input
+                id="recover-password"
+                type="password"
+                formControlName="newPassword"
+                placeholder="Minimo 8 caracteres"
+                autocomplete="new-password"
+              />
+            </label>
+            <label class="recover-modal__field" for="recover-password-confirm">
+              <span>Confirmar contraseña</span>
+              <input
+                id="recover-password-confirm"
+                type="password"
+                formControlName="confirmPassword"
+                placeholder="Repite la nueva contraseña"
+                autocomplete="new-password"
+              />
+            </label>
+          </form>
+        }
         @if (recoverNotice()) {
           <p class="recover-modal__notice" role="status">{{ recoverNotice() }}</p>
         }
+        @if (recoverError()) {
+          <p class="recover-modal__notice" role="alert">{{ recoverError() }}</p>
+        }
         <div class="recover-modal__actions">
-          <button
-            type="button"
-            class="recover-modal__submit"
-            (click)="requestPasswordRecovery()"
-          >
-            Enviar instrucciones
-          </button>
+          @if (recoverStep() === 'request') {
+            <button
+              type="button"
+              class="recover-modal__submit"
+              [disabled]="recoverLoading()"
+              (click)="requestPasswordRecovery()"
+            >
+              {{ recoverLoading() ? 'Enviando...' : 'Enviar código' }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="recover-modal__submit"
+              [disabled]="recoverLoading()"
+              (click)="submitRecoveryCode()"
+            >
+              {{ recoverLoading() ? 'Validando...' : 'Restablecer contraseña' }}
+            </button>
+            <button
+              type="button"
+              class="recover-modal__cancel"
+              [disabled]="recoverLoading()"
+              (click)="volverASolicitarCodigo()"
+            >
+              Volver
+            </button>
+          }
           <button
             type="button"
             class="recover-modal__cancel"

@@ -7,8 +7,8 @@ import { Grupo } from '../../../../../core/models/grupo.model';
 import { Usuario } from '../../../../../core/models/usuario.model';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { getErrorMessage } from '../../../../../core/utils/http-error.util';
-import { ConfirmDialogComponent } from '../../../../../shared/ui/confirm-dialog/confirm-dialog.component';
 import { AlertMessageComponent } from '../../../../../shared/ui/alert-message/alert-message.component';
+import { ConfirmDialogComponent } from '../../../../../shared/ui/confirm-dialog/confirm-dialog.component';
 import { LoadingStateComponent } from '../../../../../shared/ui/loading-state/loading-state.component';
 import { PageHeaderComponent } from '../../../../../shared/ui/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../../../shared/ui/status-badge/status-badge.component';
@@ -44,7 +44,7 @@ export class GrupoDetailComponent implements OnInit {
   protected readonly loadingEstudiantes = signal(false);
   protected readonly assigning = signal(false);
   protected readonly removing = signal(false);
-  protected readonly deactivating = signal(false);
+  protected readonly updatingStatus = signal(false);
   protected readonly confirmOpen = signal(false);
   protected readonly confirmTitle = signal('');
   protected readonly confirmMessage = signal('');
@@ -79,12 +79,14 @@ export class GrupoDetailComponent implements OnInit {
 
   protected readonly sinEstudiantesEnSistema = computed(
     () =>
-      this.estudiantesDisponibles().length === 0 && this.estudiantes().length === 0,
+      this.estudiantesDisponibles().length === 0 &&
+      this.estudiantes().length === 0,
   );
 
   protected readonly todosEstudiantesAsignados = computed(
     () =>
-      this.estudiantesDisponibles().length === 0 && this.estudiantes().length > 0,
+      this.estudiantesDisponibles().length === 0 &&
+      this.estudiantes().length > 0,
   );
 
   protected readonly puedeAdministrar = computed(() => {
@@ -165,7 +167,10 @@ export class GrupoDetailComponent implements OnInit {
       error: (error) => {
         this.estudiantesDisponibles.set([]);
         this.errorMessage.set(
-          getErrorMessage(error, 'No fue posible cargar el listado de estudiantes.'),
+          getErrorMessage(
+            error,
+            'No fue posible cargar el listado de estudiantes.',
+          ),
         );
       },
     });
@@ -211,6 +216,52 @@ export class GrupoDetailComponent implements OnInit {
     this.asignarEstudiantesIds([...new Set(ids)]);
   }
 
+  confirmarRemover(estudiante: Usuario) {
+    const grupo = this.grupoData();
+    if (!grupo || this.removing()) {
+      return;
+    }
+
+    this.abrirConfirmacion({
+      title: 'Quitar estudiante del grupo',
+      message: `Quitar a ${estudiante.fullName} del grupo "${grupo.nombre}"?`,
+      confirmLabel: 'Quitar del grupo',
+      destructive: true,
+      action: () => this.removerEstudiante(estudiante),
+    });
+  }
+
+  confirmarDesactivar() {
+    const grupo = this.grupoData();
+    if (!grupo || this.updatingStatus()) {
+      return;
+    }
+
+    const activar = !grupo.isActive;
+    this.abrirConfirmacion({
+      title: activar ? 'Activar grupo' : 'Desactivar grupo',
+      message: activar
+        ? `Activar el grupo "${grupo.nombre}"? Volvera a estar disponible para nuevas asignaciones.`
+        : `Desactivar el grupo "${grupo.nombre}"? Dejara de estar disponible para nuevas asignaciones.`,
+      confirmLabel: activar ? 'Activar grupo' : 'Desactivar grupo',
+      destructive: !activar,
+      action: () => this.cambiarEstadoGrupo(activar),
+    });
+  }
+
+  confirmarAccionDialogo(): void {
+    this.confirmAction?.();
+  }
+
+  cerrarConfirmacion(): void {
+    if (this.removing() || this.updatingStatus()) {
+      return;
+    }
+
+    this.confirmOpen.set(false);
+    this.confirmAction = null;
+  }
+
   private asignarEstudiantesIds(uniqueIds: string[], deskIndex?: number) {
     if (uniqueIds.length === 0) {
       this.errorMessage.set('Selecciona al menos un estudiante.');
@@ -243,49 +294,6 @@ export class GrupoDetailComponent implements OnInit {
           );
         },
       });
-  }
-
-  confirmarRemover(estudiante: Usuario) {
-    const grupo = this.grupoData();
-    if (!grupo || this.removing()) {
-      return;
-    }
-
-    this.abrirConfirmacion({
-      title: 'Quitar estudiante del grupo',
-      message: `¿Quitar a ${estudiante.fullName} del grupo "${grupo.nombre}"?`,
-      confirmLabel: 'Quitar del grupo',
-      destructive: true,
-      action: () => this.removerEstudiante(estudiante),
-    });
-  }
-
-  confirmarDesactivar() {
-    const grupo = this.grupoData();
-    if (!grupo || this.deactivating()) {
-      return;
-    }
-
-    this.abrirConfirmacion({
-      title: 'Desactivar grupo',
-      message: `¿Desactivar el grupo "${grupo.nombre}"? Los estudiantes dejarán de asociarse a él en nuevas asignaciones.`,
-      confirmLabel: 'Desactivar grupo',
-      destructive: true,
-      action: () => this.desactivarGrupo(),
-    });
-  }
-
-  confirmarAccionDialogo(): void {
-    this.confirmAction?.();
-  }
-
-  cerrarConfirmacion(): void {
-    if (this.removing() || this.deactivating()) {
-      return;
-    }
-
-    this.confirmOpen.set(false);
-    this.confirmAction = null;
   }
 
   private abrirConfirmacion(options: {
@@ -325,23 +333,32 @@ export class GrupoDetailComponent implements OnInit {
     });
   }
 
-  private desactivarGrupo() {
-    this.deactivating.set(true);
+  private cambiarEstadoGrupo(isActive: boolean) {
+    this.updatingStatus.set(true);
     this.errorMessage.set(null);
+    this.successMessage.set(null);
 
-    this.gruposService.desactivar(this.grupoId).subscribe({
-      next: () => {
-        this.deactivating.set(false);
+    this.gruposService.actualizar(this.grupoId, { isActive }).subscribe({
+      next: (grupoActualizado) => {
+        this.grupoData.set(grupoActualizado);
+        if (!grupoActualizado.isActive) {
+          this.showAssignPanel.set(false);
+        }
+        this.updatingStatus.set(false);
         this.cerrarConfirmacion();
-        void this.router.navigate([
-          this.authService.getRoleBasePath().slice(1),
-          'grupos',
-        ]);
+        this.successMessage.set(
+          grupoActualizado.isActive
+            ? 'Grupo activado correctamente.'
+            : 'Grupo desactivado correctamente.',
+        );
       },
       error: (error) => {
-        this.deactivating.set(false);
+        this.updatingStatus.set(false);
         this.errorMessage.set(
-          getErrorMessage(error, 'No fue posible desactivar el grupo.'),
+          getErrorMessage(
+            error,
+            'No fue posible actualizar el estado del grupo.',
+          ),
         );
       },
     });

@@ -6,6 +6,7 @@ import { Grupo } from '../../../../../core/models/grupo.model';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { getErrorMessage } from '../../../../../core/utils/http-error.util';
 import { AlertMessageComponent } from '../../../../../shared/ui/alert-message/alert-message.component';
+import { ConfirmDialogComponent } from '../../../../../shared/ui/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '../../../../../shared/ui/empty-state/empty-state.component';
 import { LoadingStateComponent } from '../../../../../shared/ui/loading-state/loading-state.component';
 import { PageHeaderComponent } from '../../../../../shared/ui/page-header/page-header.component';
@@ -19,6 +20,7 @@ import { GruposService } from '../../../services/grupos.service';
     RouterLink,
     DatePipe,
     AlertMessageComponent,
+    ConfirmDialogComponent,
     EmptyStateComponent,
     LoadingStateComponent,
     PageHeaderComponent,
@@ -36,7 +38,15 @@ export class GruposListComponent implements OnInit {
   protected readonly Role = Role;
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly successMessage = signal<string | null>(null);
   protected readonly grupos = signal<Grupo[]>([]);
+  protected readonly confirmOpen = signal(false);
+  protected readonly confirmTitle = signal('');
+  protected readonly confirmMessage = signal('');
+  protected readonly confirmLabel = signal('Confirmar');
+  protected readonly updatingGroupId = signal<string | null>(null);
+
+  private confirmAction: (() => void) | null = null;
 
   ngOnInit() {
     this.cargarGrupos();
@@ -45,6 +55,7 @@ export class GruposListComponent implements OnInit {
   cargarGrupos() {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.successMessage.set(null);
 
     this.gruposService.listar().subscribe({
       next: (grupos) => {
@@ -86,5 +97,66 @@ export class GruposListComponent implements OnInit {
 
   irANuevoGrupo(): void {
     void this.router.navigate(['nuevo'], { relativeTo: this.route });
+  }
+
+  confirmarCambioEstado(grupo: Grupo): void {
+    if (!this.puedeAdministrar(grupo) || this.updatingGroupId()) {
+      return;
+    }
+
+    const activar = !grupo.isActive;
+    this.confirmTitle.set(activar ? 'Activar grupo' : 'Desactivar grupo');
+    this.confirmMessage.set(
+      activar
+        ? `¿Activar el grupo "${grupo.nombre}"? Volverá a estar disponible para nuevas asignaciones.`
+        : `¿Desactivar el grupo "${grupo.nombre}"? Dejará de estar disponible para nuevas asignaciones.`,
+    );
+    this.confirmLabel.set(activar ? 'Activar grupo' : 'Desactivar grupo');
+    this.confirmAction = () => this.cambiarEstado(grupo, activar);
+    this.confirmOpen.set(true);
+  }
+
+  confirmarAccionDialogo(): void {
+    this.confirmAction?.();
+  }
+
+  cerrarConfirmacion(): void {
+    if (this.updatingGroupId()) {
+      return;
+    }
+
+    this.confirmOpen.set(false);
+    this.confirmAction = null;
+  }
+
+  estaActualizando(grupoId: string): boolean {
+    return this.updatingGroupId() === grupoId;
+  }
+
+  private cambiarEstado(grupo: Grupo, isActive: boolean): void {
+    this.updatingGroupId.set(grupo.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.gruposService.actualizar(grupo.id, { isActive }).subscribe({
+      next: (grupoActualizado) => {
+        this.grupos.update((grupos) =>
+          grupos.map((item) => (item.id === grupoActualizado.id ? grupoActualizado : item)),
+        );
+        this.updatingGroupId.set(null);
+        this.cerrarConfirmacion();
+        this.successMessage.set(
+          isActive
+            ? 'Grupo activado correctamente.'
+            : 'Grupo desactivado correctamente.',
+        );
+      },
+      error: (error) => {
+        this.updatingGroupId.set(null);
+        this.errorMessage.set(
+          getErrorMessage(error, 'No fue posible actualizar el estado del grupo.'),
+        );
+      },
+    });
   }
 }

@@ -3,6 +3,9 @@
 Thumbs.db
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # Logs
 *.log
@@ -22,6 +25,9 @@ dist/
 coverage/
 .cache/
 .angular/
+.tmp/
+tmp/
+temp/
 
 # Databases
 *.db
@@ -30,11 +36,15 @@ generated/
 *.sqlite
 *.sqlite3
 
+# App runtime files
+uploads/
+
 # Repo structure
 backend/node_modules/
 backend/dist/
 backend/coverage/
 backend/generated/
+backend/uploads/
 frontend/node_modules/
 frontend/dist/
 frontend/.angular/

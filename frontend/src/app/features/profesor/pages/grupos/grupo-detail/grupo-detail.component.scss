@@ -4,7 +4,8 @@
   gap: var(--siep-space-2);
   align-items: center;
 
-  .siep-btn-secondary {
+  .siep-btn-secondary,
+  .siep-btn-danger {
     text-decoration: none;
   }
 }

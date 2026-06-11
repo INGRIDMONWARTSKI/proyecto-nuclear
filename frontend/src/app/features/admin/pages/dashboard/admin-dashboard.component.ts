@@ -57,6 +57,12 @@ export class AdminDashboardComponent implements OnInit {
   );
 
   protected readonly gruposAcademicos = computed(() => this.grupos().length);
+  protected readonly gruposActivos = computed(
+    () => this.grupos().filter((grupo) => grupo.isActive).length,
+  );
+  protected readonly gruposInactivos = computed(
+    () => this.grupos().filter((grupo) => !grupo.isActive).length,
+  );
 
   protected readonly cuentasInactivas = computed(
     () => this.usuarios().filter((usuario) => !usuario.isActive).length,

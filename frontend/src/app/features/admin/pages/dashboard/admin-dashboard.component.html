@@ -255,6 +255,21 @@
           </ul>
         </section>
 
+        <section class="siep-card aside-card" style="animation-delay: 0.23s">
+          <header class="aside-card__head">
+            <span class="aside-card__icon" aria-hidden="true">🌿</span>
+            <h3>Estado de grupos</h3>
+          </header>
+          <p>Los grupos academicos ahora se controlan con estados activo e inactivo.</p>
+          <p class="aside-card__highlight aside-card__highlight--ok">
+            {{ gruposActivos() }} {{ gruposActivos() === 1 ? 'grupo activo' : 'grupos activos' }}
+          </p>
+          <p class="aside-card__highlight">
+            {{ gruposInactivos() }}
+            {{ gruposInactivos() === 1 ? 'grupo inactivo' : 'grupos inactivos' }}
+          </p>
+        </section>
+
         <section class="siep-card aside-card" style="animation-delay: 0.26s">
           <header class="aside-card__head">
             <span class="aside-card__icon" aria-hidden="true">⏸</span>

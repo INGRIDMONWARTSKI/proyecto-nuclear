@@ -48,7 +48,6 @@ export class GruposService {
   async findAll(currentUser: AuthenticatedUser): Promise<Grupo[]> {
     if (currentUser.role === Role.ADMIN) {
       return this.postgrest.select<Grupo>('grupos', {
-        filters: { isActive: true },
         order: 'createdAt.desc',
       });
     }
@@ -57,7 +56,6 @@ export class GruposService {
       return this.postgrest.select<Grupo>('grupos', {
         filters: {
           profesorId: currentUser.sub,
-          isActive: true,
         },
         order: 'createdAt.desc',
       });
@@ -106,14 +104,6 @@ export class GruposService {
       }
 
       await this.assertProfesorValido(actualizarGrupoDto.profesorId);
-    }
-
-    if (actualizarGrupoDto.isActive !== undefined) {
-      if (currentUser.role !== Role.ADMIN) {
-        throw new ForbiddenException(
-          'Solo un administrador puede cambiar el estado del grupo.',
-        );
-      }
     }
 
     const payload = this.buildUpdatePayload(actualizarGrupoDto);

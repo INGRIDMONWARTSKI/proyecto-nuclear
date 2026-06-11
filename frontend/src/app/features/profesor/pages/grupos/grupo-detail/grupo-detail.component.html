@@ -8,16 +8,18 @@
           <a class="siep-btn-secondary" routerLink="..">Volver</a>
           @if (puedeAdministrar()) {
             <a class="siep-btn-secondary" [routerLink]="['editar']">Editar</a>
-            @if (g.isActive) {
-              <button
-                class="siep-btn-danger"
-                type="button"
-                [disabled]="deactivating()"
-                (click)="confirmarDesactivar()"
-              >
-                {{ deactivating() ? 'Desactivando...' : 'Desactivar grupo' }}
-              </button>
-            }
+            <button
+              class="{{ g.isActive ? 'siep-btn-danger' : 'siep-btn-secondary' }}"
+              type="button"
+              [disabled]="updatingStatus()"
+              (click)="confirmarDesactivar()"
+            >
+              @if (updatingStatus()) {
+                Actualizando...
+              } @else {
+                {{ g.isActive ? 'Desactivar grupo' : 'Activar grupo' }}
+              }
+            </button>
           }
         </div>
       </app-page-header>
@@ -56,18 +58,18 @@
           <div class="assign-toolbar__head">
             <h2>Asignar estudiantes</h2>
             <button class="siep-btn-primary" type="button" (click)="toggleAssignPanel()">
-              {{ showAssignPanel() ? 'Ocultar' : 'Asignación múltiple' }}
+              {{ showAssignPanel() ? 'Ocultar' : 'Asignacion multiple' }}
             </button>
           </div>
 
           @if (sinEstudiantesEnSistema()) {
             <p class="assign-toolbar__notice">
               No hay estudiantes registrados en el sistema. Solicita al administrador que cree
-              cuentas con rol Estudiante desde <strong>Admin → Usuarios</strong>.
+              cuentas con rol Estudiante desde <strong>Admin -> Usuarios</strong>.
             </p>
           } @else if (todosEstudiantesAsignados()) {
             <p class="assign-toolbar__notice">
-              Todos los estudiantes disponibles ya están asignados a este grupo.
+              Todos los estudiantes disponibles ya estan asignados a este grupo.
             </p>
           }
 
@@ -77,7 +79,7 @@
                 <label for="estudianteIds">Estudiantes</label>
                 @if (sinEstudiantesEnSistema()) {
                   <p class="hint">
-                    Crea estudiantes en el módulo de usuarios antes de asignarlos a este grupo.
+                    Crea estudiantes en el modulo de usuarios antes de asignarlos a este grupo.
                   </p>
                 } @else if (estudiantesPendientes().length === 0) {
                   <p class="hint">No quedan estudiantes pendientes por asignar a este grupo.</p>
@@ -96,7 +98,7 @@
                       <button
                         type="button"
                         class="siep-btn-secondary siep-btn--compact"
-                        aria-label="Limpiar búsqueda de estudiantes"
+                        aria-label="Limpiar busqueda de estudiantes"
                         (click)="limpiarBusquedaAsignacion()"
                       >
                         Limpiar
@@ -109,7 +111,7 @@
                   </p>
                   <ul class="student-picker" aria-label="Lista de estudiantes">
                     @if (estudiantesPendientesFiltrados().length === 0) {
-                      <li class="student-picker__empty">Sin coincidencias para la búsqueda.</li>
+                      <li class="student-picker__empty">Sin coincidencias para la busqueda.</li>
                     } @else {
                       @for (estudiante of estudiantesPendientesFiltrados(); track estudiante.id) {
                         <li>
@@ -128,7 +130,7 @@
                       }
                     }
                   </ul>
-                  <small class="hint">Marca varios estudiantes o asigna desde un pupitre vacío.</small>
+                  <small class="hint">Marca varios estudiantes o asigna desde un pupitre vacio.</small>
                 }
               </div>
 
@@ -165,7 +167,7 @@
     [message]="confirmMessage()"
     [confirmLabel]="confirmLabel()"
     [destructive]="confirmDestructive()"
-    [confirming]="removing() || deactivating()"
+    [confirming]="removing() || updatingStatus()"
     (confirmed)="confirmarAccionDialogo()"
     (cancelled)="cerrarConfirmacion()"
   />

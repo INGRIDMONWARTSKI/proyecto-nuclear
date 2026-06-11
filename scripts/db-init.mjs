@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const dbContainer = 'proyectonuclear-db-1';
+const dbContainer = 'proyecto-nuclear-db-1';
 const sqlFiles = [
   'database/persona-1-auth.sql',
   'database/persona-2-grupos.sql',

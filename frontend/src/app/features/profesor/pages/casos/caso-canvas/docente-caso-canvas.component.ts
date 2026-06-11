@@ -26,6 +26,10 @@ import {
   CasoEditorOpcion,
 } from '../../../../simulacion/models/docente/caso-editor.model';
 import {
+  AiAsset,
+  AiAssetStyle,
+} from '../../../../simulacion/models/docente/ai-asset.model';
+import {
   EditorElement,
   EditorElementType,
 } from '../../../../simulacion/models/docente/editor-layout.model';
@@ -107,6 +111,12 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   );
   protected readonly feedbackReferenceDraft = signal('');
   protected readonly previewSelectedOptionId = signal<string | null>(null);
+  protected readonly aiDescription = signal('');
+  protected readonly aiStyle = signal<AiAssetStyle>('editorial_sereno');
+  protected readonly aiGenerating = signal(false);
+  protected readonly aiApplying = signal(false);
+  protected readonly aiAssets = signal<AiAsset[]>([]);
+  protected readonly selectedAiAssetId = signal<string | null>(null);
 
   protected casoId = '';
   protected readonly sceneBaseWidth = 1280;
@@ -134,6 +144,24 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     { id: 'layout', label: 'Posicion y tamano' },
     { id: 'content', label: 'Contenido' },
     { id: 'advanced', label: 'Avanzado' },
+  ] as const;
+
+  protected readonly aiStyleOptions = [
+    {
+      id: 'editorial_sereno',
+      label: 'Editorial sereno',
+      description: 'Ilustracion limpia, academica y equilibrada.',
+    },
+    {
+      id: 'acuarela_suave',
+      label: 'Acuarela suave',
+      description: 'Textura ligera y atmosfera calmada.',
+    },
+    {
+      id: 'minimal_calido',
+      label: 'Minimal calido',
+      description: 'Composicion simple, profesional y acogedora.',
+    },
   ] as const;
 
   protected readonly escenarios = computed(() => this.editor()?.escenarios ?? []);
@@ -167,6 +195,16 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   );
 
   protected readonly validationErrors = computed(() => this.editor()?.validationErrors ?? []);
+  protected readonly latestAiAsset = computed(() => {
+    const selectedId = this.selectedAiAssetId();
+    const assets = this.aiAssets();
+
+    if (selectedId) {
+      return assets.find((item) => item.id === selectedId) ?? assets[0] ?? null;
+    }
+
+    return assets[0] ?? null;
+  });
 
   protected readonly allLibraryItems = computed((): BibliotecaItem[] => [
     {
@@ -427,6 +465,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         this.syncQuestionDraft();
         this.syncDecisionSelection();
         this.resetStudentPreview();
+        this.loadAiAssets();
         this.loading.set(false);
         this.scheduleFitSceneToViewport();
       },
@@ -455,6 +494,18 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     this.syncDecisionSelection();
     this.resetStudentPreview();
     this.scheduleFitSceneToViewport();
+  }
+
+  updateAiDescription(value: string): void {
+    this.aiDescription.set(value);
+  }
+
+  updateAiStyle(value: AiAssetStyle): void {
+    this.aiStyle.set(value);
+  }
+
+  selectAiAsset(assetId: string): void {
+    this.selectedAiAssetId.set(assetId);
   }
 
   selectElement(elementId: string): void {
@@ -668,13 +719,19 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
           background.content = {
             ...background.content,
             backgroundCode: libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo,
+            aiAssetId: null,
+            imageUrl: null,
           };
           background.style = {
             ...background.style,
             backgroundCode: String(libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo),
+            aiAssetId: null,
+            imageUrl: null,
           };
         }
         escenario.fondoCodigo = String(libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo);
+        escenario.aiBackgroundAssetId = null;
+        escenario.aiBackgroundUrl = null;
       });
       return;
     }
@@ -698,6 +755,91 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       escenario.layout.elements.push(newElement);
     });
     this.selectedElementId.set(newElement.id);
+  }
+
+  generateAiBackground(): void {
+    const escenario = this.escenarioSeleccionado();
+    const descripcion = this.aiDescription().trim();
+
+    if (!escenario) {
+      return;
+    }
+
+    if (descripcion.length < 12) {
+      this.errorMessage.set('Describe el fondo con al menos 12 caracteres.');
+      return;
+    }
+
+    this.aiGenerating.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.simulacionService
+      .generarAiAsset({
+        casoId: this.casoId,
+        escenarioId: escenario.id,
+        tipo: 'FONDO',
+        descripcion,
+        estilo: this.aiStyle(),
+      })
+      .subscribe({
+        next: (asset) => {
+          this.aiGenerating.set(false);
+          this.aiDescription.set('');
+          this.aiAssets.set([asset, ...this.aiAssets().filter((item) => item.id !== asset.id)]);
+          this.selectedAiAssetId.set(asset.id);
+          this.successMessage.set('Fondo IA generado. Ya puedes usarlo en la escena.');
+        },
+        error: (error) => {
+          this.aiGenerating.set(false);
+          this.errorMessage.set(getErrorMessage(error, 'No fue posible generar el fondo con IA.'));
+        },
+      });
+  }
+
+  applyLatestAiBackground(): void {
+    const escenario = this.escenarioSeleccionado();
+    const asset = this.latestAiAsset();
+
+    if (!escenario || !asset) {
+      return;
+    }
+
+    this.aiApplying.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.simulacionService.insertarAiAssetEnEscenario(asset.id, escenario.id).subscribe({
+      next: (appliedAsset) => {
+        this.aiApplying.set(false);
+        this.aiAssets.set(
+          this.aiAssets().map((item) => (item.id === appliedAsset.id ? appliedAsset : item)),
+        );
+        this.selectedAiAssetId.set(appliedAsset.id);
+        this.patchScenario((item) => {
+          item.aiBackgroundAssetId = appliedAsset.id;
+          item.aiBackgroundUrl = appliedAsset.publicUrl;
+          const background = item.layout.elements.find((element) => element.type === 'background');
+          if (background) {
+            background.style = {
+              ...background.style,
+              aiAssetId: appliedAsset.id,
+              imageUrl: appliedAsset.publicUrl,
+            };
+            background.content = {
+              ...background.content,
+              aiAssetId: appliedAsset.id,
+              imageUrl: appliedAsset.publicUrl,
+            };
+          }
+        });
+        this.successMessage.set('Fondo IA aplicado al escenario actual.');
+      },
+      error: (error) => {
+        this.aiApplying.set(false);
+        this.errorMessage.set(getErrorMessage(error, 'No fue posible aplicar el fondo IA.'));
+      },
+    });
   }
 
   startDrag(event: PointerEvent, elementId: string): void {
@@ -1002,7 +1144,42 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   canvasBackground(): string {
     const escenario = this.escenarioSeleccionado();
-    return this.backgroundGradient(escenario?.fondoCodigo ?? 'consultorio');
+    return escenario?.aiBackgroundUrl || this.backgroundGradient(escenario?.fondoCodigo ?? 'consultorio');
+  }
+
+  canvasBackgroundStyle(escenario = this.escenarioSeleccionado()): Record<string, string> {
+    const imageUrl = escenario?.aiBackgroundUrl ?? null;
+
+    if (imageUrl) {
+      return {
+        backgroundImage: `linear-gradient(rgba(31, 61, 46, 0.08), rgba(31, 61, 46, 0.08)), url('${imageUrl}')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      };
+    }
+
+    return {
+      background: this.backgroundGradient(escenario?.fondoCodigo ?? 'consultorio'),
+    };
+  }
+
+  scenarioThumbStyle(escenario: CasoEditorEscenario): Record<string, string> {
+    if (escenario.aiBackgroundUrl) {
+      return {
+        backgroundImage: `url('${escenario.aiBackgroundUrl}')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    }
+
+    return {
+      background: this.backgroundGradient(escenario.fondoCodigo),
+    };
+  }
+
+  hasAiBackground(escenario = this.escenarioSeleccionado()): boolean {
+    return Boolean(escenario?.aiBackgroundUrl);
   }
 
   backgroundGradient(code: string): string {
@@ -1200,6 +1377,20 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   private selectedScenarioElement(elementId: string): EditorElement | null {
     return this.escenarioSeleccionado()?.layout.elements.find((item) => item.id === elementId) ?? null;
+  }
+
+  private loadAiAssets(): void {
+    this.simulacionService.listarAiAssetsCaso(this.casoId).subscribe({
+      next: (assets) => {
+        this.aiAssets.set(assets);
+        if (!this.selectedAiAssetId() && assets.length > 0) {
+          this.selectedAiAssetId.set(assets[0].id);
+        }
+      },
+      error: () => {
+        this.aiAssets.set([]);
+      },
+    });
   }
 
   private onPointerMove(event: PointerEvent): void {

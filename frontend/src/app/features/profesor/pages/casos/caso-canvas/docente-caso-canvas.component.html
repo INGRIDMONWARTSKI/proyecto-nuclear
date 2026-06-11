@@ -160,6 +160,78 @@
                     </button>
                   </div>
                 }
+                <section class="ai-generator">
+                  <div class="ai-generator__header">
+                    <div>
+                      <p class="panel__eyebrow">Generar con IA</p>
+                      <h4>Fondo de escenario</h4>
+                    </div>
+                    <span class="ai-generator__pill">MVP</span>
+                  </div>
+
+                  <div class="property-note ai-generator__type">
+                    <div>
+                      <strong>Tipo</strong>
+                      <p>FONDO</p>
+                    </div>
+                    <span>16:9</span>
+                  </div>
+
+                  <label class="field">
+                    <span>Descripcion</span>
+                    <textarea
+                      rows="4"
+                      [value]="aiDescription()"
+                      placeholder="Ej: consultorio sereno con luz natural, plantas suaves y atmosfera de escucha profesional."
+                      (input)="updateAiDescription($any($event.target).value)"
+                    ></textarea>
+                  </label>
+
+                  <label class="field">
+                    <span>Estilo visual</span>
+                    <select [value]="aiStyle()" (change)="updateAiStyle($any($event.target).value)">
+                      @for (style of aiStyleOptions; track style.id) {
+                        <option [value]="style.id">{{ style.label }}</option>
+                      }
+                    </select>
+                  </label>
+
+                  <button class="siep-btn-primary ai-generator__action" type="button" [disabled]="aiGenerating()" (click)="generateAiBackground()">
+                    {{ aiGenerating() ? 'Generando...' : 'Generar' }}
+                  </button>
+
+                  @if (aiAssets().length > 0) {
+                    <div class="ai-preview-list">
+                      @for (asset of aiAssets().slice(0, 4); track asset.id) {
+                        <button
+                          class="ai-preview-card"
+                          type="button"
+                          [class.ai-preview-card--active]="latestAiAsset().id === asset.id"
+                          (click)="selectAiAsset(asset.id)"
+                        >
+                          <div class="ai-preview-card__thumb" [style.background-image]="'url(' + asset.publicUrl + ')'"></div>
+                          <div class="ai-preview-card__meta">
+                            <strong>{{ asset.nombre }}</strong>
+                            <span>{{ asset.estilo }}</span>
+                          </div>
+                        </button>
+                      }
+                    </div>
+                  }
+
+                  @if (latestAiAsset(); as asset) {
+                    <div class="ai-preview">
+                      <div class="ai-preview__image" [style.background-image]="'url(' + asset.publicUrl + ')'"></div>
+                      <div class="ai-preview__meta">
+                        <strong>Preview lista</strong>
+                        <span>{{ asset.estilo }} · {{ asset.proveedor }}</span>
+                      </div>
+                      <button class="siep-btn-secondary ai-generator__action" type="button" [disabled]="aiApplying()" (click)="applyLatestAiBackground()">
+                        {{ aiApplying() ? 'Aplicando...' : 'Usar como fondo' }}
+                      </button>
+                    </div>
+                  }
+                </section>
               </div>
             } @else {
               <div class="panel-collapsed-rail" role="button" tabindex="0" (click)="toggleLibraryPanel()">
@@ -205,15 +277,17 @@
                   [style.width.px]="sceneBaseWidth"
                   [style.height.px]="sceneBaseHeight"
                   [style.transform]="'scale(' + zoomLevel() + ')'"
-                  [style.background]="canvasBackground()"
+                  [ngStyle]="canvasBackgroundStyle()"
                   (click)="clearSelectedElement()"
                 >
                   <div class="scene-stage__grid"></div>
-                  <div class="scene-stage__backdrop">
-                    <div class="scene-stage__window"></div>
-                    <div class="scene-stage__sofa"></div>
-                    <div class="scene-stage__table"></div>
-                  </div>
+                  @if (!hasAiBackground()) {
+                    <div class="scene-stage__backdrop">
+                      <div class="scene-stage__window"></div>
+                      <div class="scene-stage__sofa"></div>
+                      <div class="scene-stage__table"></div>
+                    </div>
+                  }
 
                   @if (selectedElement()) {
                     <div class="floating-toolbar" (click)="$event.stopPropagation()">
@@ -430,7 +504,7 @@
                 [class.scenario-chip--active]="escenarioSeleccionado()!.id === esc.id"
                 (click)="selectEscenario(esc.id)"
               >
-                <div class="scenario-chip__thumb" [style.background]="backgroundGradient(esc.fondoCodigo)"></div>
+                <div class="scenario-chip__thumb" [ngStyle]="scenarioThumbStyle(esc)"></div>
                 <div class="scenario-chip__meta">
                   <span>E{{ esc.orden }}</span>
                   <strong>{{ esc.titulo }}</strong>
@@ -639,12 +713,14 @@
             </div>
           </div>
 
-          <article class="student-stage" [style.background]="canvasBackground()">
-            <div class="student-stage__backdrop">
-              <div class="scene-stage__window"></div>
-              <div class="scene-stage__sofa"></div>
-              <div class="scene-stage__table"></div>
-            </div>
+          <article class="student-stage" [ngStyle]="canvasBackgroundStyle()">
+            @if (!hasAiBackground()) {
+              <div class="student-stage__backdrop">
+                <div class="scene-stage__window"></div>
+                <div class="scene-stage__sofa"></div>
+                <div class="scene-stage__table"></div>
+              </div>
+            }
 
             @for (element of orderedElements(); track element.id) {
               @if (!element.hidden) {

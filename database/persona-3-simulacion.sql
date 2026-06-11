@@ -230,6 +230,36 @@ comment on table public.respuestas_estudiante is 'Respuestas de estudiante por s
 create index if not exists respuestas_estudiante_sesion_id_idx
   on public.respuestas_estudiante (sesion_id);
 
+create table if not exists public.recursos_visuales (
+  id uuid primary key default gen_random_uuid(),
+  caso_id uuid not null references public.casos (id) on delete cascade,
+  escenario_id uuid references public.escenarios (id) on delete set null,
+  docente_id uuid not null references public.usuarios (id),
+  tipo text not null
+    check (tipo in ('FONDO', 'PERSONAJE', 'OBJETO', 'ESCENA_COMPLETA')),
+  nombre text not null,
+  prompt_original text not null,
+  prompt_final text not null,
+  url_externa text not null,
+  ruta_archivo text not null,
+  ancho integer,
+  alto integer,
+  estilo text not null,
+  proveedor text not null,
+  created_at timestamptz not null default now()
+);
+
+comment on table public.recursos_visuales is 'Catalogo e historial de recursos visuales generados con IA.';
+
+create index if not exists recursos_visuales_caso_id_idx
+  on public.recursos_visuales (caso_id);
+
+create index if not exists recursos_visuales_escenario_id_idx
+  on public.recursos_visuales (escenario_id);
+
+create index if not exists recursos_visuales_docente_id_idx
+  on public.recursos_visuales (docente_id);
+
 -- RF-13: asignacion de casos publicados a grupos academicos.
 -- Convencion camelCase (igual que public.grupos y public.estudiante_grupo).
 create table if not exists public.caso_grupo (

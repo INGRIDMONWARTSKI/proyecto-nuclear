@@ -40,6 +40,8 @@ export interface CasoEditorEscenario {
   titulo: string;
   situacionTexto: string;
   fondoCodigo: string;
+  aiBackgroundUrl?: string | null;
+  aiBackgroundAssetId?: string | null;
   isFinal: boolean;
   layout: EscenarioLayout;
   pregunta: CasoEditorPregunta | null;

@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import {
   CasoEditor,
 } from '../models/docente/caso-editor.model';
+import { AiAsset, AiAssetStyle, AiAssetType } from '../models/docente/ai-asset.model';
 import {
   CasoDocente,
   CasoDocenteDetalle,
@@ -119,6 +120,27 @@ export class SimulacionDocenteService {
     return this.http.post<EscenarioDocente>(
       `${this.docenteUrl}/escenarios/${escenarioId}/duplicate`,
       {},
+    );
+  }
+
+  generarAiAsset(payload: {
+    casoId: string;
+    escenarioId: string;
+    tipo: AiAssetType;
+    descripcion: string;
+    estilo: AiAssetStyle;
+  }) {
+    return this.http.post<AiAsset>(`${environment.apiUrl}/ai-assets/generate`, payload);
+  }
+
+  listarAiAssetsCaso(casoId: string) {
+    return this.http.get<AiAsset[]>(`${environment.apiUrl}/ai-assets/caso/${casoId}`);
+  }
+
+  insertarAiAssetEnEscenario(assetId: string, escenarioId: string) {
+    return this.http.post<AiAsset>(
+      `${environment.apiUrl}/ai-assets/${assetId}/insertar-en-escenario`,
+      { escenarioId },
     );
   }
 

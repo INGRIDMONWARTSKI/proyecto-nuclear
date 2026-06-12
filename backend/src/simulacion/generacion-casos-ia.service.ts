@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
@@ -25,6 +26,8 @@ import { CasoPreviewTree } from './types/caso-preview.types';
 
 @Injectable()
 export class GeneracionCasosIaService {
+  private static readonly MAX_GENERATION_ATTEMPTS = 2;
+
   constructor(
     private readonly casosService: CasosService,
     private readonly escenariosService: EscenariosService,
@@ -183,16 +186,31 @@ export class GeneracionCasosIaService {
     prompt: string,
     cantidadEscenarios: number,
   ): Promise<CasoGeneradoIa> {
-    let lastError: Error | null = null;
+    let lastErrorMessage =
+      'La IA devolvio una estructura que no cumple los requisitos minimos.';
+    const collectedErrors: string[] = [];
 
-    for (let intento = 0; intento < 2; intento += 1) {
+    for (
+      let intento = 0;
+      intento < GeneracionCasosIaService.MAX_GENERATION_ATTEMPTS;
+      intento += 1
+    ) {
       try {
         const raw = await this.geminiService.generateJson(prompt);
         const parsed = JSON.parse(raw) as unknown;
         return this.validateGeneratedCase(parsed, cantidadEscenarios);
       } catch (error) {
-        if (error instanceof SyntaxError || error instanceof BadRequestException) {
-          lastError = error;
+        if (error instanceof SyntaxError) {
+          const message =
+            'La IA devolvio una respuesta que no pudo interpretarse como JSON valido.';
+          lastErrorMessage = message;
+          collectedErrors.push(message);
+          continue;
+        }
+
+        if (error instanceof BadRequestException) {
+          lastErrorMessage = error.message;
+          collectedErrors.push(error.message);
           continue;
         }
 
@@ -200,9 +218,12 @@ export class GeneracionCasosIaService {
       }
     }
 
-    throw new BadGatewayException(
-      `La IA devolvio una estructura invalida. ${lastError?.message ?? ''}`.trim(),
-    );
+    throw new UnprocessableEntityException({
+      message:
+        'La IA genero un borrador invalido y no se guardo. Intenta nuevamente con referencias mas especificas.',
+      code: 'IA_DRAFT_INVALID',
+      errors: this.uniqueErrors(collectedErrors.length > 0 ? collectedErrors : [lastErrorMessage]),
+    });
   }
 
   private validateGeneratedCase(
@@ -537,9 +558,12 @@ export class GeneracionCasosIaService {
       );
 
       if (validationErrors.length > 0) {
-        throw new BadGatewayException(
-          `La IA genero un borrador inconsistente: ${validationErrors.join(' | ')}`,
-        );
+        throw new UnprocessableEntityException({
+          message:
+            'La IA genero un borrador invalido y no se guardo. Intenta nuevamente con referencias mas especificas.',
+          code: 'IA_DRAFT_INVALID',
+          errors: this.uniqueErrors(validationErrors),
+        });
       }
 
       return {
@@ -667,5 +691,9 @@ export class GeneracionCasosIaService {
     throw new ForbiddenException(
       'Solo docentes o administradores pueden generar casos con IA.',
     );
+  }
+
+  private uniqueErrors(errors: string[]): string[] {
+    return [...new Set(errors.map((item) => item.trim()).filter((item) => item.length > 0))];
   }
 }

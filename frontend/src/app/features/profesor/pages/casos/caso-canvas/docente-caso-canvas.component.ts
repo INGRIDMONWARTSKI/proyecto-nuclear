@@ -28,6 +28,7 @@ import {
 import {
   AiAsset,
   AiAssetStyle,
+  AiAssetVisibleType,
 } from '../../../../simulacion/models/docente/ai-asset.model';
 import {
   EditorElement,
@@ -113,6 +114,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly previewSelectedOptionId = signal<string | null>(null);
   protected readonly aiDescription = signal('');
   protected readonly aiStyle = signal<AiAssetStyle>('editorial_sereno');
+  protected readonly aiVisibleType = signal<AiAssetVisibleType>('background');
   protected readonly aiGenerating = signal(false);
   protected readonly aiApplying = signal(false);
   protected readonly aiAssets = signal<AiAsset[]>([]);
@@ -123,6 +125,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly sceneBaseHeight = 720;
 
   private dragState: DragState | null = null;
+  private pendingAiInsertedElementId: string | null = null;
   private fitSceneTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private readonly onPointerMoveBound = (event: PointerEvent) => this.onPointerMove(event);
   private readonly onPointerUpBound = () => this.stopDragging();
@@ -162,6 +165,13 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       label: 'Minimal calido',
       description: 'Composicion simple, profesional y acogedora.',
     },
+  ] as const;
+
+  protected readonly aiVisibleTypeOptions = [
+    { id: 'background', label: 'Fondo' },
+    { id: 'character', label: 'Personaje' },
+    { id: 'object', label: 'Objeto' },
+    { id: 'symbol', label: 'Simbolo/emocion' },
   ] as const;
 
   protected readonly escenarios = computed(() => this.editor()?.escenarios ?? []);
@@ -205,6 +215,10 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
     return assets[0] ?? null;
   });
+
+  protected readonly selectedElementIsBackground = computed(
+    () => this.selectedElement()?.type === 'background',
+  );
 
   protected readonly allLibraryItems = computed((): BibliotecaItem[] => [
     {
@@ -460,7 +474,12 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
           ? editor.escenarios.find((item) => item.id === this.selectedEscenarioId())
           : editor.escenarios[0];
         this.selectedEscenarioId.set(currentScenario?.id ?? null);
-        this.selectedElementId.set(currentScenario?.layout.elements[0]?.id ?? null);
+        const pendingElementId = this.pendingAiInsertedElementId;
+        const insertedElement = pendingElementId
+          ? currentScenario?.layout.elements.find((item) => item.id === pendingElementId)
+          : null;
+        this.selectedElementId.set(insertedElement?.id ?? currentScenario?.layout.elements[0]?.id ?? null);
+        this.pendingAiInsertedElementId = null;
         this.ensureLibrarySelection();
         this.syncQuestionDraft();
         this.syncDecisionSelection();
@@ -502,6 +521,10 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   updateAiStyle(value: AiAssetStyle): void {
     this.aiStyle.set(value);
+  }
+
+  updateAiVisibleType(value: AiAssetVisibleType): void {
+    this.aiVisibleType.set(value);
   }
 
   selectAiAsset(assetId: string): void {
@@ -714,21 +737,19 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
     if (libraryItem.tipo === 'background') {
       this.patchScenario((escenario) => {
-        const background = escenario.layout.elements.find((item) => item.type === 'background');
-        if (background) {
-          background.content = {
-            ...background.content,
-            backgroundCode: libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo,
-            aiAssetId: null,
-            imageUrl: null,
-          };
-          background.style = {
-            ...background.style,
-            backgroundCode: String(libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo),
-            aiAssetId: null,
-            imageUrl: null,
-          };
-        }
+        const background = this.ensureScenarioBackground(escenario);
+        background.content = {
+          ...background.content,
+          backgroundCode: libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo,
+          aiAssetId: null,
+          imageUrl: null,
+        };
+        background.style = {
+          ...background.style,
+          backgroundCode: String(libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo),
+          aiAssetId: null,
+          imageUrl: null,
+        };
         escenario.fondoCodigo = String(libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo);
         escenario.aiBackgroundAssetId = null;
         escenario.aiBackgroundUrl = null;
@@ -757,16 +778,17 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     this.selectedElementId.set(newElement.id);
   }
 
-  generateAiBackground(): void {
+  generateAiAsset(): void {
     const escenario = this.escenarioSeleccionado();
     const descripcion = this.aiDescription().trim();
+    const visibleType = this.aiVisibleType();
 
     if (!escenario) {
       return;
     }
 
     if (descripcion.length < 12) {
-      this.errorMessage.set('Describe el fondo con al menos 12 caracteres.');
+      this.errorMessage.set('Describe el recurso con al menos 12 caracteres.');
       return;
     }
 
@@ -778,7 +800,8 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       .generarAiAsset({
         casoId: this.casoId,
         escenarioId: escenario.id,
-        tipo: 'FONDO',
+        tipo: this.backendAiType(visibleType),
+        visibleType,
         descripcion,
         estilo: this.aiStyle(),
       })
@@ -788,16 +811,22 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
           this.aiDescription.set('');
           this.aiAssets.set([asset, ...this.aiAssets().filter((item) => item.id !== asset.id)]);
           this.selectedAiAssetId.set(asset.id);
-          this.successMessage.set('Fondo IA generado. Ya puedes usarlo en la escena.');
+          this.successMessage.set(
+            visibleType === 'background'
+              ? 'Fondo IA generado. Ya puedes usarlo en la escena.'
+              : 'Recurso IA generado. Ya puedes insertarlo en la escena.',
+          );
         },
         error: (error) => {
           this.aiGenerating.set(false);
-          this.errorMessage.set(getErrorMessage(error, 'No fue posible generar el fondo con IA.'));
+          this.errorMessage.set(
+            getErrorMessage(error, 'No fue posible generar el recurso con IA.'),
+          );
         },
       });
   }
 
-  applyLatestAiBackground(): void {
+  applyLatestAiAsset(): void {
     const escenario = this.escenarioSeleccionado();
     const asset = this.latestAiAsset();
 
@@ -809,37 +838,48 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    this.simulacionService.insertarAiAssetEnEscenario(asset.id, escenario.id).subscribe({
-      next: (appliedAsset) => {
-        this.aiApplying.set(false);
-        this.aiAssets.set(
-          this.aiAssets().map((item) => (item.id === appliedAsset.id ? appliedAsset : item)),
-        );
-        this.selectedAiAssetId.set(appliedAsset.id);
-        this.patchScenario((item) => {
-          item.aiBackgroundAssetId = appliedAsset.id;
-          item.aiBackgroundUrl = appliedAsset.publicUrl;
-          const background = item.layout.elements.find((element) => element.type === 'background');
-          if (background) {
-            background.style = {
-              ...background.style,
-              aiAssetId: appliedAsset.id,
-              imageUrl: appliedAsset.publicUrl,
-            };
-            background.content = {
-              ...background.content,
-              aiAssetId: appliedAsset.id,
-              imageUrl: appliedAsset.publicUrl,
-            };
+    const visibleType = this.assetVisibleType(asset);
+    this.simulacionService
+      .insertarAiAssetEnEscenario(asset.id, escenario.id, visibleType)
+      .subscribe({
+        next: (appliedAsset) => {
+          this.aiApplying.set(false);
+          this.aiAssets.set(
+            this.aiAssets().map((item) => (item.id === appliedAsset.id ? appliedAsset : item)),
+          );
+          this.selectedAiAssetId.set(appliedAsset.id);
+
+          if (visibleType === 'background') {
+            this.patchScenario((item) => {
+              item.aiBackgroundAssetId = appliedAsset.id;
+              item.aiBackgroundUrl = appliedAsset.publicUrl;
+              const background = this.ensureScenarioBackground(item);
+              background.style = {
+                ...background.style,
+                aiAssetId: appliedAsset.id,
+                imageUrl: appliedAsset.publicUrl,
+              };
+              background.content = {
+                ...background.content,
+                aiAssetId: appliedAsset.id,
+                imageUrl: appliedAsset.publicUrl,
+              };
+            });
+            this.successMessage.set('Fondo IA aplicado al escenario actual.');
+            return;
           }
-        });
-        this.successMessage.set('Fondo IA aplicado al escenario actual.');
-      },
-      error: (error) => {
-        this.aiApplying.set(false);
-        this.errorMessage.set(getErrorMessage(error, 'No fue posible aplicar el fondo IA.'));
-      },
-    });
+
+          this.successMessage.set('Recurso IA insertado en la escena.');
+          this.pendingAiInsertedElementId = appliedAsset.insertedElementId ?? null;
+          this.loadEditor();
+        },
+        error: (error) => {
+          this.aiApplying.set(false);
+          this.errorMessage.set(
+            getErrorMessage(error, 'No fue posible insertar el recurso IA en la escena.'),
+          );
+        },
+      });
   }
 
   startDrag(event: PointerEvent, elementId: string): void {
@@ -935,6 +975,11 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       return;
     }
 
+    if (element.type === 'background') {
+      this.errorMessage.set('El fondo base del escenario no se puede duplicar.');
+      return;
+    }
+
     const duplicated: EditorElement = {
       ...structuredClone(element),
       id: crypto.randomUUID(),
@@ -953,7 +998,13 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   deleteSelectedElement(): void {
     const selectedId = this.selectedElementId();
-    if (!selectedId) {
+    const selectedElement = this.selectedElement();
+    if (!selectedId || !selectedElement) {
+      return;
+    }
+
+    if (selectedElement.type === 'background') {
+      this.errorMessage.set('El fondo base del escenario no se puede eliminar.');
       return;
     }
 
@@ -1211,6 +1262,38 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     return typeof value === 'string' ? value : '';
   }
 
+  elementImageUrl(element: EditorElement): string {
+    return this.contentLabel(element, 'imageUrl');
+  }
+
+  elementAiType(element: EditorElement): string {
+    return this.contentLabel(element, 'aiType');
+  }
+
+  elementObjectFit(element: EditorElement): string {
+    const value = element.style['objectFit'];
+    return typeof value === 'string' ? value : 'contain';
+  }
+
+  latestAiActionLabel(): string {
+    return this.assetVisibleType(this.latestAiAsset()) === 'background'
+      ? 'Usar como fondo'
+      : 'Insertar en escena';
+  }
+
+  aiTypeBadge(): string {
+    switch (this.aiVisibleType()) {
+      case 'character':
+        return 'PERSONAJE';
+      case 'object':
+        return 'OBJETO';
+      case 'symbol':
+        return 'SIMBOLO';
+      default:
+        return 'FONDO';
+    }
+  }
+
   characterGradient(element: EditorElement): string {
     const avatar = this.contentLabel(element, 'avatar').toLowerCase();
     const rol = this.contentLabel(element, 'rol').toLowerCase();
@@ -1343,6 +1426,33 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     return `${pregunta.opciones.length} opciones configuradas`;
   }
 
+  private assetVisibleType(asset: AiAsset | null): AiAssetVisibleType {
+    if (asset?.visibleType) {
+      return asset.visibleType;
+    }
+
+    switch (asset?.tipo) {
+      case 'PERSONAJE':
+        return 'character';
+      case 'OBJETO':
+        return 'object';
+      default:
+        return 'background';
+    }
+  }
+
+  private backendAiType(visibleType: AiAssetVisibleType): 'FONDO' | 'PERSONAJE' | 'OBJETO' {
+    switch (visibleType) {
+      case 'character':
+        return 'PERSONAJE';
+      case 'object':
+      case 'symbol':
+        return 'OBJETO';
+      default:
+        return 'FONDO';
+    }
+  }
+
   private ensureLibrarySelection(): void {
     const items = this.library();
     if (!items.length) {
@@ -1467,6 +1577,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
           const clone = structuredClone(escenario);
           mutator(clone);
+          this.ensureScenarioBackground(clone);
           clone.layout.elements = [...clone.layout.elements].sort((a, b) => a.zIndex - b.zIndex);
           return clone;
         }),
@@ -1484,6 +1595,60 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   toNumber(value: string): number {
     return Number(value) || 0;
+  }
+
+  private ensureScenarioBackground(escenario: CasoEditorEscenario): EditorElement {
+    const existing = escenario.layout.elements.find((item) => item.type === 'background');
+
+    if (existing) {
+      existing.position = { x: 50, y: 50 };
+      existing.size = { width: 1000, height: 560 };
+      existing.rotation = 0;
+      existing.zIndex = 0;
+      existing.locked = true;
+      existing.hidden = false;
+      existing.style = {
+        ...existing.style,
+        backgroundCode:
+          typeof existing.style['backgroundCode'] === 'string'
+            ? existing.style['backgroundCode']
+            : escenario.fondoCodigo,
+      };
+      existing.content = {
+        ...existing.content,
+        title:
+          typeof existing.content['title'] === 'string'
+            ? existing.content['title']
+            : escenario.titulo,
+        situacionTexto:
+          typeof existing.content['situacionTexto'] === 'string'
+            ? existing.content['situacionTexto']
+            : escenario.situacionTexto,
+      };
+      return existing;
+    }
+
+    const background: EditorElement = {
+      id: `bg-${escenario.id}`,
+      type: 'background',
+      position: { x: 50, y: 50 },
+      size: { width: 1000, height: 560 },
+      rotation: 0,
+      zIndex: 0,
+      locked: true,
+      hidden: false,
+      style: {
+        backgroundCode: escenario.fondoCodigo,
+      },
+      content: {
+        title: escenario.titulo,
+        situacionTexto: escenario.situacionTexto,
+      },
+      bindings: {},
+    };
+
+    escenario.layout.elements.unshift(background);
+    return background;
   }
 
   private handleWindowResize(): void {

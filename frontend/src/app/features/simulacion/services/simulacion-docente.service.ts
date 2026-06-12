@@ -5,7 +5,12 @@ import { environment } from '../../../../environments/environment';
 import {
   CasoEditor,
 } from '../models/docente/caso-editor.model';
-import { AiAsset, AiAssetStyle, AiAssetType } from '../models/docente/ai-asset.model';
+import {
+  AiAsset,
+  AiAssetStyle,
+  AiAssetType,
+  AiAssetVisibleType,
+} from '../models/docente/ai-asset.model';
 import {
   CasoDocente,
   CasoDocenteDetalle,
@@ -127,6 +132,7 @@ export class SimulacionDocenteService {
     casoId: string;
     escenarioId: string;
     tipo: AiAssetType;
+    visibleType?: AiAssetVisibleType;
     descripcion: string;
     estilo: AiAssetStyle;
   }) {
@@ -137,10 +143,14 @@ export class SimulacionDocenteService {
     return this.http.get<AiAsset[]>(`${environment.apiUrl}/ai-assets/caso/${casoId}`);
   }
 
-  insertarAiAssetEnEscenario(assetId: string, escenarioId: string) {
+  insertarAiAssetEnEscenario(
+    assetId: string,
+    escenarioId: string,
+    visibleType?: AiAssetVisibleType,
+  ) {
     return this.http.post<AiAsset>(
       `${environment.apiUrl}/ai-assets/${assetId}/insertar-en-escenario`,
-      { escenarioId },
+      { escenarioId, visibleType },
     );
   }
 

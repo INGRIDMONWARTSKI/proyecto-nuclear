@@ -3,7 +3,7 @@ import {
   AI_ASSET_STYLES,
   type AiAssetStyle,
 } from './dto/generate-ai-asset.dto';
-import type { AiAssetType } from './entities/ai-asset.entity';
+import type { AiAssetType, AiAssetVisibleType } from './entities/ai-asset.entity';
 
 const STYLE_HINTS: Record<AiAssetStyle, string> = {
   editorial_sereno:
@@ -18,6 +18,7 @@ const STYLE_HINTS: Record<AiAssetStyle, string> = {
 export class PromptBuilderService {
   build(params: {
     tipo: AiAssetType;
+    visibleType?: AiAssetVisibleType;
     descripcion: string;
     estilo: AiAssetStyle;
     escenarioTitulo: string;
@@ -34,7 +35,7 @@ export class PromptBuilderService {
       'no watermark',
       'no logos',
       STYLE_HINTS[estilo],
-      this.typeRules(params.tipo),
+      this.typeRules(params.tipo, params.visibleType),
       `scene title reference: ${params.escenarioTitulo}`,
       `pedagogical context: ${params.situacionTexto}`,
       `teacher request: ${params.descripcion.trim()}`,
@@ -43,14 +44,16 @@ export class PromptBuilderService {
     return rules.join(', ');
   }
 
-  private typeRules(tipo: AiAssetType): string {
+  private typeRules(tipo: AiAssetType, visibleType?: AiAssetVisibleType): string {
     switch (tipo) {
       case 'FONDO':
-        return 'wide background scene, 16:9, no characters in foreground, environment-focused composition';
+        return 'wide background scene, 16:9, horizontal composition, no main characters, environment-focused composition, suitable as a visual novel background';
       case 'PERSONAJE':
-        return 'single character, full body, neutral background, expressive but respectful';
+        return 'single character for an educational psychology simulator, full body or medium shot, centered composition, simple background, expressive but respectful';
       case 'OBJETO':
-        return 'single object, centered, simple background';
+        return visibleType === 'symbol'
+          ? 'simple emotional symbolic visual element, clean educational icon style, centered composition, simple background'
+          : 'single isolated object for an educational visual editor, centered composition, simple background';
       default:
         return 'complete educational scene, cohesive composition, respectful body language';
     }

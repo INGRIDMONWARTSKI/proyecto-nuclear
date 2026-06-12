@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Role } from '../common/enums/role.enum';
 import { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
@@ -183,6 +184,179 @@ describe('GeneracionCasosIaService', () => {
       titulo: 'Caso generado',
       totalEscenarios: 2,
       modelo: 'gemini-2.5-flash',
+    });
+  });
+
+  it('reintenta cuando la IA devuelve un borrador estructuralmente invalido', async () => {
+    geminiService.generateJson = jest
+      .fn()
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          titulo: 'Caso incompleto',
+          escenarios: [
+            {
+              orden: 1,
+              titulo: 'Escenario 1',
+              situacionTexto: 'Situacion amplia del escenario uno.',
+              fondoCodigo: 'aula',
+              isFinal: false,
+              pregunta: {
+                enunciado: 'Pregunta con una sola opcion invalida.',
+                opciones: [
+                  {
+                    orden: 1,
+                    texto: 'Unica opcion',
+                    puntaje: 10,
+                    retroalimentacion: {
+                      mensaje: 'Insuficiente.',
+                      tipo: 'correctiva',
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              orden: 2,
+              titulo: 'Final',
+              situacionTexto: 'Cierre del caso con amplitud suficiente.',
+              fondoCodigo: 'oficina_psicologica',
+              isFinal: true,
+              pregunta: null,
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          titulo: 'Caso corregido',
+          descripcion: 'Descripcion suficiente',
+          objetivoAprendizaje: 'Objetivo suficiente',
+          escenarios: [
+            {
+              orden: 1,
+              titulo: 'Escenario 1',
+              situacionTexto: 'Situacion amplia del escenario uno.',
+              fondoCodigo: 'aula',
+              isFinal: false,
+              pregunta: {
+                enunciado: 'Que deberia hacer el profesional primero en esta escena?',
+                opciones: [
+                  {
+                    orden: 1,
+                    texto: 'Escuchar y contener',
+                    puntaje: 100,
+                    escenarioDestinoOrden: 2,
+                    retroalimentacion: {
+                      mensaje: 'Buena priorizacion clinica.',
+                      tipo: 'refuerzo',
+                    },
+                  },
+                  {
+                    orden: 2,
+                    texto: 'Cerrar la sesion',
+                    puntaje: 0,
+                    retroalimentacion: {
+                      mensaje: 'No aborda la necesidad inmediata.',
+                      tipo: 'correctiva',
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              orden: 2,
+              titulo: 'Cierre',
+              situacionTexto: 'El caso llega a una fase de cierre y evaluacion.',
+              fondoCodigo: 'oficina_psicologica',
+              isFinal: true,
+              pregunta: null,
+            },
+          ],
+        }),
+      );
+
+    casosService.create = jest
+      .fn()
+      .mockResolvedValue({ id: 'caso-2', titulo: 'Caso corregido' } as never);
+    escenariosService.create = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'esc-1' } as never)
+      .mockResolvedValueOnce({ id: 'esc-2' } as never);
+    decisionesService.createPregunta = jest
+      .fn()
+      .mockResolvedValue({ id: 'preg-1' } as never);
+    decisionesService.createOpcion = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'op-1' } as never)
+      .mockResolvedValueOnce({ id: 'op-2' } as never);
+    decisionesService.updateOpcion = jest.fn().mockResolvedValue({} as never);
+    retroalimentacionesService.create = jest
+      .fn()
+      .mockResolvedValue({ id: 'ret-1' } as never);
+    publicacionService.validateCaseCompletenessById = jest
+      .fn()
+      .mockResolvedValue([]);
+
+    const response = await service.generarCaso(
+      { casosReferenciaTexto: ['Referencia base'], cantidadEscenarios: 2 },
+      currentUser,
+    );
+
+    expect(geminiService.generateJson).toHaveBeenCalledTimes(2);
+    expect(response.casoId).toBe('caso-2');
+  });
+
+  it('devuelve 422 amable cuando la IA no logra producir un borrador valido', async () => {
+    geminiService.generateJson = jest
+      .fn()
+      .mockResolvedValue(
+        JSON.stringify({
+          titulo: 'Caso invalido',
+          escenarios: [
+            {
+              orden: 1,
+              titulo: 'Escenario 1',
+              situacionTexto: 'Situacion amplia del escenario uno.',
+              fondoCodigo: 'aula',
+              isFinal: false,
+              pregunta: {
+                enunciado: 'Pregunta con una sola opcion invalida.',
+                opciones: [
+                  {
+                    orden: 1,
+                    texto: 'Unica opcion',
+                    puntaje: 10,
+                    retroalimentacion: {
+                      mensaje: 'Insuficiente.',
+                      tipo: 'correctiva',
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              orden: 2,
+              titulo: 'Final',
+              situacionTexto: 'Cierre del caso con amplitud suficiente.',
+              fondoCodigo: 'oficina_psicologica',
+              isFinal: true,
+              pregunta: null,
+            },
+          ],
+        }),
+      );
+
+    const promise = service.generarCaso(
+      { casosReferenciaTexto: ['Referencia base'], cantidadEscenarios: 2 },
+      currentUser,
+    );
+
+    await expect(promise).rejects.toThrow(UnprocessableEntityException);
+    await expect(promise).rejects.toMatchObject({
+      response: {
+        code: 'IA_DRAFT_INVALID',
+        errors: ['Cada pregunta debe incluir al menos dos opciones.'],
+      },
     });
   });
 
@@ -391,6 +565,104 @@ describe('GeneracionCasosIaService', () => {
     });
     expect(postgrest.remove).toHaveBeenCalledWith('casos', {
       filters: { id: 'caso-rb' },
+    });
+  });
+
+  it('hace rollback y devuelve un mensaje amable si la validacion final falla', async () => {
+    geminiService.generateJson = jest.fn().mockResolvedValue(
+      JSON.stringify({
+        titulo: 'Caso inconsistente',
+        escenarios: [
+          {
+            orden: 1,
+            titulo: 'Inicio',
+            situacionTexto: 'Situacion extensa para primer escenario.',
+            fondoCodigo: 'aula',
+            isFinal: false,
+            pregunta: {
+              enunciado: 'Que harias primero en este contexto clinico?',
+              opciones: [
+                {
+                  orden: 1,
+                  texto: 'Contener',
+                  puntaje: 100,
+                  retroalimentacion: {
+                    mensaje: 'Bien.',
+                    tipo: 'refuerzo',
+                  },
+                },
+                {
+                  orden: 2,
+                  texto: 'Postergar',
+                  puntaje: 0,
+                  retroalimentacion: {
+                    mensaje: 'No conviene.',
+                    tipo: 'correctiva',
+                  },
+                },
+              ],
+            },
+          },
+          {
+            orden: 2,
+            titulo: 'Final',
+            situacionTexto: 'Cierre suficientemente amplio del caso.',
+            fondoCodigo: 'casa',
+            isFinal: true,
+            pregunta: null,
+          },
+        ],
+      }),
+    );
+    casosService.create = jest
+      .fn()
+      .mockResolvedValue({ id: 'caso-invalid', titulo: 'Caso inconsistente' } as never);
+    escenariosService.create = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'esc-invalid-1' } as never)
+      .mockResolvedValueOnce({ id: 'esc-invalid-2' } as never);
+    decisionesService.createPregunta = jest
+      .fn()
+      .mockResolvedValue({ id: 'preg-invalid-1' } as never);
+    decisionesService.createOpcion = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'op-invalid-1' } as never)
+      .mockResolvedValueOnce({ id: 'op-invalid-2' } as never);
+    retroalimentacionesService.create = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'ret-invalid-1' } as never)
+      .mockResolvedValueOnce({ id: 'ret-invalid-2' } as never);
+    publicacionService.validateCaseCompletenessById = jest.fn().mockResolvedValue([
+      'El escenario inicial debe tener pregunta y al menos dos opciones.',
+    ]);
+
+    const promise = service.generarCaso(
+      { casosReferenciaTexto: ['base'], cantidadEscenarios: 2 },
+      currentUser,
+    );
+
+    await expect(promise).rejects.toThrow(UnprocessableEntityException);
+    await expect(promise).rejects.toMatchObject({
+      response: {
+        code: 'IA_DRAFT_INVALID',
+        errors: ['El escenario inicial debe tener pregunta y al menos dos opciones.'],
+      },
+    });
+
+    expect(postgrest.remove).toHaveBeenCalledWith('retroalimentaciones', {
+      filters: { id: ['ret-invalid-1', 'ret-invalid-2'] },
+    });
+    expect(postgrest.remove).toHaveBeenCalledWith('opciones_respuesta', {
+      filters: { id: ['op-invalid-1', 'op-invalid-2'] },
+    });
+    expect(postgrest.remove).toHaveBeenCalledWith('preguntas_decision', {
+      filters: { id: ['preg-invalid-1'] },
+    });
+    expect(postgrest.remove).toHaveBeenCalledWith('escenarios', {
+      filters: { id: ['esc-invalid-1', 'esc-invalid-2'] },
+    });
+    expect(postgrest.remove).toHaveBeenCalledWith('casos', {
+      filters: { id: 'caso-invalid' },
     });
   });
 });

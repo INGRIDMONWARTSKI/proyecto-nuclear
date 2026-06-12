@@ -20,6 +20,27 @@ interface LegacyElementoEscenaRecord {
 
 const DEFAULT_LAYOUT_VERSION = 1;
 
+function buildBackgroundElement(escenario: EscenarioRecord): EditorElementBase {
+  return {
+    id: `bg-${escenario.id}`,
+    type: 'background',
+    position: { x: 50, y: 50 },
+    size: { width: 1000, height: 560 },
+    rotation: 0,
+    zIndex: 0,
+    locked: true,
+    hidden: false,
+    style: {
+      backgroundCode: escenario.fondo_codigo,
+    },
+    content: {
+      title: escenario.titulo,
+      situacionTexto: escenario.situacion_texto,
+    },
+    bindings: {},
+  };
+}
+
 function safeNumber(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
@@ -83,24 +104,7 @@ export function buildDefaultLayout(
   escenario: EscenarioRecord,
   legacyElements: LegacyElementoEscenaRecord[] = [],
 ): EscenarioLayout {
-  const backgroundElement: EditorElementBase = {
-    id: `bg-${escenario.id}`,
-    type: 'background',
-    position: { x: 50, y: 50 },
-    size: { width: 1000, height: 560 },
-    rotation: 0,
-    zIndex: 0,
-    locked: true,
-    hidden: false,
-    style: {
-      backgroundCode: escenario.fondo_codigo,
-    },
-    content: {
-      title: escenario.titulo,
-      situacionTexto: escenario.situacion_texto,
-    },
-    bindings: {},
-  };
+  const backgroundElement = buildBackgroundElement(escenario);
 
   const mappedLegacyElements = legacyElements.map<EditorElementBase>((item) => ({
     id: item.id,
@@ -211,6 +215,59 @@ export function buildDefaultLayout(
   };
 }
 
+function normalizeBackgroundElement(
+  element: EditorElementBase,
+  escenario: EscenarioRecord,
+): EditorElementBase {
+  const fallback = buildBackgroundElement(escenario);
+
+  return {
+    ...element,
+    id: typeof element.id === 'string' && element.id.trim().length > 0 ? element.id : fallback.id,
+    type: 'background',
+    position: fallback.position,
+    size: fallback.size,
+    rotation: 0,
+    zIndex: 0,
+    locked: true,
+    hidden: false,
+    style: {
+      ...element.style,
+      backgroundCode:
+        typeof element.style?.backgroundCode === 'string'
+          ? element.style.backgroundCode
+          : escenario.fondo_codigo,
+    },
+    content: {
+      ...element.content,
+      title:
+        typeof element.content?.['title'] === 'string'
+          ? element.content['title']
+          : escenario.titulo,
+      situacionTexto:
+        typeof element.content?.['situacionTexto'] === 'string'
+          ? element.content['situacionTexto']
+          : escenario.situacion_texto,
+    },
+    bindings: {},
+  };
+}
+
+function ensureBackgroundElement(
+  elements: EditorElementBase[],
+  escenario: EscenarioRecord,
+): EditorElementBase[] {
+  const backgroundIndex = elements.findIndex((item) => item.type === 'background');
+
+  if (backgroundIndex === -1) {
+    return [buildBackgroundElement(escenario), ...elements];
+  }
+
+  return elements.map((element, index) =>
+    index === backgroundIndex ? normalizeBackgroundElement(element, escenario) : element,
+  );
+}
+
 export function normalizeLayout(
   layoutData: unknown,
   escenario: EscenarioRecord,
@@ -226,8 +283,10 @@ export function normalizeLayout(
     return buildDefaultLayout(escenario, legacyElements);
   }
 
+  const elementsWithBackground = ensureBackgroundElement(normalizedElements, escenario);
+
   return {
     version: safeNumber(record.version, DEFAULT_LAYOUT_VERSION),
-    elements: normalizedElements.sort((a, b) => a.zIndex - b.zIndex),
+    elements: elementsWithBackground.sort((a, b) => a.zIndex - b.zIndex),
   };
 }

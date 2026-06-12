@@ -1,10 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AlertMessageComponent } from '../../../../../shared/ui/alert-message/alert-message.component';
 import { LoadingStateComponent } from '../../../../../shared/ui/loading-state/loading-state.component';
 import { PageHeaderComponent } from '../../../../../shared/ui/page-header/page-header.component';
-import { getErrorMessage } from '../../../../../core/utils/http-error.util';
+import { getErrorBody, getErrorMessage } from '../../../../../core/utils/http-error.util';
 import { CasoDocente } from '../../../../simulacion/models/docente/caso-docente.model';
 import { SimulacionDocenteService } from '../../../../simulacion/services/simulacion-docente.service';
 
@@ -103,9 +104,7 @@ export class DocenteCasoIaFormComponent implements OnInit {
         },
         error: (error) => {
           this.saving.set(false);
-          this.errorMessage.set(
-            getErrorMessage(error, 'No fue posible generar el caso con IA.'),
-          );
+          this.errorMessage.set(this.getIaGenerationErrorMessage(error));
         },
       });
   }
@@ -126,5 +125,25 @@ export class DocenteCasoIaFormComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  private getIaGenerationErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      const body = getErrorBody(error);
+
+      if (body?.code === 'IA_SERVICE_TEMPORARILY_UNAVAILABLE' || error.status === 503) {
+        return 'El servicio de IA esta temporalmente saturado. Intenta de nuevo en unos minutos.';
+      }
+
+      if (body?.code === 'IA_DRAFT_INVALID' || error.status === 422) {
+        return (
+          typeof body?.message === 'string'
+            ? body.message
+            : 'La IA genero un borrador invalido y no se guardo. Intenta nuevamente con referencias mas especificas.'
+        );
+      }
+    }
+
+    return getErrorMessage(error, 'No fue posible generar el caso con IA.');
   }
 }

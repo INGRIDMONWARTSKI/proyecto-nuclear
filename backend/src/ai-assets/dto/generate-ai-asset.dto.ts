@@ -1,5 +1,12 @@
-import { IsIn, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
-import type { AiAssetType } from '../entities/ai-asset.entity';
+import {
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+import type { AiAssetType, AiAssetVisibleType } from '../entities/ai-asset.entity';
 
 export const AI_ASSET_STYLES = ['editorial_sereno', 'acuarela_suave', 'minimal_calido'] as const;
 
@@ -12,8 +19,12 @@ export class GenerateAiAssetDto {
   @IsUUID()
   escenarioId: string;
 
-  @IsIn(['FONDO', 'PERSONAJE', 'OBJETO', 'ESCENA_COMPLETA'])
+  @IsIn(['FONDO', 'PERSONAJE', 'OBJETO'])
   tipo: AiAssetType;
+
+  @IsOptional()
+  @IsIn(['background', 'character', 'object', 'symbol'])
+  visibleType?: AiAssetVisibleType;
 
   @IsString()
   @MinLength(12)

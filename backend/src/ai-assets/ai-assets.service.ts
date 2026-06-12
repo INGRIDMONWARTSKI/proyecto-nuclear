@@ -17,9 +17,15 @@ import { PostgrestService } from '../postgrest/postgrest.service';
 import { CasosService } from '../simulacion/casos.service';
 import { normalizeLayout } from '../simulacion/editor-layout.util';
 import type { EscenarioRecord } from '../simulacion/entities/escenario.entity';
+import type { EditorElementBase } from '../simulacion/types/editor-layout.types';
 import { GenerateAiAssetDto, type AiAssetStyle } from './dto/generate-ai-asset.dto';
 import { InsertAiAssetDto } from './dto/insert-ai-asset.dto';
-import { AiAsset, AiAssetRecord } from './entities/ai-asset.entity';
+import {
+  AiAsset,
+  AiAssetRecord,
+  type AiAssetType,
+  type AiAssetVisibleType,
+} from './entities/ai-asset.entity';
 import { PromptBuilderService } from './prompt-builder.service';
 
 @Injectable()
@@ -65,8 +71,10 @@ export class AiAssetsService {
       throw new BadRequestException('El escenario no pertenece al caso indicado.');
     }
 
+    const visibleType = this.resolveVisibleType(dto.tipo, dto.visibleType);
     const promptFinal = this.promptBuilder.build({
       tipo: dto.tipo,
+      visibleType,
       descripcion: dto.descripcion,
       estilo: dto.estilo,
       escenarioTitulo: escenario.titulo,
@@ -81,6 +89,7 @@ export class AiAssetsService {
       imageBuffer: imageRequest.buffer,
       urlExterna: imageRequest.url,
       estilo: dto.estilo,
+      visibleType,
     });
 
     return savedAsset;
@@ -120,35 +129,43 @@ export class AiAssetsService {
       throw new ForbiddenException('No puedes aplicar un recurso generado por otro docente.');
     }
 
-    if (asset.tipo !== 'FONDO') {
-      throw new BadRequestException('El MVP solo permite insertar fondos IA.');
-    }
-
     const escenario = await this.findEscenarioById(dto.escenarioId);
     if (escenario.caso_id !== asset.caso_id) {
       throw new BadRequestException('El escenario no pertenece al mismo caso del recurso.');
     }
 
     const layout = normalizeLayout(escenario.layout_data, escenario);
-    const background = layout.elements.find((item) => item.type === 'background');
+    const visibleType = this.resolveVisibleType(asset.tipo, dto.visibleType);
+    let insertedElementId: string | null = null;
 
-    if (!background) {
-      throw new NotFoundException('No se encontro el elemento de fondo del escenario.');
+    if (asset.tipo === 'FONDO') {
+      const background = layout.elements.find((item) => item.type === 'background');
+
+      if (!background) {
+        throw new NotFoundException('No se encontro el elemento de fondo del escenario.');
+      }
+
+      background.style = {
+        ...background.style,
+        aiAssetId: asset.id,
+        imageUrl: this.buildPublicUrl(asset.ruta_archivo),
+        backgroundCode: escenario.fondo_codigo,
+      };
+      background.content = {
+        ...background.content,
+        aiAssetId: asset.id,
+        imageUrl: this.buildPublicUrl(asset.ruta_archivo),
+        provider: asset.proveedor,
+        estilo: asset.estilo,
+      };
+    } else if (asset.tipo === 'PERSONAJE' || asset.tipo === 'OBJETO') {
+      const nextZ = Math.max(...layout.elements.map((item) => item.zIndex), 0) + 1;
+      const imageElement = this.buildImageElement(asset, visibleType, nextZ);
+      layout.elements.push(imageElement);
+      insertedElementId = imageElement.id;
+    } else {
+      throw new BadRequestException('El tipo de recurso IA no se puede insertar en el escenario.');
     }
-
-    background.style = {
-      ...background.style,
-      aiAssetId: asset.id,
-      imageUrl: this.buildPublicUrl(asset.ruta_archivo),
-      backgroundCode: escenario.fondo_codigo,
-    };
-    background.content = {
-      ...background.content,
-      aiAssetId: asset.id,
-      imageUrl: this.buildPublicUrl(asset.ruta_archivo),
-      provider: asset.proveedor,
-      estilo: asset.estilo,
-    };
 
     await this.postgrest.update<EscenarioRecord>(
       'escenarios',
@@ -173,7 +190,7 @@ export class AiAssetsService {
       },
     );
 
-    return this.toAiAsset(updatedAsset ?? asset);
+    return this.toAiAsset(updatedAsset ?? asset, visibleType, insertedElementId);
   }
 
   private async persistAsset(params: {
@@ -183,6 +200,7 @@ export class AiAssetsService {
     imageBuffer: Buffer;
     urlExterna: string;
     estilo: AiAssetStyle;
+    visibleType: AiAssetVisibleType;
   }): Promise<AiAsset> {
     const directory = join(process.cwd(), 'uploads', 'ai-assets');
     await mkdir(directory, { recursive: true });
@@ -225,7 +243,7 @@ export class AiAssetsService {
       throw error;
     }
 
-    return this.toAiAsset(record);
+    return this.toAiAsset(record, params.visibleType);
   }
 
   private async fetchHuggingFaceImage(promptFinal: string): Promise<{
@@ -283,6 +301,73 @@ export class AiAssetsService {
     return `${tipo.toLowerCase()}-${estilo}-${new Date().toISOString().slice(0, 19)}`;
   }
 
+  private resolveVisibleType(
+    tipo: AiAssetType,
+    visibleType?: AiAssetVisibleType,
+  ): AiAssetVisibleType {
+    if (visibleType) {
+      return visibleType;
+    }
+
+    switch (tipo) {
+      case 'FONDO':
+        return 'background';
+      case 'PERSONAJE':
+        return 'character';
+      case 'OBJETO':
+        return 'object';
+      default:
+        return 'background';
+    }
+  }
+
+  private buildImageElement(
+    asset: AiAssetRecord,
+    visibleType: AiAssetVisibleType,
+    zIndex: number,
+  ): EditorElementBase {
+    const { width, height } = this.initialSizeForVisibleType(visibleType);
+    const publicUrl = this.buildPublicUrl(asset.ruta_archivo);
+
+    return {
+      id: randomUUID(),
+      type: 'image',
+      position: { x: 52, y: 52 },
+      size: { width, height },
+      rotation: 0,
+      zIndex,
+      locked: false,
+      hidden: false,
+      style: {
+        objectFit: 'contain',
+      },
+      content: {
+        nombre: asset.nombre,
+        imageUrl: publicUrl,
+        aiAssetId: asset.id,
+        aiType: visibleType,
+        sourceType: 'ai',
+      },
+      bindings: {},
+    };
+  }
+
+  private initialSizeForVisibleType(visibleType: AiAssetVisibleType): {
+    width: number;
+    height: number;
+  } {
+    switch (visibleType) {
+      case 'character':
+        return { width: 240, height: 280 };
+      case 'symbol':
+        return { width: 140, height: 140 };
+      case 'object':
+        return { width: 180, height: 180 };
+      default:
+        return { width: 180, height: 180 };
+    }
+  }
+
   private async findAssetById(assetId: string): Promise<AiAssetRecord> {
     const [asset] = await this.postgrest.select<AiAssetRecord>('recursos_visuales', {
       filters: { id: assetId },
@@ -320,7 +405,12 @@ export class AiAssetsService {
     );
   }
 
-  private toAiAsset(record: AiAssetRecord): AiAsset {
+  private toAiAsset(
+    record: AiAssetRecord,
+    visibleType = this.resolveVisibleType(record.tipo),
+    insertedElementId: string | null = null,
+  ): AiAsset {
+    const publicUrl = this.buildPublicUrl(record.ruta_archivo);
     return {
       id: record.id,
       casoId: record.caso_id,
@@ -332,12 +422,22 @@ export class AiAssetsService {
       promptFinal: record.prompt_final,
       urlExterna: record.url_externa,
       rutaArchivo: record.ruta_archivo,
-      publicUrl: this.buildPublicUrl(record.ruta_archivo),
+      publicUrl,
       ancho: record.ancho,
       alto: record.alto,
       estilo: record.estilo,
       proveedor: record.proveedor,
       createdAt: record.created_at,
+      success: true,
+      visibleType,
+      imageUrl: publicUrl,
+      promptUsed: record.prompt_final,
+      provider: record.proveedor,
+      metadata: {
+        provider: record.proveedor,
+        visibleType,
+      },
+      insertedElementId,
     };
   }
 }

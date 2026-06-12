@@ -1,4 +1,5 @@
 export type AiAssetType = 'FONDO' | 'PERSONAJE' | 'OBJETO' | 'ESCENA_COMPLETA';
+export type AiAssetVisibleType = 'background' | 'character' | 'object' | 'symbol';
 
 export interface AiAssetRecord {
   id: string;
@@ -18,6 +19,11 @@ export interface AiAssetRecord {
   created_at: string;
 }
 
+export interface AiAssetMetadata {
+  provider?: string;
+  visibleType?: AiAssetVisibleType;
+}
+
 export interface AiAsset {
   id: string;
   casoId: string;
@@ -35,4 +41,11 @@ export interface AiAsset {
   estilo: string;
   proveedor: string;
   createdAt: string;
+  success?: boolean;
+  visibleType?: AiAssetVisibleType;
+  imageUrl?: string;
+  promptUsed?: string;
+  provider?: string;
+  metadata?: AiAssetMetadata;
+  insertedElementId?: string | null;
 }

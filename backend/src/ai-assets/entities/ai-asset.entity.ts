@@ -22,6 +22,10 @@ export interface AiAssetRecord {
 export interface AiAssetMetadata {
   provider?: string;
   visibleType?: AiAssetVisibleType;
+  backgroundRemoved?: boolean;
+  originalImageUrl?: string;
+  processedImageUrl?: string;
+  backgroundRemovalWarning?: string;
 }
 
 export interface AiAsset {

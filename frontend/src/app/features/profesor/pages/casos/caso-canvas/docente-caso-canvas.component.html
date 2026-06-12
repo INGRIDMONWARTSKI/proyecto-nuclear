@@ -215,6 +215,12 @@
                     {{ aiGenerating() ? 'Generando...' : 'Generar' }}
                   </button>
 
+                  @if (aiGenerationHint()) {
+                    <div class="ai-generator__status">
+                      {{ aiGenerationHint() }}
+                    </div>
+                  }
+
                   @if (aiAssets().length > 0) {
                     <div class="ai-preview-list">
                       @for (asset of aiAssets().slice(0, 4); track asset.id) {
@@ -224,7 +230,7 @@
                           [class.ai-preview-card--active]="latestAiAsset().id === asset.id"
                           (click)="selectAiAsset(asset.id)"
                         >
-                          <div class="ai-preview-card__thumb" [style.background-image]="'url(' + asset.publicUrl + ')'"></div>
+                          <div class="ai-preview-card__thumb" [style.background-image]="'url(' + assetPreviewUrl(asset) + ')'"></div>
                           <div class="ai-preview-card__meta">
                             <strong>{{ asset.nombre }}</strong>
                             <span>{{ asset.visibleType || asset.tipo }} · {{ asset.estilo }}</span>
@@ -236,11 +242,16 @@
 
                   @if (latestAiAsset(); as asset) {
                     <div class="ai-preview">
-                      <div class="ai-preview__image" [style.background-image]="'url(' + asset.publicUrl + ')'"></div>
+                      <div class="ai-preview__image" [style.background-image]="'url(' + latestAiAssetUrl() + ')'"></div>
                       <div class="ai-preview__meta">
                         <strong>Preview lista</strong>
                         <span>{{ asset.visibleType || asset.tipo }} · {{ asset.proveedor }}</span>
                       </div>
+                      @if (latestAiAssetWarning()) {
+                        <div class="ai-generator__warning" role="status">
+                          {{ latestAiAssetWarning() }}
+                        </div>
+                      }
                       <button class="siep-btn-secondary ai-generator__action" type="button" [disabled]="aiApplying()" (click)="applyLatestAiAsset()">
                         {{ aiApplying() ? 'Aplicando...' : latestAiActionLabel() }}
                       </button>

@@ -504,6 +504,25 @@
   width: 100%;
 }
 
+.ai-generator__status,
+.ai-generator__warning {
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--siep-radius-lg);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.ai-generator__status {
+  background: rgba(205, 232, 181, 0.32);
+  color: var(--siep-forest);
+}
+
+.ai-generator__warning {
+  background: rgba(255, 236, 179, 0.72);
+  color: #7a5b00;
+  border: 1px solid rgba(196, 145, 0, 0.18);
+}
+
 .ai-preview-list {
   display: grid;
   gap: 0.55rem;
@@ -528,6 +547,7 @@
 
 .ai-preview-card__thumb,
 .ai-preview__image {
+  background-color: #f6f8f3;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

@@ -8,9 +8,9 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { mkdir, writeFile } from 'fs/promises';
-import { join } from 'path';
 import { randomUUID } from 'crypto';
+import * as fs from 'fs/promises';
+import { join } from 'path';
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { PostgrestService } from '../postgrest/postgrest.service';
@@ -18,15 +18,32 @@ import { CasosService } from '../simulacion/casos.service';
 import { normalizeLayout } from '../simulacion/editor-layout.util';
 import type { EscenarioRecord } from '../simulacion/entities/escenario.entity';
 import type { EditorElementBase } from '../simulacion/types/editor-layout.types';
+import { BackgroundRemovalService } from './background-removal.service';
 import { GenerateAiAssetDto, type AiAssetStyle } from './dto/generate-ai-asset.dto';
 import { InsertAiAssetDto } from './dto/insert-ai-asset.dto';
 import {
   AiAsset,
+  AiAssetMetadata,
   AiAssetRecord,
   type AiAssetType,
   type AiAssetVisibleType,
 } from './entities/ai-asset.entity';
 import { PromptBuilderService } from './prompt-builder.service';
+
+interface PersistedAssetPaths {
+  finalRelativePath: string;
+  originalRelativePath: string;
+  processedRelativePath?: string;
+  backgroundRemoved: boolean;
+  backgroundRemovalWarning?: string;
+}
+
+interface AiAssetSidecar {
+  backgroundRemoved?: boolean;
+  originalRelativePath?: string;
+  processedRelativePath?: string;
+  backgroundRemovalWarning?: string;
+}
 
 @Injectable()
 export class AiAssetsService {
@@ -43,6 +60,7 @@ export class AiAssetsService {
     private readonly postgrest: PostgrestService,
     private readonly casosService: CasosService,
     private readonly promptBuilder: PromptBuilderService,
+    private readonly backgroundRemovalService: BackgroundRemovalService,
     private readonly configService: ConfigService,
   ) {
     this.hfToken = this.configService.get<string>('HF_TOKEN')?.trim() || null;
@@ -82,7 +100,7 @@ export class AiAssetsService {
     });
 
     const imageRequest = await this.fetchHuggingFaceImage(promptFinal);
-    const savedAsset = await this.persistAsset({
+    return this.persistAsset({
       dto,
       currentUser,
       promptFinal,
@@ -91,8 +109,6 @@ export class AiAssetsService {
       estilo: dto.estilo,
       visibleType,
     });
-
-    return savedAsset;
   }
 
   async listByCaso(casoId: string, currentUser: AuthenticatedUser): Promise<AiAsset[]> {
@@ -113,7 +129,7 @@ export class AiAssetsService {
       throw error;
     }
 
-    return records.map((item) => this.toAiAsset(item));
+    return Promise.all(records.map((item) => this.toAiAsset(item)));
   }
 
   async insertIntoScenario(
@@ -136,6 +152,7 @@ export class AiAssetsService {
 
     const layout = normalizeLayout(escenario.layout_data, escenario);
     const visibleType = this.resolveVisibleType(asset.tipo, dto.visibleType);
+    const assetPublicUrl = this.buildPublicUrl(asset.ruta_archivo);
     let insertedElementId: string | null = null;
 
     if (asset.tipo === 'FONDO') {
@@ -148,13 +165,13 @@ export class AiAssetsService {
       background.style = {
         ...background.style,
         aiAssetId: asset.id,
-        imageUrl: this.buildPublicUrl(asset.ruta_archivo),
+        imageUrl: assetPublicUrl,
         backgroundCode: escenario.fondo_codigo,
       };
       background.content = {
         ...background.content,
         aiAssetId: asset.id,
-        imageUrl: this.buildPublicUrl(asset.ruta_archivo),
+        imageUrl: assetPublicUrl,
         provider: asset.proveedor,
         estilo: asset.estilo,
       };
@@ -202,13 +219,7 @@ export class AiAssetsService {
     estilo: AiAssetStyle;
     visibleType: AiAssetVisibleType;
   }): Promise<AiAsset> {
-    const directory = join(process.cwd(), 'uploads', 'ai-assets');
-    await mkdir(directory, { recursive: true });
-
-    const fileName = `${Date.now()}-${randomUUID()}.jpg`;
-    const fullPath = join(directory, fileName);
-    const relativePath = `/uploads/ai-assets/${fileName}`;
-    await writeFile(fullPath, params.imageBuffer);
+    const assetFiles = await this.writeAssetFiles(params.imageBuffer, params.visibleType);
 
     let record: AiAssetRecord;
     try {
@@ -223,7 +234,7 @@ export class AiAssetsService {
           prompt_original: params.dto.descripcion.trim(),
           prompt_final: params.promptFinal,
           url_externa: params.urlExterna,
-          ruta_archivo: relativePath,
+          ruta_archivo: assetFiles.finalRelativePath,
           ancho: this.imageWidth,
           alto: this.imageHeight,
           estilo: params.estilo,
@@ -243,7 +254,56 @@ export class AiAssetsService {
       throw error;
     }
 
+    await this.writeSidecarMetadata(record.id, {
+      backgroundRemoved: assetFiles.backgroundRemoved,
+      originalRelativePath: assetFiles.originalRelativePath,
+      processedRelativePath: assetFiles.processedRelativePath,
+      backgroundRemovalWarning: assetFiles.backgroundRemovalWarning,
+    });
+
     return this.toAiAsset(record, params.visibleType);
+  }
+
+  private async writeAssetFiles(
+    imageBuffer: Buffer,
+    visibleType: AiAssetVisibleType,
+  ): Promise<PersistedAssetPaths> {
+    const directory = join(process.cwd(), 'uploads', 'ai-assets');
+    await fs.mkdir(directory, { recursive: true });
+
+    const assetKey = `${Date.now()}-${randomUUID()}`;
+    const originalRelativePath = `/uploads/ai-assets/${assetKey}.jpg`;
+    const originalFullPath = this.resolveAbsoluteUploadPath(originalRelativePath);
+    await fs.writeFile(originalFullPath, imageBuffer);
+
+    if (!this.shouldAttemptBackgroundRemoval(visibleType)) {
+      return {
+        finalRelativePath: originalRelativePath,
+        originalRelativePath,
+        backgroundRemoved: false,
+      };
+    }
+
+    const removalResult = await this.backgroundRemovalService.removeBackground(originalFullPath);
+    if (!removalResult.backgroundRemoved || !removalResult.processedBuffer) {
+      return {
+        finalRelativePath: originalRelativePath,
+        originalRelativePath,
+        backgroundRemoved: false,
+        backgroundRemovalWarning: removalResult.warning,
+      };
+    }
+
+    const processedRelativePath = `/uploads/ai-assets/${assetKey}.png`;
+    const processedFullPath = this.resolveAbsoluteUploadPath(processedRelativePath);
+    await fs.writeFile(processedFullPath, removalResult.processedBuffer);
+
+    return {
+      finalRelativePath: processedRelativePath,
+      originalRelativePath,
+      processedRelativePath,
+      backgroundRemoved: true,
+    };
   }
 
   private async fetchHuggingFaceImage(promptFinal: string): Promise<{
@@ -252,23 +312,26 @@ export class AiAssetsService {
   }> {
     if (!this.inferenceClient || !this.hfToken) {
       throw new InternalServerErrorException(
-        'Falta configurar HF_TOKEN en el backend para generar fondos IA con Hugging Face.',
+        'Falta configurar HF_TOKEN en el backend para generar recursos IA con Hugging Face.',
       );
     }
 
     try {
-      const imageBlob = await this.inferenceClient.textToImage({
-        provider: this.imageProviderPolicy,
-        model: this.imageModel,
-        inputs: promptFinal,
-        parameters: {
-          width: this.imageWidth,
-          height: this.imageHeight,
-          num_inference_steps: 4,
+      const imageBlob = await this.inferenceClient.textToImage(
+        {
+          provider: this.imageProviderPolicy,
+          model: this.imageModel,
+          inputs: promptFinal,
+          parameters: {
+            width: this.imageWidth,
+            height: this.imageHeight,
+            num_inference_steps: 4,
+          },
         },
-      }, {
-        outputType: 'blob',
-      });
+        {
+          outputType: 'blob',
+        },
+      );
 
       const arrayBuffer = await imageBlob.arrayBuffer();
       if (arrayBuffer.byteLength === 0) {
@@ -398,6 +461,46 @@ export class AiAssetsService {
     return `${this.publicBaseUrl.replace(/\/$/, '')}${relativePath}`;
   }
 
+  private resolveAbsoluteUploadPath(relativePath: string): string {
+    return join(process.cwd(), relativePath.replace(/^\/+/, ''));
+  }
+
+  private shouldAttemptBackgroundRemoval(visibleType: AiAssetVisibleType): boolean {
+    return visibleType === 'character' || visibleType === 'object' || visibleType === 'symbol';
+  }
+
+  private sidecarPath(assetId: string): string {
+    return join(process.cwd(), 'uploads', 'ai-assets', 'metadata', `${assetId}.json`);
+  }
+
+  private async writeSidecarMetadata(assetId: string, metadata: AiAssetSidecar): Promise<void> {
+    const hasMeaningfulContent =
+      typeof metadata.processedRelativePath === 'string' ||
+      typeof metadata.backgroundRemovalWarning === 'string' ||
+      metadata.backgroundRemoved === true;
+
+    if (!hasMeaningfulContent) {
+      return;
+    }
+
+    try {
+      const sidecarDirectory = join(process.cwd(), 'uploads', 'ai-assets', 'metadata');
+      await fs.mkdir(sidecarDirectory, { recursive: true });
+      await fs.writeFile(this.sidecarPath(assetId), JSON.stringify(metadata, null, 2), 'utf-8');
+    } catch {
+      // Best effort: si falla, el editor debe seguir funcionando con el archivo final.
+    }
+  }
+
+  private async readSidecarMetadata(assetId: string): Promise<AiAssetSidecar | null> {
+    try {
+      const content = await fs.readFile(this.sidecarPath(assetId), 'utf-8');
+      return JSON.parse(content) as AiAssetSidecar;
+    } catch {
+      return null;
+    }
+  }
+
   private isMissingAiAssetsTable(error: unknown): boolean {
     return (
       error instanceof Error &&
@@ -405,12 +508,31 @@ export class AiAssetsService {
     );
   }
 
-  private toAiAsset(
+  private async toAiAsset(
     record: AiAssetRecord,
     visibleType = this.resolveVisibleType(record.tipo),
     insertedElementId: string | null = null,
-  ): AiAsset {
+  ): Promise<AiAsset> {
     const publicUrl = this.buildPublicUrl(record.ruta_archivo);
+    const sidecar = await this.readSidecarMetadata(record.id);
+    const metadata: AiAssetMetadata = {
+      provider: record.proveedor,
+      visibleType,
+    };
+
+    if (typeof sidecar?.backgroundRemoved === 'boolean') {
+      metadata.backgroundRemoved = sidecar.backgroundRemoved;
+    }
+    if (sidecar?.originalRelativePath) {
+      metadata.originalImageUrl = this.buildPublicUrl(sidecar.originalRelativePath);
+    }
+    if (sidecar?.processedRelativePath) {
+      metadata.processedImageUrl = this.buildPublicUrl(sidecar.processedRelativePath);
+    }
+    if (sidecar?.backgroundRemovalWarning) {
+      metadata.backgroundRemovalWarning = sidecar.backgroundRemovalWarning;
+    }
+
     return {
       id: record.id,
       casoId: record.caso_id,
@@ -433,10 +555,7 @@ export class AiAssetsService {
       imageUrl: publicUrl,
       promptUsed: record.prompt_final,
       provider: record.proveedor,
-      metadata: {
-        provider: record.proveedor,
-        visibleType,
-      },
+      metadata,
       insertedElementId,
     };
   }

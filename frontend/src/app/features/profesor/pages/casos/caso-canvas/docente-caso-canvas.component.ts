@@ -1281,6 +1281,29 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       : 'Insertar en escena';
   }
 
+  latestAiAssetWarning(): string {
+    return this.latestAiAsset()?.metadata?.backgroundRemovalWarning ?? '';
+  }
+
+  latestAiAssetUrl(): string {
+    const asset = this.latestAiAsset();
+    return asset?.imageUrl || asset?.publicUrl || '';
+  }
+
+  assetPreviewUrl(asset: AiAsset): string {
+    return asset.imageUrl || asset.publicUrl;
+  }
+
+  aiGenerationHint(): string {
+    if (!this.aiGenerating()) {
+      return '';
+    }
+
+    return this.aiVisibleType() === 'background'
+      ? 'Generando fondo con Hugging Face...'
+      : 'Generando imagen y preparando transparencia. La primera vez puede tardar un poco mas.';
+  }
+
   aiTypeBadge(): string {
     switch (this.aiVisibleType()) {
       case 'character':

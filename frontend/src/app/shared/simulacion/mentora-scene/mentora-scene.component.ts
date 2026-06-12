@@ -48,10 +48,6 @@ export interface MentoraHotspotSelection {
 
 type HotspotVisualState = 'pending' | 'hover' | 'explored' | 'important';
 
-interface MentoraSceneData {
-  onHotspotSelected: (payload: MentoraHotspotSelection) => void;
-}
-
 const MENTORA_COLORS = {
   deepPurple: 0x2f5d34,
   lavender: 0xcde8b5,
@@ -107,8 +103,8 @@ class MentoraSimulationScene extends Phaser.Scene {
     super({ key: 'MentoraSimulationScene' });
   }
 
-  init(data: MentoraSceneData): void {
-    this.onHotspotSelected = data.onHotspotSelected;
+  setHotspotSelectedHandler(handler: (payload: MentoraHotspotSelection) => void): void {
+    this.onHotspotSelected = handler;
   }
 
   create(): void {
@@ -914,6 +910,7 @@ export class MentoraSceneComponent implements AfterViewInit, OnChanges, OnDestro
   @Output() readonly hotspotSelected = new EventEmitter<MentoraHotspotSelection>();
 
   private game: Phaser.Game | null = null;
+  private phaserScene: MentoraSimulationScene | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private gameBootstrapped = false;
 
@@ -925,12 +922,11 @@ export class MentoraSceneComponent implements AfterViewInit, OnChanges, OnDestro
     this.gameBootstrapped = true;
     const host = this.gameHost.nativeElement;
     const { width, height } = resolveCanvasHostSize(host);
-
-    const sceneData: MentoraSceneData = {
-      onHotspotSelected: (payload: MentoraHotspotSelection) => {
-        this.ngZone.run(() => this.hotspotSelected.emit(payload));
-      },
-    };
+    const phaserScene = new MentoraSimulationScene();
+    phaserScene.setHotspotSelectedHandler((payload: MentoraHotspotSelection) => {
+      this.ngZone.run(() => this.hotspotSelected.emit(payload));
+    });
+    this.phaserScene = phaserScene;
 
     this.ngZone.runOutsideAngular(() => {
       this.game = new Phaser.Game({
@@ -946,18 +942,11 @@ export class MentoraSceneComponent implements AfterViewInit, OnChanges, OnDestro
         audio: {
           noAudio: true,
         },
-        scene: [
-          {
-            key: 'MentoraSimulationScene',
-            active: true,
-            scene: MentoraSimulationScene,
-            data: sceneData,
-          } as Phaser.Types.Scenes.SceneType,
-        ],
+        scene: [phaserScene],
       });
-
-      this.game.events.once('ready', () => this.syncSceneState());
     });
+
+    phaserScene.events.once(Phaser.Scenes.Events.CREATE, () => this.syncSceneState());
 
     this.resizeObserver = new ResizeObserver(() => {
       if (!this.game) {
@@ -988,19 +977,17 @@ export class MentoraSceneComponent implements AfterViewInit, OnChanges, OnDestro
       this.game = null;
     }
 
+    this.phaserScene = null;
+
     this.gameBootstrapped = false;
   }
 
   private syncSceneState(): void {
-    const scene = this.game?.scene.getScene('MentoraSimulationScene') as
-      | MentoraSimulationScene
-      | undefined;
-
-    if (!scene) {
+    if (!this.phaserScene) {
       return;
     }
 
-    scene.updateEscenario(this.escenario);
-    scene.updateAvatarMotion(this.avatarMotion);
+    this.phaserScene.updateEscenario(this.escenario);
+    this.phaserScene.updateAvatarMotion(this.avatarMotion);
   }
 }

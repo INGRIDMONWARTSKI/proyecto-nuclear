@@ -1,3 +1,5 @@
+@use '../../../../styles/mentora-tokens';
+
 .escenario {
   display: grid;
   gap: 1.1rem;
@@ -112,152 +114,15 @@
 
 .escenario__stage {
   position: relative;
-  isolation: isolate;
   min-height: 560px;
   overflow: hidden;
-  border-radius: 1.1rem;
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  box-shadow:
-    0 16px 36px rgba(46, 125, 50, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
-}
-
-.escenario__forest {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.escenario__forest-sky {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(187, 222, 251, 0.28), transparent 58%),
-    linear-gradient(180deg, rgba(232, 245, 233, 0.55) 0%, rgba(200, 230, 201, 0.35) 42%, rgba(165, 214, 167, 0.2) 100%);
-}
-
-.escenario__forest-trees {
-  position: absolute;
-  left: -8%;
-  right: -8%;
-  height: 52%;
-  opacity: 0.55;
-  background-repeat: repeat-x;
-  background-size: 120px 100%;
-}
-
-.escenario__forest-trees--back {
-  bottom: 28%;
-  opacity: 0.38;
-  background-image:
-    radial-gradient(ellipse 18px 42px at 12% 100%, rgba(56, 142, 60, 0.45), transparent 72%),
-    radial-gradient(ellipse 22px 52px at 28% 100%, rgba(46, 125, 50, 0.4), transparent 72%),
-    radial-gradient(ellipse 16px 38px at 44% 100%, rgba(67, 160, 71, 0.42), transparent 72%),
-    radial-gradient(ellipse 24px 56px at 62% 100%, rgba(46, 125, 50, 0.38), transparent 72%),
-    radial-gradient(ellipse 18px 44px at 78% 100%, rgba(56, 142, 60, 0.4), transparent 72%),
-    radial-gradient(ellipse 20px 48px at 94% 100%, rgba(46, 125, 50, 0.36), transparent 72%);
-}
-
-.escenario__forest-trees--front {
-  bottom: 18%;
-  opacity: 0.62;
-  background-image:
-    radial-gradient(ellipse 26px 68px at 8% 100%, rgba(27, 94, 32, 0.5), transparent 70%),
-    radial-gradient(ellipse 20px 52px at 22% 100%, rgba(46, 125, 50, 0.48), transparent 70%),
-    radial-gradient(ellipse 28px 72px at 38% 100%, rgba(27, 94, 32, 0.52), transparent 70%),
-    radial-gradient(ellipse 22px 58px at 54% 100%, rgba(46, 125, 50, 0.46), transparent 70%),
-    radial-gradient(ellipse 30px 76px at 70% 100%, rgba(27, 94, 32, 0.5), transparent 70%),
-    radial-gradient(ellipse 24px 62px at 86% 100%, rgba(46, 125, 50, 0.44), transparent 70%);
-}
-
-.escenario__forest-path {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: min(42%, 220px);
-  height: 38%;
-  transform: translateX(-50%);
-  background:
-    radial-gradient(ellipse 100% 88% at 50% 100%, rgba(215, 204, 180, 0.38) 0%, rgba(215, 204, 180, 0.12) 52%, transparent 72%);
-  border-radius: 50% 50% 0 0;
-  opacity: 0.85;
-}
-
-.escenario__forest-mist {
-  position: absolute;
-  inset: auto 0 0;
-  height: 42%;
-  background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.22) 38%, rgba(246, 248, 243, 0.48) 100%);
-}
-
-.escenario__practicante {
-  position: absolute;
-  left: 10%;
-  bottom: 12%;
-  z-index: 2;
-  width: 3.4rem;
-  pointer-events: none;
-  filter: drop-shadow(0 8px 14px rgba(31, 61, 46, 0.12));
-  opacity: 0.88;
-  transform: translateX(0);
-  transition:
-    transform 0.5s ease,
-    opacity 0.5s ease,
-    filter 0.5s ease;
-}
-
-:host(.escenario--avatar-advance) .escenario__practicante {
-  transform: translateX(9%);
-  opacity: 0.96;
-  filter: drop-shadow(0 10px 16px rgba(46, 125, 50, 0.16));
-}
-
-:host(.escenario--avatar-pause) .escenario__practicante {
-  transform: translateX(2%);
-  opacity: 0.9;
-  filter: drop-shadow(0 8px 14px rgba(31, 61, 46, 0.1));
-}
-
-:host(.escenario--avatar-retreat) .escenario__practicante {
-  transform: translateX(-6%);
-  opacity: 0.82;
-  filter: drop-shadow(0 6px 12px rgba(31, 61, 46, 0.08));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .escenario__practicante {
-    transform: none !important;
-    transition: opacity 0.35s ease, filter 0.35s ease;
-  }
-
-  :host(.escenario--avatar-advance) .escenario__practicante {
-    opacity: 1;
-    filter: brightness(1.04) drop-shadow(0 8px 14px rgba(46, 125, 50, 0.14));
-  }
-
-  :host(.escenario--avatar-pause) .escenario__practicante {
-    opacity: 0.86;
-    filter: brightness(0.98);
-  }
-
-  :host(.escenario--avatar-retreat) .escenario__practicante {
-    opacity: 0.78;
-    filter: brightness(0.94);
-  }
-}
-
-.escenario__practicante-figure {
-  display: block;
-  width: 100%;
-  height: auto;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .escenario__backdrop {
   position: absolute;
   inset: 0;
-  z-index: 1;
   opacity: 0.28;
   pointer-events: none;
 }
@@ -270,8 +135,8 @@
 }
 
 .escenario__window {
-  width: 28%;
-  height: 24%;
+  width: 30%;
+  height: 28%;
   left: 8%;
   top: 10%;
   background: rgba(255, 255, 255, 0.42);
@@ -279,10 +144,10 @@
 }
 
 .escenario__sofa {
-  width: 44%;
-  height: 18%;
-  left: 14%;
-  bottom: 11%;
+  width: 46%;
+  height: 20%;
+  left: 16%;
+  bottom: 9%;
   background: rgba(255, 255, 255, 0.35);
 }
 
@@ -295,52 +160,66 @@
 }
 
 .stage-character,
-.stage-note,
+.stage-image,
 .stage-question,
-.stage-object {
+.stage-note {
   position: absolute;
-  z-index: 3;
 }
 
 .stage-character {
+  width: 180px;
   display: grid;
   justify-items: center;
   gap: var(--siep-space-2);
 }
 
+.stage-character__bubble,
+.stage-image,
+.stage-note,
+.stage-question {
+  box-shadow: 0 14px 30px rgba(31, 61, 46, 0.1);
+}
+
+.stage-image {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.2);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
 .stage-character__bubble {
-  max-width: 220px;
-  padding: 0.85rem 1rem;
-  border-radius: 1.25rem 1.25rem 1.25rem 0.35rem;
-  background: rgba(255, 255, 255, 0.96);
+  max-width: 170px;
+  padding: 0.85rem 0.95rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
   color: var(--siep-text);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   line-height: 1.45;
-  border: 1px solid rgba(102, 187, 106, 0.14);
-  box-shadow: 0 12px 28px rgba(31, 61, 46, 0.14);
-  backdrop-filter: blur(4px);
 }
 
 .stage-character__avatar {
-  width: 100%;
-  height: calc(100% - 52px);
-  min-height: 120px;
+  width: 92px;
+  height: 120px;
   border-radius: 999px 999px 28px 28px;
-  box-shadow: 0 14px 32px rgba(31, 61, 46, 0.16);
-  border: 2px solid rgba(255, 255, 255, 0.55);
 }
 
 .stage-character__label {
+  display: grid;
+  gap: 0.1rem;
   text-align: center;
-
-  strong,
-  span {
-    display: block;
-  }
 
   strong {
     color: var(--siep-forest);
-    font-size: 0.9rem;
+    font-size: 0.92rem;
   }
 
   span {
@@ -349,60 +228,53 @@
   }
 }
 
-.stage-note,
-.stage-question,
-.stage-object {
-  padding: 0.8rem 0.95rem;
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 12px 28px rgba(31, 61, 46, 0.12);
-  color: var(--siep-text);
-  border: 1px solid rgba(102, 187, 106, 0.12);
-  backdrop-filter: blur(4px);
+.stage-question {
+  width: min(360px, calc(100% - 2rem));
+  padding: 1rem;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--siep-space-2);
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  h4 {
+    margin: 0;
+    color: var(--siep-forest);
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+}
+
+.stage-question__tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--siep-radius-pill);
+  padding: 0.22rem 0.6rem;
+  background: rgba(255, 248, 225, 0.92);
+  color: #9b6b00;
+  font-size: 0.72rem;
+  font-family: var(--siep-font-title);
+  font-weight: 700;
 }
 
 .stage-note {
-  line-height: 1.5;
+  padding: 0.8rem 0.95rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--siep-text);
   font-size: 0.82rem;
-}
-
-.stage-question {
-  display: grid;
-  gap: 0.35rem;
-  background: rgba(232, 245, 233, 0.88);
-  border-color: rgba(102, 187, 106, 0.28);
-
-  span {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-weight: 700;
-    color: var(--siep-leaf);
-  }
-
-  strong {
-    font-size: 0.86rem;
-    color: var(--siep-forest);
-    line-height: 1.45;
-    font-weight: 600;
-  }
-}
-
-.stage-object span {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--siep-forest);
+  line-height: 1.45;
 }
 
 @media (max-width: 760px) {
   .escenario__stage {
     min-height: 620px;
-  }
-
-  .escenario__practicante {
-    left: 6%;
-    width: 2.85rem;
-    bottom: 10%;
   }
 
   .escenario__header {

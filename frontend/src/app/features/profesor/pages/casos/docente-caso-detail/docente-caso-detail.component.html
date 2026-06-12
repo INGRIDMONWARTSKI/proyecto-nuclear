@@ -3,16 +3,19 @@
 } @else {
   @if (caso(); as c) {
     <section class="siep-page case-detail-page">
-      <app-page-header
-        [title]="c.titulo"
-        subtitle="Gestiona escenarios, contenido pedagogico, editor visual y publicacion."
-        icon="🧠"
-      >
-        <div actions class="case-header-actions">
-          <a class="siep-btn-secondary" routerLink="..">Volver</a>
-          <a class="siep-btn-primary" [routerLink]="['canvas']">Abrir editor visual</a>
-        </div>
-      </app-page-header>
+      <div class="profesor-page-hero">
+        <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
+        <app-page-header
+          [title]="c.titulo"
+          subtitle="Gestiona escenarios, contenido pedagogico, editor visual y publicacion."
+          icon="🧠"
+        >
+          <div actions class="case-header-actions">
+            <a class="siep-btn-secondary" routerLink="..">Volver</a>
+            <a class="siep-btn-primary" [routerLink]="['canvas']">Abrir editor visual</a>
+          </div>
+        </app-page-header>
+      </div>
 
       @if (errorMessage()) {
         <app-alert-message [message]="errorMessage()!" type="error" />
@@ -197,13 +200,16 @@
     </section>
   } @else {
     <section class="siep-page">
-      <app-page-header
-        title="Caso no disponible"
-        subtitle="No se pudo cargar la informacion del caso."
-        icon="🧠"
-      >
-        <a actions class="siep-btn-secondary" routerLink="..">Volver</a>
-      </app-page-header>
+      <div class="profesor-page-hero">
+        <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
+        <app-page-header
+          title="Caso no disponible"
+          subtitle="No se pudo cargar la informacion del caso."
+          icon="🧠"
+        >
+          <a actions class="siep-btn-secondary" routerLink="..">Volver</a>
+        </app-page-header>
+      </div>
       @if (errorMessage()) {
         <app-alert-message [message]="errorMessage()!" type="error" />
       }

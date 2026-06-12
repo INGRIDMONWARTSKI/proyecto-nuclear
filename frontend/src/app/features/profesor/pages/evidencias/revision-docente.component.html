@@ -1,15 +1,16 @@
 ﻿<section class="siep-page revision">
-  <p class="siep-brand" aria-hidden="true">MENTORA · Profesor</p>
-
-  <app-page-header
-    title="Revisión del intento"
-    subtitle="Modo lectura para acompañar el aprendizaje: consulta decisiones, puntaje y retroalimentación del estudiante."
-    icon="🌿"
-  >
-    <a actions class="siep-btn-secondary" routerLink="/profesor/evidencias">
-      Volver a evidencias
-    </a>
-  </app-page-header>
+  <div class="profesor-page-hero">
+    <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · EVIDENCIAS</p>
+    <app-page-header
+      title="Revisión del intento"
+      subtitle="Modo lectura para acompañar el aprendizaje: consulta decisiones, puntaje y retroalimentación del estudiante."
+      icon="🌿"
+    >
+      <a actions class="siep-btn-secondary" routerLink="/profesor/evidencias">
+        Volver a evidencias
+      </a>
+    </app-page-header>
+  </div>
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />

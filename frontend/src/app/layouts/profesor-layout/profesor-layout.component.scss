@@ -1,4 +1,5 @@
 @use '../admin-layout/actor-layout.component.scss';
+@use '../../features/profesor/shared/profesor-page-hero' as profesorHero;
 
 @mixin glass-surface($opacity: 0.92) {
   background: rgba(255, 252, 247, $opacity);
@@ -51,19 +52,23 @@
   border-radius: var(--siep-radius-md);
 }
 
-.profesor-shell ::ng-deep .siep-page-header {
-  margin-bottom: 1rem;
-}
+.profesor-shell ::ng-deep {
+  @include profesorHero.profesor-page-hero;
 
-.profesor-shell ::ng-deep .siep-page-header h1 {
-  letter-spacing: 0.015em;
-  font-weight: 800;
-}
+  .siep-page-header {
+    margin-bottom: 1rem;
+  }
 
-.profesor-shell ::ng-deep .siep-page-header__subtitle {
-  max-width: 52ch;
-  font-size: 0.86rem;
-  line-height: 1.45;
+  .siep-page-header h1 {
+    letter-spacing: 0.015em;
+    font-weight: 800;
+  }
+
+  .siep-page-header__subtitle {
+    max-width: 52ch;
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

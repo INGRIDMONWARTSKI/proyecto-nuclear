@@ -1,11 +1,12 @@
 ﻿<section class="siep-page evidencias">
-  <p class="siep-brand" aria-hidden="true">MENTORA · Profesor</p>
-
-  <app-page-header
-    title="Evidencias de aprendizaje"
-    subtitle="Consulta intentos finalizados, decisiones y resultados de tus estudiantes en MENTORA."
-    icon="🌿"
-  />
+  <div class="profesor-page-hero">
+    <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · EVIDENCIAS</p>
+    <app-page-header
+      title="Evidencias de aprendizaje"
+      subtitle="Consulta intentos finalizados, decisiones y resultados de tus estudiantes en MENTORA."
+      icon="🌿"
+    />
+  </div>
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />

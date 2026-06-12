@@ -8,35 +8,61 @@
       <app-loading-state message="Cargando grupo..." />
     } @else {
       @if (grupoData(); as g) {
-        <app-page-header [title]="g.nombre" [subtitle]="g.descripcion ?? undefined" icon="🌿">
-          <div actions class="header-actions">
-            <a class="siep-btn-secondary" routerLink="..">Volver</a>
-            @if (puedeAdministrar()) {
-              @if (authService.hasRole(Role.ADMIN) && g.isActive) {
+        @if (authService.hasRole(Role.ADMIN)) {
+          <app-page-header [title]="g.nombre" [subtitle]="g.descripcion ?? undefined" icon="🌿">
+            <div actions class="header-actions">
+              <a class="siep-btn-secondary" routerLink="..">Volver</a>
+              @if (puedeAdministrar()) {
+                @if (authService.hasRole(Role.ADMIN) && g.isActive) {
+                  <button
+                    type="button"
+                    class="siep-btn-primary"
+                    (click)="abrirImportacion()"
+                  >
+                    Importar estudiantes
+                  </button>
+                }
+                <a class="siep-btn-secondary" [routerLink]="['editar']">Editar</a>
                 <button
+                  class="{{ g.isActive ? 'siep-btn-danger' : 'siep-btn-secondary' }}"
                   type="button"
-                  class="siep-btn-primary"
-                  (click)="abrirImportacion()"
+                  [disabled]="updatingStatus()"
+                  (click)="confirmarDesactivar()"
                 >
-                  Importar estudiantes
+                  @if (updatingStatus()) {
+                    Actualizando...
+                  } @else {
+                    {{ g.isActive ? 'Desactivar grupo' : 'Activar grupo' }}
+                  }
                 </button>
               }
-              <a class="siep-btn-secondary" [routerLink]="['editar']">Editar</a>
-              <button
-                class="{{ g.isActive ? 'siep-btn-danger' : 'siep-btn-secondary' }}"
-                type="button"
-                [disabled]="updatingStatus()"
-                (click)="confirmarDesactivar()"
-              >
-                @if (updatingStatus()) {
-                  Actualizando...
-                } @else {
-                  {{ g.isActive ? 'Desactivar grupo' : 'Activar grupo' }}
+            </div>
+          </app-page-header>
+        } @else {
+          <div class="profesor-page-hero">
+            <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · GRUPOS</p>
+            <app-page-header [title]="g.nombre" [subtitle]="g.descripcion ?? undefined" icon="🌿">
+              <div actions class="header-actions">
+                <a class="siep-btn-secondary" routerLink="..">Volver</a>
+                @if (puedeAdministrar()) {
+                  <a class="siep-btn-secondary" [routerLink]="['editar']">Editar</a>
+                  <button
+                    class="{{ g.isActive ? 'siep-btn-danger' : 'siep-btn-secondary' }}"
+                    type="button"
+                    [disabled]="updatingStatus()"
+                    (click)="confirmarDesactivar()"
+                  >
+                    @if (updatingStatus()) {
+                      Actualizando...
+                    } @else {
+                      {{ g.isActive ? 'Desactivar grupo' : 'Activar grupo' }}
+                    }
+                  </button>
                 }
-              </button>
-            }
+              </div>
+            </app-page-header>
           </div>
-        </app-page-header>
+        }
 
         @if (errorMessage()) {
           <app-alert-message [message]="errorMessage()!" type="error" />
@@ -160,13 +186,26 @@
           </section>
         }
       } @else {
-        <app-page-header
-          title="Grupo no disponible"
-          subtitle="No existe o no tienes permiso para verlo."
-          icon="🌿"
-        >
-          <a actions class="siep-btn-secondary" routerLink="..">Volver a grupos</a>
-        </app-page-header>
+        @if (authService.hasRole(Role.ADMIN)) {
+          <app-page-header
+            title="Grupo no disponible"
+            subtitle="No existe o no tienes permiso para verlo."
+            icon="🌿"
+          >
+            <a actions class="siep-btn-secondary" routerLink="..">Volver a grupos</a>
+          </app-page-header>
+        } @else {
+          <div class="profesor-page-hero">
+            <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · GRUPOS</p>
+            <app-page-header
+              title="Grupo no disponible"
+              subtitle="No existe o no tienes permiso para verlo."
+              icon="🌿"
+            >
+              <a actions class="siep-btn-secondary" routerLink="..">Volver a grupos</a>
+            </app-page-header>
+          </div>
+        }
         @if (errorMessage()) {
           <app-alert-message [message]="errorMessage()!" type="error" />
         }

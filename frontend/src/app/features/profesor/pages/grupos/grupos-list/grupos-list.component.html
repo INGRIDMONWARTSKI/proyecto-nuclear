@@ -4,19 +4,31 @@
   }
 
   <div [class.admin-page__content]="authService.hasRole(Role.ADMIN)">
-  <p class="siep-brand" aria-hidden="true">
-    {{ authService.hasRole(Role.ADMIN) ? 'MENTORA · Admin' : 'SIEP · Grupos' }}
-  </p>
-
-  <app-page-header
-    title="Grupos académicos"
-    [subtitle]="listSubtitle()"
-    icon="🌿"
-  >
-    @if (authService.canManageGrupos()) {
-      <a actions class="siep-btn-primary" routerLink="nuevo">Nuevo grupo</a>
-    }
-  </app-page-header>
+  @if (authService.hasRole(Role.ADMIN)) {
+    <p class="siep-brand" aria-hidden="true">MENTORA · Admin</p>
+    <app-page-header
+      title="Grupos académicos"
+      [subtitle]="listSubtitle()"
+      icon="🌿"
+    >
+      @if (authService.canManageGrupos()) {
+        <a actions class="siep-btn-primary" routerLink="nuevo">Nuevo grupo</a>
+      }
+    </app-page-header>
+  } @else {
+    <div class="profesor-page-hero">
+      <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · GRUPOS</p>
+      <app-page-header
+        title="Grupos académicos"
+        [subtitle]="listSubtitle()"
+        icon="🌿"
+      >
+        @if (authService.canManageGrupos()) {
+          <a actions class="siep-btn-primary" routerLink="nuevo">Nuevo grupo</a>
+        }
+      </app-page-header>
+    </div>
+  }
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />

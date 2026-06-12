@@ -1,11 +1,12 @@
 ﻿<section class="siep-page asignaciones">
-  <p class="siep-brand" aria-hidden="true">SIEP · Asignaciones</p>
-
-  <app-page-header
-    title="Asignaciones"
-    subtitle="Vincula casos publicados con grupos académicos para habilitar el acceso de tus estudiantes."
-    icon="🌿"
-  />
+  <div class="profesor-page-hero">
+    <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · ASIGNACIONES</p>
+    <app-page-header
+      title="Asignaciones"
+      subtitle="Vincula casos publicados con grupos académicos para habilitar el acceso de tus estudiantes."
+      icon="🌿"
+    />
+  </div>
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />

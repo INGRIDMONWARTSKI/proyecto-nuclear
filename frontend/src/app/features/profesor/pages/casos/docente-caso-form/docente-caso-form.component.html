@@ -1,11 +1,14 @@
 <section class="siep-page">
-  <app-page-header
-    [title]="isEdit() ? 'Editar caso' : 'Nuevo caso'"
-    subtitle="Define la información general del caso psicológico."
-    icon="🌿"
-  >
-    <a actions class="siep-btn-secondary" routerLink="..">Volver</a>
-  </app-page-header>
+  <div class="profesor-page-hero">
+    <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
+    <app-page-header
+      [title]="isEdit() ? 'Editar caso' : 'Nuevo caso'"
+      subtitle="Define la información general del caso psicológico."
+      icon="🌿"
+    >
+      <a actions class="siep-btn-secondary" routerLink="..">Volver</a>
+    </app-page-header>
+  </div>
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />

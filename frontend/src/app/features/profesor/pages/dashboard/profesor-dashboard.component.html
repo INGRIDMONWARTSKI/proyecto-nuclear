@@ -1,10 +1,11 @@
 ﻿<section class="siep-page profesor-dashboard">
-  <p class="siep-brand" aria-hidden="true">MENTORA · Profesor</p>
-
-  <app-page-header
-    title="Panel del profesor"
-    subtitle="Acompaña grupos, casos y evidencias del proceso psicosocial."
-  />
+  <div class="profesor-page-hero">
+    <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · PROFESOR</p>
+    <app-page-header
+      title="Panel del profesor"
+      subtitle="Acompaña grupos, casos y evidencias del proceso psicosocial."
+    />
+  </div>
 
   @if (errorMessage()) {
     <app-alert-message type="error" [message]="errorMessage()!" />

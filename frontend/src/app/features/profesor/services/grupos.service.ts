@@ -9,6 +9,7 @@ import {
   Grupo,
 } from '../../../core/models/grupo.model';
 import { Usuario } from '../../../core/models/usuario.model';
+import { ImportarEstudiantesResponse } from '../../../core/models/import-estudiantes.model';
 
 @Injectable({ providedIn: 'root' })
 export class GruposService {
@@ -55,6 +56,15 @@ export class GruposService {
   removerEstudiante(grupoId: string, estudianteId: string) {
     return this.http.delete<{ message: string }>(
       `${this.baseUrl}/${grupoId}/estudiantes/${estudianteId}`,
+    );
+  }
+
+  importarEstudiantes(grupoId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ImportarEstudiantesResponse>(
+      `${this.baseUrl}/${grupoId}/importar-estudiantes`,
+      formData,
     );
   }
 }

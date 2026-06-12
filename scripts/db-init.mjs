@@ -4,7 +4,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const dbContainer = 'proyecto-nuclear-db-1';
 const sqlFiles = [
   'database/persona-1-auth.sql',
   'database/persona-1-auth-recovery.sql',
@@ -16,6 +15,7 @@ function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     stdio: 'inherit',
     shell: true,
+    cwd: root,
     ...options,
   });
 
@@ -28,8 +28,10 @@ function tableExists() {
   const check = spawnSync(
     'docker',
     [
+      'compose',
       'exec',
-      dbContainer,
+      '-T',
+      'db',
       'psql',
       '-U',
       'postgres',
@@ -38,7 +40,7 @@ function tableExists() {
       '-tAc',
       "SELECT to_regclass('public.usuarios') IS NOT NULL;",
     ],
-    { encoding: 'utf8', shell: true },
+    { encoding: 'utf8', shell: true, cwd: root },
   );
 
   if (check.status !== 0) {
@@ -53,8 +55,10 @@ function recoveryTableExists() {
   const check = spawnSync(
     'docker',
     [
+      'compose',
       'exec',
-      dbContainer,
+      '-T',
+      'db',
       'psql',
       '-U',
       'postgres',
@@ -63,7 +67,7 @@ function recoveryTableExists() {
       '-tAc',
       "SELECT to_regclass('public.password_reset_tokens') IS NOT NULL;",
     ],
-    { encoding: 'utf8', shell: true },
+    { encoding: 'utf8', shell: true, cwd: root },
   );
 
   if (check.status !== 0) {
@@ -83,8 +87,8 @@ if (!tableExists() || !recoveryTableExists()) {
     const sql = readFileSync(join(root, file), 'utf8');
     const apply = spawnSync(
       'docker',
-      ['exec', '-i', dbContainer, 'psql', '-U', 'postgres', '-d', 'nuclear'],
-      { input: sql, encoding: 'utf8', shell: true },
+      ['compose', 'exec', '-T', 'db', 'psql', '-U', 'postgres', '-d', 'nuclear'],
+      { input: sql, encoding: 'utf8', shell: true, cwd: root },
     );
 
     if (apply.status !== 0) {
@@ -93,7 +97,7 @@ if (!tableExists() || !recoveryTableExists()) {
     }
   }
 
-  run('docker', ['compose', 'restart', 'postgrest'], { cwd: root });
+  run('docker', ['compose', 'restart', 'postgrest']);
 }
 
 console.log('[db-init] Ejecutando seed de usuarios demo...');

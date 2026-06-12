@@ -1,0 +1,328 @@
+:host {
+  display: contents;
+}
+
+.profesor-ambient__bleed {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.profesor-ambient__bleed-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('../../../../../assets/mentora/profesor-dashboard.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(241, 248, 233, 0.32) 0%,
+        rgba(250, 252, 247, 0.1) 18%,
+        rgba(250, 252, 247, 0.24) 50%,
+        rgba(250, 252, 247, 0.1) 82%,
+        rgba(241, 248, 233, 0.3) 100%
+      ),
+      linear-gradient(
+        168deg,
+        rgba(250, 252, 247, 0.42) 0%,
+        rgba(250, 252, 247, 0.2) 45%,
+        rgba(241, 248, 233, 0.32) 100%
+      ),
+      radial-gradient(ellipse 62% 48% at 78% 12%, rgba(243, 201, 107, 0.12), transparent 72%);
+  }
+}
+
+.profesor-ambient__side {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pedagogy-path {
+  position: absolute;
+  top: 10%;
+  bottom: 8%;
+  width: min(13vw, 170px);
+  height: auto;
+  color: #7cb342;
+  opacity: 0.16;
+  animation: pedagogy-path-breathe 18s ease-in-out infinite;
+}
+
+.profesor-ambient__side--left .pedagogy-path {
+  left: 1.2vw;
+}
+
+.profesor-ambient__side--right .pedagogy-path {
+  right: 1.2vw;
+  left: auto;
+}
+
+.pedagogy-path__route {
+  opacity: 0.28;
+}
+
+.pedagogy-path__node {
+  fill: #689f38;
+  opacity: 0.3;
+  animation: pedagogy-node-pulse 13s ease-in-out infinite;
+
+  &--1 { animation-delay: 0s; }
+  &--2 { animation-delay: -2.8s; }
+  &--3 { animation-delay: -5.6s; }
+  &--4 { animation-delay: -8.4s; }
+
+  &--1,
+  &--3 {
+    fill: #2f5d34;
+    opacity: 0.34;
+  }
+}
+
+.doc-ghost {
+  position: absolute;
+  color: #2f5d34;
+  opacity: 0.55;
+  filter: drop-shadow(0 6px 12px rgba(47, 93, 52, 0.08));
+  animation: doc-ghost-drift 12s ease-in-out infinite;
+}
+
+.review-mark {
+  position: absolute;
+  color: #7cb342;
+  opacity: 0.42;
+  animation: review-mark-float 10s ease-in-out infinite;
+}
+
+.ambient-leaf {
+  position: absolute;
+  color: #7cb342;
+  filter: drop-shadow(0 8px 14px rgba(47, 93, 52, 0.14));
+  animation: profesor-leaf-float 9.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.profesor-ambient__side--left {
+  .doc-ghost--1 {
+    top: 22%;
+    left: 10vw;
+    width: 34px;
+    height: auto;
+    animation-duration: 11s;
+    animation-delay: -1.8s;
+  }
+
+  .review-mark--1 {
+    top: 52%;
+    left: 5vw;
+    width: 22px;
+    height: 22px;
+    animation-duration: 9s;
+    animation-delay: -3.4s;
+  }
+
+  .ambient-leaf--1 {
+    top: 14%;
+    left: 5vw;
+    width: 34px;
+    height: 34px;
+    color: #7cb342;
+    opacity: 0.68;
+    animation-duration: 8s;
+  }
+
+  .ambient-leaf--2 {
+    top: 72%;
+    left: 14vw;
+    width: 22px;
+    height: 22px;
+    color: #9ccc65;
+    opacity: 0.52;
+    animation-duration: 11.5s;
+    animation-delay: -4.2s;
+  }
+}
+
+.profesor-ambient__side--right {
+  .doc-ghost--2 {
+    top: 34%;
+    right: 11vw;
+    left: auto;
+    width: 30px;
+    height: auto;
+    animation-duration: 13s;
+    animation-delay: -2.6s;
+    animation-name: doc-ghost-drift-alt;
+  }
+
+  .review-mark--2 {
+    top: 68%;
+    right: 6vw;
+    left: auto;
+    width: 20px;
+    height: 20px;
+    animation-duration: 10.5s;
+    animation-delay: -5.1s;
+    animation-name: review-mark-float-alt;
+  }
+
+  .ambient-leaf--3 {
+    top: 20%;
+    right: 5vw;
+    left: auto;
+    width: 40px;
+    height: 40px;
+    color: #689f38;
+    opacity: 0.7;
+    animation-duration: 7.5s;
+    animation-delay: -1.2s;
+    animation-name: profesor-leaf-float-alt;
+  }
+
+  .ambient-leaf--4 {
+    top: 84%;
+    right: 13vw;
+    left: auto;
+    width: 26px;
+    height: 26px;
+    color: #2f5d34;
+    opacity: 0.58;
+    animation-duration: 12s;
+    animation-delay: -6.8s;
+    animation-name: profesor-leaf-float-alt;
+  }
+}
+
+@keyframes profesor-leaf-float {
+  0%, 100% { transform: translate(0, 0) rotate(-3deg); }
+  25% { transform: translate(7px, -16px) rotate(4deg); }
+  50% { transform: translate(-5px, -26px) rotate(-2deg); }
+  75% { transform: translate(6px, -12px) rotate(3deg); }
+}
+
+@keyframes profesor-leaf-float-alt {
+  0%, 100% { transform: translate(0, 0) rotate(2deg); }
+  30% { transform: translate(-8px, -14px) rotate(-3deg); }
+  60% { transform: translate(5px, -24px) rotate(4deg); }
+  85% { transform: translate(-4px, -10px) rotate(-2deg); }
+}
+
+@keyframes pedagogy-path-breathe {
+  0%, 100% { opacity: 0.16; }
+  50% { opacity: 0.26; }
+}
+
+@keyframes pedagogy-node-pulse {
+  0%, 100% { opacity: 0.24; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.08); }
+}
+
+@keyframes doc-ghost-drift {
+  0%, 100% { transform: translate(0, 0) rotate(-2deg); opacity: 0.5; }
+  50% { transform: translate(6px, -10px) rotate(1deg); opacity: 0.62; }
+}
+
+@keyframes doc-ghost-drift-alt {
+  0%, 100% { transform: translate(0, 0) rotate(2deg); opacity: 0.48; }
+  50% { transform: translate(-5px, -12px) rotate(-1deg); opacity: 0.58; }
+}
+
+@keyframes review-mark-float {
+  0%, 100% { transform: translateY(0); opacity: 0.38; }
+  50% { transform: translateY(-8px); opacity: 0.52; }
+}
+
+@keyframes review-mark-float-alt {
+  0%, 100% { transform: translateY(0); opacity: 0.36; }
+  50% { transform: translateY(-6px); opacity: 0.48; }
+}
+
+@media (max-width: 900px) {
+  .pedagogy-path {
+    width: min(10vw, 110px);
+    opacity: 0.11;
+  }
+
+  .doc-ghost,
+  .profesor-ambient__side--left .ambient-leaf--2,
+  .profesor-ambient__side--right .ambient-leaf--4,
+  .profesor-ambient__side--right .review-mark--2 {
+    display: none;
+  }
+
+  .ambient-leaf--1,
+  .ambient-leaf--3 {
+    width: 28px !important;
+    height: 28px !important;
+    opacity: 0.4 !important;
+  }
+
+  .review-mark--1 {
+    width: 18px;
+    height: 18px;
+    opacity: 0.32;
+  }
+}
+
+@media (max-width: 640px) {
+  .pedagogy-path,
+  .doc-ghost,
+  .review-mark,
+  .profesor-ambient__side--right .ambient-leaf--3,
+  .profesor-ambient__side--left .ambient-leaf--2 {
+    display: none;
+  }
+
+  .profesor-ambient__side--left .ambient-leaf--1 {
+    width: 24px !important;
+    height: 24px !important;
+    opacity: 0.3 !important;
+    left: 3vw;
+    top: 16%;
+  }
+
+  .profesor-ambient__bleed-bg {
+    background-position: center top;
+
+    &::after {
+      background: linear-gradient(
+        180deg,
+        rgba(250, 252, 247, 0.9) 0%,
+        rgba(250, 252, 247, 0.86) 100%
+      );
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-leaf,
+  .pedagogy-path,
+  .pedagogy-path__node,
+  .doc-ghost,
+  .review-mark {
+    animation: none !important;
+  }
+
+  .ambient-leaf,
+  .doc-ghost,
+  .review-mark {
+    opacity: 0.42 !important;
+    transform: none !important;
+  }
+
+  .pedagogy-path {
+    opacity: 0.18 !important;
+  }
+}

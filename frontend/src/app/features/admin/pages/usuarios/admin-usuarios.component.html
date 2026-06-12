@@ -1,5 +1,8 @@
-﻿<section class="siep-page usuarios">
-  <p class="siep-brand" aria-hidden="true">SIEP · Admin</p>
+﻿<section class="siep-page admin-page usuarios">
+  <app-admin-ambient />
+
+  <div class="admin-page__content">
+  <p class="siep-brand" aria-hidden="true">MENTORA · Admin</p>
 
   <app-page-header
     title="Usuarios"
@@ -243,4 +246,5 @@
     (confirmed)="confirmarCambioEstado()"
     (cancelled)="cerrarConfirmacion()"
   />
+  </div>
 </section>

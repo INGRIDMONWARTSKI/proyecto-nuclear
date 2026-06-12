@@ -15,6 +15,9 @@ import { StatusBadgeComponent } from '../../../../../shared/ui/status-badge/stat
 import { ClassroomSceneComponent } from '../../../components/salon-clases/classroom-scene.component';
 import { GruposService } from '../../../services/grupos.service';
 import { filtrarEstudiantesPorBusqueda } from '../../../utils/estudiante-busqueda.util';
+import { AdminAmbientComponent } from '../../../../admin/shared/admin-ambient/admin-ambient.component';
+import { ImportEstudiantesDialogComponent } from '../../../../admin/components/import-estudiantes-dialog/import-estudiantes-dialog.component';
+import type { ImportarEstudiantesResponse } from '../../../../../core/models/import-estudiantes.model';
 
 @Component({
   selector: 'app-grupo-detail',
@@ -29,6 +32,8 @@ import { filtrarEstudiantesPorBusqueda } from '../../../utils/estudiante-busqued
     PageHeaderComponent,
     StatusBadgeComponent,
     ClassroomSceneComponent,
+    AdminAmbientComponent,
+    ImportEstudiantesDialogComponent,
   ],
   templateUrl: './grupo-detail.component.html',
   styleUrl: './grupo-detail.component.scss',
@@ -39,6 +44,7 @@ export class GrupoDetailComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly gruposService = inject(GruposService);
   protected readonly authService = inject(AuthService);
+  protected readonly Role = Role;
 
   protected readonly loading = signal(true);
   protected readonly loadingEstudiantes = signal(false);
@@ -50,6 +56,10 @@ export class GrupoDetailComponent implements OnInit {
   protected readonly confirmMessage = signal('');
   protected readonly confirmLabel = signal('Confirmar');
   protected readonly confirmDestructive = signal(true);
+  protected readonly importOpen = signal(false);
+  protected readonly importing = signal(false);
+  protected readonly importErrorMessage = signal<string | null>(null);
+  protected readonly importResult = signal<ImportarEstudiantesResponse | null>(null);
 
   private confirmAction: (() => void) | null = null;
   protected readonly errorMessage = signal<string | null>(null);
@@ -182,6 +192,53 @@ export class GrupoDetailComponent implements OnInit {
     if (!abrir) {
       this.busquedaAsignacion.set('');
     }
+  }
+
+  abrirImportacion(): void {
+    this.importErrorMessage.set(null);
+    this.importResult.set(null);
+    this.importOpen.set(true);
+  }
+
+  cerrarImportacion(): void {
+    if (this.importing()) {
+      return;
+    }
+    this.importOpen.set(false);
+    this.importErrorMessage.set(null);
+    this.importResult.set(null);
+  }
+
+  importarEstudiantes(file: File): void {
+    if (!this.grupoId || this.importing()) {
+      return;
+    }
+
+    this.importing.set(true);
+    this.importErrorMessage.set(null);
+
+    this.gruposService.importarEstudiantes(this.grupoId, file).subscribe({
+      next: (response) => {
+        this.importResult.set(response);
+        this.importing.set(false);
+        this.cargarEstudiantes();
+        if (this.puedeAdministrar()) {
+          this.cargarEstudiantesDisponibles();
+        }
+        const totalOk = response.creados.length + response.existentesAsignados.length;
+        this.successMessage.set(
+          totalOk > 0
+            ? `Importación completada: ${totalOk} estudiante(s) procesado(s) correctamente.`
+            : 'Importación completada. Revisa el resumen para ver duplicados o errores.',
+        );
+      },
+      error: (error) => {
+        this.importing.set(false);
+        this.importErrorMessage.set(
+          getErrorMessage(error, 'No fue posible importar el archivo de estudiantes.'),
+        );
+      },
+    });
   }
 
   actualizarBusquedaAsignacion(event: Event) {

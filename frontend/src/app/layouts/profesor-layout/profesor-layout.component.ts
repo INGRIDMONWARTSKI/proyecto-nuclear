@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ProfesorAmbientComponent } from '../../features/profesor/shared/profesor-ambient/profesor-ambient.component';
 
 @Component({
   selector: 'app-profesor-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ProfesorAmbientComponent],
   templateUrl: './profesor-layout.component.html',
-  styleUrl: '../admin-layout/actor-layout.component.scss',
+  styleUrl: './profesor-layout.component.scss',
 })
 export class ProfesorLayoutComponent {
   protected readonly authService = inject(AuthService);

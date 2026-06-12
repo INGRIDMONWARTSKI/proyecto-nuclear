@@ -6,8 +6,11 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -18,6 +21,7 @@ import { ActualizarGrupoDto } from './dto/actualizar-grupo.dto';
 import { AsignarEstudiantesDto } from './dto/asignar-estudiantes.dto';
 import { CrearGrupoDto } from './dto/crear-grupo.dto';
 import { GruposService } from './grupos.service';
+import type { UploadedImportFile } from './interfaces/uploaded-import-file.interface';
 
 @Controller('grupos')
 @UseGuards(JwtAuthGuard)
@@ -74,6 +78,18 @@ export class GruposController {
       asignarEstudiantesDto,
       currentUser,
     );
+  }
+
+  @Post(':id/importar-estudiantes')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  importarEstudiantes(
+    @Param('id') id: string,
+    @UploadedFile() file: UploadedImportFile,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.gruposService.importarEstudiantes(id, file, currentUser);
   }
 
   @Delete(':id/estudiantes/:estudianteId')

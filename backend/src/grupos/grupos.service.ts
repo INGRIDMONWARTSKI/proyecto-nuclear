@@ -15,6 +15,16 @@ import { AsignarEstudiantesDto } from './dto/asignar-estudiantes.dto';
 import { CrearGrupoDto } from './dto/crear-grupo.dto';
 import { EstudianteGrupo } from './entities/estudiante-grupo.entity';
 import { Grupo } from './entities/grupo.entity';
+import type {
+  ImportEstudianteItem,
+  ImportarEstudiantesResponse,
+} from './interfaces/importar-estudiantes.interface';
+import type { UploadedImportFile } from './interfaces/uploaded-import-file.interface';
+import { generateTemporaryPassword } from './utils/generate-temporary-password.util';
+import {
+  isValidEmail,
+  parseEstudiantesFile,
+} from './utils/parse-estudiantes-file.util';
 
 @Injectable()
 export class GruposService {
@@ -263,6 +273,205 @@ export class GruposService {
     }
 
     return estudiantes;
+  }
+
+  async importarEstudiantes(
+    grupoId: string,
+    file: UploadedImportFile,
+    currentUser: AuthenticatedUser,
+  ): Promise<ImportarEstudiantesResponse> {
+    if (currentUser.role !== Role.ADMIN) {
+      throw new ForbiddenException(
+        'Solo un administrador puede importar estudiantes.',
+      );
+    }
+
+    if (!file) {
+      throw new BadRequestException('Debes adjuntar un archivo para importar.');
+    }
+
+    const grupo = await this.findGrupoById(grupoId);
+
+    if (!grupo.isActive) {
+      throw new BadRequestException(
+        'No se pueden importar estudiantes a un grupo inactivo.',
+      );
+    }
+
+    const rows = parseEstudiantesFile(file.buffer, file.originalname);
+    const response: ImportarEstudiantesResponse = {
+      totalFilas: rows.length,
+      creados: [],
+      existentesAsignados: [],
+      duplicados: [],
+      errores: [],
+      reporteCredenciales: [],
+    };
+
+    const emailsEnArchivo = new Set<string>();
+
+    for (const row of rows) {
+      const fullName = row.fullName.trim();
+      const email = row.email.trim().toLowerCase();
+
+      if (!fullName || !email) {
+        response.errores.push({
+          fullName: fullName || '(sin nombre)',
+          email: email || '(sin correo)',
+          estado: 'error',
+          observacion: `Fila ${row.rowNumber}: nombre y correo son obligatorios.`,
+        });
+        continue;
+      }
+
+      if (fullName.length < 3) {
+        response.errores.push({
+          fullName,
+          email,
+          estado: 'error',
+          observacion: `Fila ${row.rowNumber}: el nombre debe tener al menos 3 caracteres.`,
+        });
+        continue;
+      }
+
+      if (!isValidEmail(email)) {
+        response.errores.push({
+          fullName,
+          email,
+          estado: 'error',
+          observacion: `Fila ${row.rowNumber}: correo con formato invalido.`,
+        });
+        continue;
+      }
+
+      if (emailsEnArchivo.has(email)) {
+        response.duplicados.push({
+          fullName,
+          email,
+          estado: 'duplicado',
+          observacion: `Fila ${row.rowNumber}: correo repetido en el archivo.`,
+        });
+        continue;
+      }
+
+      emailsEnArchivo.add(email);
+
+      try {
+        await this.processImportRow({
+          grupoId,
+          fullName,
+          email,
+          rowNumber: row.rowNumber,
+          response,
+        });
+      } catch (error) {
+        response.errores.push({
+          fullName,
+          email,
+          estado: 'error',
+          observacion:
+            error instanceof Error
+              ? error.message
+              : `Fila ${row.rowNumber}: no fue posible procesar la fila.`,
+        });
+      }
+    }
+
+    return response;
+  }
+
+  private async processImportRow(params: {
+    grupoId: string;
+    fullName: string;
+    email: string;
+    rowNumber: number;
+    response: ImportarEstudiantesResponse;
+  }) {
+    const { grupoId, fullName, email, rowNumber, response } = params;
+    const existing = await this.usuariosService.findByEmail(email);
+
+    if (existing) {
+      if (existing.role !== Role.ESTUDIANTE) {
+        response.errores.push({
+          fullName,
+          email,
+          estado: 'error',
+          observacion: `Fila ${rowNumber}: el correo pertenece a un usuario ${existing.role}.`,
+        });
+        return;
+      }
+
+      if (!existing.isActive) {
+        response.errores.push({
+          fullName,
+          email,
+          estado: 'error',
+          observacion: `Fila ${rowNumber}: el estudiante existe pero esta inactivo.`,
+        });
+        return;
+      }
+
+      const yaAsignado = await this.findMembership(grupoId, existing.id);
+      if (yaAsignado) {
+        response.duplicados.push({
+          fullName: existing.fullName,
+          email,
+          estado: 'duplicado',
+          observacion: `Fila ${rowNumber}: el estudiante ya pertenece al grupo.`,
+        });
+        return;
+      }
+
+      await this.postgrest.insert<EstudianteGrupo>(
+        'estudiante_grupo',
+        {
+          grupoId,
+          estudianteId: existing.id,
+        },
+        { select: '*' },
+      );
+
+      const item: ImportEstudianteItem = {
+        fullName: existing.fullName,
+        email,
+        estado: 'existente_asignado',
+        observacion: `Fila ${rowNumber}: estudiante existente asignado al grupo.`,
+      };
+      response.existentesAsignados.push(item);
+      return;
+    }
+
+    const temporaryPassword = generateTemporaryPassword();
+    const created = await this.usuariosService.createEstudiante(
+      fullName,
+      email,
+      temporaryPassword,
+    );
+
+    await this.postgrest.insert<EstudianteGrupo>(
+      'estudiante_grupo',
+      {
+        grupoId,
+        estudianteId: created.id,
+      },
+      { select: '*' },
+    );
+
+    const item: ImportEstudianteItem = {
+      fullName: created.fullName,
+      email,
+      estado: 'creado',
+      observacion: `Fila ${rowNumber}: estudiante creado y asignado al grupo.`,
+      temporaryPassword,
+    };
+
+    response.creados.push(item);
+    response.reporteCredenciales.push({
+      fullName: created.fullName,
+      email,
+      temporaryPassword,
+      estado: 'creado',
+    });
   }
 
   private async resolveProfesorIdForCreate(

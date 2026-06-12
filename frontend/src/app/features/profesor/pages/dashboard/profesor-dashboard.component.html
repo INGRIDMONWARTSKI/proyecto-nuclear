@@ -1,224 +1,231 @@
 ﻿<section class="siep-page profesor-dashboard">
-
   <p class="siep-brand" aria-hidden="true">MENTORA · Profesor</p>
 
-
-
   <app-page-header
-
     title="Panel del profesor"
-
-    subtitle="Diseña casos, organiza grupos y acompaña el aprendizaje psicosocial de tus estudiantes en MENTORA."
-
-    icon="🌿"
-
+    subtitle="Acompaña grupos, casos y evidencias del proceso psicosocial."
   />
 
+  @if (errorMessage()) {
+    <app-alert-message type="error" [message]="errorMessage()!" />
+  }
 
+  @if (loading()) {
+    <app-loading-state message="Cargando panel docente..." />
+  } @else if (!errorMessage()) {
+    <section class="siep-card profesor-dashboard__hub" aria-label="Centro de acompañamiento docente">
+      <header class="profesor-dashboard__section-head">
+        <h2>Centro de acompañamiento docente</h2>
+        <p>Resumen de tu práctica formativa en MENTORA.</p>
+      </header>
 
-  <section class="siep-card profesor-dashboard__start" aria-label="Por dónde empezar">
+      <div class="profesor-dashboard__metrics">
+        <article class="metric-card" style="animation-delay: 0.05s">
+          <span class="metric-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="4" y="3" width="16" height="18" rx="2" />
+              <line x1="8" y1="8" x2="16" y2="8" />
+              <line x1="8" y1="12" x2="14" y2="12" />
+            </svg>
+          </span>
+          <div class="metric-card__body">
+            <p class="metric-card__label">Casos activos</p>
+            <p class="metric-card__value">{{ casosActivos() }}</p>
+          </div>
+        </article>
 
-    <header class="profesor-dashboard__section-head">
+        <article class="metric-card" style="animation-delay: 0.1s">
+          <span class="metric-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="9" cy="8" r="3" />
+              <circle cx="16" cy="10" r="2.5" />
+              <path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5" />
+              <path d="M14 19c0-1.8 1-3.4 2.5-4.2" />
+            </svg>
+          </span>
+          <div class="metric-card__body">
+            <p class="metric-card__label">Grupos asignados</p>
+            <p class="metric-card__value">{{ gruposAsignados() }}</p>
+          </div>
+        </article>
 
-      <h2>Por dónde empezar</h2>
+        <article class="metric-card" style="animation-delay: 0.15s">
+          <span class="metric-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M6 4h12v16H6z" />
+              <path d="M9 9h6M9 13h6M9 17h4" />
+              <path d="M14 4v3h3" />
+            </svg>
+          </span>
+          <div class="metric-card__body">
+            <p class="metric-card__label">Evidencias pendientes</p>
+            <p class="metric-card__value">{{ evidenciasPendientes() }}</p>
+          </div>
+        </article>
 
-      <p>Un recorrido sugerido para poner en marcha tu espacio docente.</p>
+        <article class="metric-card" style="animation-delay: 0.2s">
+          <span class="metric-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="12" cy="7" r="3.5" />
+              <path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" />
+              <path d="M17 8l2 2-3 3" />
+            </svg>
+          </span>
+          <div class="metric-card__body">
+            <p class="metric-card__label">Estudiantes en seguimiento</p>
+            <p class="metric-card__value">{{ estudiantesSeguimiento() }}</p>
+          </div>
+        </article>
+      </div>
+    </section>
 
-    </header>
+    <section class="siep-card profesor-dashboard__actions" aria-label="Acciones docentes">
+      <header class="profesor-dashboard__section-head">
+        <h2>Acciones docentes</h2>
+        <p>Accesos directos a las tareas centrales de tu rol.</p>
+      </header>
 
+      <div class="profesor-dashboard__grid">
+        <a routerLink="/profesor/casos" class="profesor-dashboard__action">
+          <span class="profesor-dashboard__action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="4" y="3" width="16" height="18" rx="2" />
+              <line x1="8" y1="8" x2="16" y2="8" />
+              <line x1="8" y1="12" x2="14" y2="12" />
+            </svg>
+          </span>
+          <span class="profesor-dashboard__action-title">Crear o revisar casos</span>
+          <span class="profesor-dashboard__action-desc">Diseña escenarios, decisiones y retroalimentación.</span>
+        </a>
 
+        <a routerLink="/profesor/grupos" class="profesor-dashboard__action">
+          <span class="profesor-dashboard__action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="9" cy="8" r="3" />
+              <circle cx="16" cy="10" r="2.5" />
+              <path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5" />
+            </svg>
+          </span>
+          <span class="profesor-dashboard__action-title">Organizar grupos</span>
+          <span class="profesor-dashboard__action-desc">Gestiona estudiantes y grupos académicos.</span>
+        </a>
 
-    <ol class="profesor-dashboard__path">
+        <a routerLink="/profesor/asignaciones" class="profesor-dashboard__action">
+          <span class="profesor-dashboard__action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="6" cy="6" r="2.5" />
+              <circle cx="18" cy="18" r="2.5" />
+              <path d="M8.5 7.5L15.5 16.5" />
+            </svg>
+          </span>
+          <span class="profesor-dashboard__action-title">Asignar simulaciones</span>
+          <span class="profesor-dashboard__action-desc">Vincula casos publicados con tus grupos.</span>
+        </a>
 
-      <li>
+        <a routerLink="/profesor/evidencias" class="profesor-dashboard__action">
+          <span class="profesor-dashboard__action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M5 12l4 4L19 6" />
+              <circle cx="12" cy="12" r="9" />
+            </svg>
+          </span>
+          <span class="profesor-dashboard__action-title">Revisar evidencias</span>
+          <span class="profesor-dashboard__action-desc">Consulta intentos y recorridos de estudiantes.</span>
+        </a>
+      </div>
+    </section>
 
-        <span class="profesor-dashboard__path-step" aria-hidden="true">1</span>
+    <section class="siep-card profesor-dashboard__activity" aria-label="Actividad reciente">
+      <header class="profesor-dashboard__section-head">
+        <h2>Actividad reciente</h2>
+        <p>Últimos movimientos en casos, evidencias y estudiantes.</p>
+      </header>
 
-        <div>
-
-          <strong>Crea o revisa tus casos</strong>
-
-          <p>Diseña escenarios, decisiones y retroalimentación en el módulo de casos.</p>
-
+      <div class="profesor-dashboard__activity-grid">
+        <div class="activity-column">
+          <h3 class="activity-column__title">Evidencias recientes</h3>
+          @if (evidenciasRecientes().length === 0) {
+            <p class="activity-column__empty">Aún no hay evidencias registradas.</p>
+          } @else {
+            <ul class="activity-list">
+              @for (evidencia of evidenciasRecientes(); track evidencia.sesionId) {
+                <li>
+                  <a
+                    [routerLink]="['/profesor/evidencias', evidencia.sesionId]"
+                    class="activity-item"
+                  >
+                    <span class="activity-item__title">{{ evidencia.casoTitulo }}</span>
+                    <span class="activity-item__meta">{{ evidencia.estudianteNombre }}</span>
+                    @if (evidencia.fechaFinalizacion; as fecha) {
+                      <time class="activity-item__date">{{ fecha | date: 'd MMM y, HH:mm' }}</time>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          }
         </div>
 
-      </li>
-
-      <li>
-
-        <span class="profesor-dashboard__path-step" aria-hidden="true">2</span>
-
-        <div>
-
-          <strong>Organiza tus grupos</strong>
-
-          <p>Asigna estudiantes a grupos académicos antes de publicar contenidos.</p>
-
+        <div class="activity-column">
+          <h3 class="activity-column__title">Casos publicados</h3>
+          @if (casosPublicadosRecientes().length === 0) {
+            <p class="activity-column__empty">No hay casos publicados todavía.</p>
+          } @else {
+            <ul class="activity-list">
+              @for (caso of casosPublicadosRecientes(); track caso.id) {
+                <li>
+                  <a [routerLink]="['/profesor/casos', caso.id]" class="activity-item">
+                    <span class="activity-item__title">{{ caso.titulo }}</span>
+                    <span class="activity-item__meta">Publicado</span>
+                    @if (caso.publishedAt ?? caso.updatedAt; as fecha) {
+                      <time class="activity-item__date">{{ fecha | date: 'd MMM y' }}</time>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          }
         </div>
 
-      </li>
-
-      <li>
-
-        <span class="profesor-dashboard__path-step" aria-hidden="true">3</span>
-
-        <div>
-
-          <strong>Publica y asigna</strong>
-
-          <p>Publica un caso y vincúlalo a los grupos que participarán en la simulación.</p>
-
+        <div class="activity-column">
+          <h3 class="activity-column__title">Estudiantes finalizados</h3>
+          @if (estudiantesFinalizadosRecientes().length === 0) {
+            <p class="activity-column__empty">Sin finalizaciones recientes.</p>
+          } @else {
+            <ul class="activity-list">
+              @for (evidencia of estudiantesFinalizadosRecientes(); track evidencia.sesionId) {
+                <li>
+                  <a
+                    [routerLink]="['/profesor/evidencias', evidencia.sesionId]"
+                    class="activity-item"
+                  >
+                    <span class="activity-item__title">{{ evidencia.estudianteNombre }}</span>
+                    <span class="activity-item__meta">{{ evidencia.casoTitulo }}</span>
+                    @if (evidencia.fechaFinalizacion; as fecha) {
+                      <time class="activity-item__date">{{ fecha | date: 'd MMM y' }}</time>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          }
         </div>
+      </div>
+    </section>
 
-      </li>
+    <section class="siep-card profesor-dashboard__guidance" aria-label="Orientación MENTORA">
+      <header class="profesor-dashboard__section-head">
+        <h2>Orientación MENTORA</h2>
+        <p>Recomendación pedagógica para tu práctica docente.</p>
+      </header>
 
-      <li>
-
-        <span class="profesor-dashboard__path-step" aria-hidden="true">4</span>
-
+      <article class="guidance-card">
+        <span class="guidance-card__accent" aria-hidden="true"></span>
         <div>
-
-          <strong>Revisa evidencias</strong>
-
-          <p>Consulta intentos, decisiones y resultados cuando los estudiantes finalicen.</p>
-
+          <h3 class="guidance-card__title">{{ orientacionActual().titulo }}</h3>
+          <p class="guidance-card__text">{{ orientacionActual().texto }}</p>
         </div>
-
-      </li>
-
-    </ol>
-
-  </section>
-
-
-
-  <section class="siep-card profesor-dashboard__quick" aria-label="Accesos rápidos">
-
-    <header class="profesor-dashboard__section-head">
-
-      <h2>Accesos rápidos</h2>
-
-      <p>Entra directamente a los módulos de tu práctica docente.</p>
-
-    </header>
-
-
-
-    <div class="profesor-dashboard__grid">
-
-      <a routerLink="/profesor/casos" class="profesor-dashboard__action profesor-dashboard__action--featured">
-
-        <span class="profesor-dashboard__action-badge">Recomendado</span>
-
-        <span class="profesor-dashboard__action-icon" aria-hidden="true">📋</span>
-
-        <span class="profesor-dashboard__action-title">Casos de simulación</span>
-
-        <span class="profesor-dashboard__action-desc">Diseña escenarios, decisiones y retroalimentación.</span>
-
-      </a>
-
-
-
-      <a routerLink="/profesor/grupos" class="profesor-dashboard__action">
-
-        <span class="profesor-dashboard__action-icon" aria-hidden="true">👥</span>
-
-        <span class="profesor-dashboard__action-title">Mis grupos</span>
-
-        <span class="profesor-dashboard__action-desc">Organiza estudiantes y grupos académicos.</span>
-
-      </a>
-
-
-
-      <a routerLink="/profesor/asignaciones" class="profesor-dashboard__action">
-
-        <span class="profesor-dashboard__action-icon" aria-hidden="true">🔗</span>
-
-        <span class="profesor-dashboard__action-title">Asignaciones</span>
-
-        <span class="profesor-dashboard__action-desc">Vincula casos publicados con tus grupos.</span>
-
-      </a>
-
-
-
-      <a routerLink="/profesor/evidencias" class="profesor-dashboard__action">
-
-        <span class="profesor-dashboard__action-icon" aria-hidden="true">📊</span>
-
-        <span class="profesor-dashboard__action-title">Evidencias</span>
-
-        <span class="profesor-dashboard__action-desc">Revisa intentos y el recorrido de tus estudiantes.</span>
-
-      </a>
-
-    </div>
-
-  </section>
-
-
-
-  <section class="siep-card profesor-dashboard__activity" aria-label="Buenas prácticas docentes">
-
-    <header class="profesor-dashboard__section-head">
-
-      <h2>Buenas prácticas docentes</h2>
-
-      <p>Consejos para acompañar simulaciones con sentido pedagógico.</p>
-
-    </header>
-
-
-
-    <ul class="profesor-dashboard__tips">
-
-      <li class="profesor-dashboard__tip">
-
-        <span class="profesor-dashboard__tip-icon" aria-hidden="true">🌱</span>
-
-        <div>
-
-          <strong>Publica antes de asignar</strong>
-
-          <p>Un caso en borrador no puede asignarse. Revísalo y publícalo desde su detalle.</p>
-
-        </div>
-
-      </li>
-
-      <li class="profesor-dashboard__tip">
-
-        <span class="profesor-dashboard__tip-icon" aria-hidden="true">💬</span>
-
-        <div>
-
-          <strong>Usa evidencias con intención</strong>
-
-          <p>Revisa decisiones y retroalimentación para orientar el seguimiento académico.</p>
-
-        </div>
-
-      </li>
-
-      <li class="profesor-dashboard__tip">
-
-        <span class="profesor-dashboard__tip-icon" aria-hidden="true">🧠</span>
-
-        <div>
-
-          <strong>Práctica reflexiva</strong>
-
-          <p>Tus estudiantes avanzan por escenarios con feedback inmediato y aprendizaje guiado.</p>
-
-        </div>
-
-      </li>
-
-    </ul>
-
-  </section>
-
+      </article>
+    </section>
+  }
 </section>
-

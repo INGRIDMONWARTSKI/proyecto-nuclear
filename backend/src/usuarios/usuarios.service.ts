@@ -31,8 +31,8 @@ export class UsuariosService {
       return await this.postgrest.insert<Usuario>(
         'usuarios',
         {
-          fullName: crearUsuarioDto.fullName,
-          email: crearUsuarioDto.email,
+          fullName: crearUsuarioDto.fullName.trim(),
+          email: crearUsuarioDto.email.trim().toLowerCase(),
           passwordHash,
           role: crearUsuarioDto.role,
         },
@@ -44,6 +44,19 @@ export class UsuariosService {
       this.rethrowConflict(error);
       throw error;
     }
+  }
+
+  async createEstudiante(
+    fullName: string,
+    email: string,
+    password: string,
+  ): Promise<Usuario> {
+    return this.create({
+      fullName: fullName.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      role: Role.ESTUDIANTE,
+    });
   }
 
   async update(

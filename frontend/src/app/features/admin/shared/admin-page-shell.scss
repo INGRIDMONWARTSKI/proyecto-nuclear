@@ -1,0 +1,84 @@
+@mixin glass-surface($opacity: 0.92) {
+  background: rgba(255, 252, 247, $opacity);
+  border: 1px solid var(--siep-border);
+  box-shadow:
+    0 12px 32px rgba(16, 42, 29, 0.08),
+    inset 0 1px 0 rgba(255, 252, 247, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@mixin admin-page-shell {
+  :host {
+    display: block;
+    position: relative;
+    z-index: 1;
+  }
+
+  .admin-page {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    isolation: isolate;
+
+    ::ng-deep .siep-page-header {
+      margin-bottom: 1rem;
+    }
+
+    ::ng-deep .siep-page-header h1 {
+      letter-spacing: 0.015em;
+      font-weight: 800;
+    }
+
+    ::ng-deep .siep-page-header__subtitle {
+      max-width: 52ch;
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+  }
+
+  .admin-page__content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: min(1100px, 100%);
+    margin: 0 auto;
+    padding: 0.35rem 0.25rem 1.25rem;
+  }
+
+  .admin-page .siep-card {
+    @include glass-surface(0.84);
+    border-radius: var(--siep-radius-lg);
+    transition:
+      transform var(--siep-transition-spring),
+      box-shadow var(--siep-transition-base),
+      border-color var(--siep-transition-base),
+      background var(--siep-transition-base);
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--siep-border);
+      box-shadow:
+        0 16px 40px rgba(16, 42, 29, 0.1),
+        0 0 22px var(--siep-glow-soft),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+  }
+
+  .admin-page .siep-card-row {
+    @include glass-surface(0.76);
+    border-radius: var(--siep-radius-md);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .admin-page .siep-card {
+      transition: none;
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+}

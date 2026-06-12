@@ -1,0 +1,331 @@
+:host {
+  display: contents;
+}
+
+.admin-ambient__bleed {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.admin-ambient__bleed-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('../../../../../assets/mentora/admin-dashboard-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(241, 248, 233, 0.28) 0%,
+        rgba(250, 252, 247, 0.08) 16%,
+        rgba(250, 252, 247, 0.22) 50%,
+        rgba(250, 252, 247, 0.08) 84%,
+        rgba(241, 248, 233, 0.28) 100%
+      ),
+      linear-gradient(
+        165deg,
+        rgba(250, 252, 247, 0.38) 0%,
+        rgba(250, 252, 247, 0.22) 42%,
+        rgba(241, 248, 233, 0.28) 100%
+      ),
+      radial-gradient(ellipse 70% 50% at 85% 15%, rgba(243, 201, 107, 0.1), transparent 70%);
+  }
+}
+
+.admin-ambient__side {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ambient-network {
+  position: absolute;
+  top: 12%;
+  bottom: 10%;
+  width: min(12vw, 160px);
+  height: auto;
+  opacity: 0.18;
+  animation: ambient-network-breathe 16s ease-in-out infinite;
+}
+
+.admin-ambient__side--left .ambient-network {
+  left: 1.5vw;
+}
+
+.admin-ambient__side--right .ambient-network {
+  right: 1.5vw;
+  left: auto;
+}
+
+.ambient-network__lines {
+  opacity: 0.22;
+  color: var(--siep-sage);
+}
+
+.ambient-network__node {
+  fill: var(--siep-leaf);
+  opacity: 0.28;
+  animation: ambient-node-pulse 12s ease-in-out infinite;
+
+  &--1 { animation-delay: 0s; }
+  &--2 { animation-delay: -2s; }
+  &--3 { animation-delay: -3.6s; }
+  &--4 { animation-delay: -5.2s; }
+  &--5 { animation-delay: -6.8s; }
+  &--6 { animation-delay: -8.4s; }
+
+  &--1,
+  &--4 {
+    fill: var(--siep-forest);
+    opacity: 0.32;
+  }
+}
+
+.ambient-leaf {
+  position: absolute;
+  color: #7cb342;
+  opacity: 0.6;
+  filter: drop-shadow(0 8px 14px rgba(47, 93, 52, 0.16));
+  animation: ambient-leaf-float 9s ease-in-out infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.admin-ambient__side--left {
+  .ambient-leaf--1 {
+    top: 12%;
+    left: 4vw;
+    width: 38px;
+    height: 38px;
+    color: #7cb342;
+    opacity: 0.72;
+    animation-duration: 7.5s;
+    animation-delay: 0s;
+  }
+
+  .ambient-leaf--2 {
+    top: 25%;
+    left: 15vw;
+    width: 24px;
+    height: 24px;
+    color: #9ccc65;
+    opacity: 0.55;
+    animation-duration: 10s;
+    animation-delay: -2.4s;
+  }
+
+  .ambient-leaf--3 {
+    top: 58%;
+    left: 3vw;
+    width: 44px;
+    height: 44px;
+    color: #689f38;
+    opacity: 0.68;
+    animation-duration: 8.5s;
+    animation-delay: -5.2s;
+  }
+
+  .ambient-leaf--4 {
+    top: 88%;
+    left: 12vw;
+    width: 28px;
+    height: 28px;
+    color: #2f5d34;
+    opacity: 0.62;
+    animation-duration: 11.5s;
+    animation-delay: -8.1s;
+  }
+}
+
+.admin-ambient__side--right {
+  .ambient-leaf--1 {
+    top: 18%;
+    right: 6vw;
+    left: auto;
+    width: 36px;
+    height: 36px;
+    color: #689f38;
+    opacity: 0.7;
+    animation-duration: 9s;
+    animation-delay: -1.5s;
+    animation-name: ambient-leaf-float-alt;
+  }
+
+  .ambient-leaf--2 {
+    top: 42%;
+    right: 14vw;
+    left: auto;
+    width: 22px;
+    height: 22px;
+    color: #9ccc65;
+    opacity: 0.5;
+    animation-duration: 12s;
+    animation-delay: -4.8s;
+    animation-name: ambient-leaf-float-alt;
+  }
+
+  .ambient-leaf--3 {
+    top: 74%;
+    right: 4vw;
+    left: auto;
+    width: 48px;
+    height: 48px;
+    color: #7cb342;
+    opacity: 0.75;
+    animation-duration: 6.5s;
+    animation-delay: -3.2s;
+    animation-name: ambient-leaf-float-alt;
+  }
+
+  .ambient-leaf--4 {
+    top: 88%;
+    right: 11vw;
+    left: auto;
+    width: 30px;
+    height: 30px;
+    color: #2f5d34;
+    opacity: 0.58;
+    animation-duration: 10.5s;
+    animation-delay: -9.4s;
+    animation-name: ambient-leaf-float-alt;
+  }
+}
+
+@keyframes ambient-leaf-float {
+  0%, 100% {
+    transform: translate(0, 0) rotate(-4deg);
+  }
+  20% {
+    transform: translate(8px, -14px) rotate(3deg);
+  }
+  45% {
+    transform: translate(-6px, -28px) rotate(-2deg);
+  }
+  70% {
+    transform: translate(10px, -18px) rotate(5deg);
+  }
+  85% {
+    transform: translate(-3px, -8px) rotate(-3deg);
+  }
+}
+
+@keyframes ambient-leaf-float-alt {
+  0%, 100% {
+    transform: translate(0, 0) rotate(3deg);
+  }
+  25% {
+    transform: translate(-9px, -16px) rotate(-4deg);
+  }
+  50% {
+    transform: translate(7px, -30px) rotate(2deg);
+  }
+  75% {
+    transform: translate(-5px, -12px) rotate(-5deg);
+  }
+}
+
+@keyframes ambient-node-pulse {
+  0%, 100% {
+    opacity: 0.22;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.38;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes ambient-network-breathe {
+  0%, 100% { opacity: 0.18; }
+  50% { opacity: 0.3; }
+}
+
+@media (max-width: 900px) {
+  .ambient-network {
+    width: min(10vw, 100px);
+    opacity: 0.12;
+  }
+
+  .admin-ambient__side--left .ambient-leaf--3,
+  .admin-ambient__side--left .ambient-leaf--4,
+  .admin-ambient__side--right .ambient-leaf--3,
+  .admin-ambient__side--right .ambient-leaf--4 {
+    display: none;
+  }
+
+  .admin-ambient__side--left .ambient-leaf--1,
+  .admin-ambient__side--right .ambient-leaf--1 {
+    width: 32px;
+    height: 32px;
+    opacity: 0.42;
+  }
+
+  .admin-ambient__side--left .ambient-leaf--2,
+  .admin-ambient__side--right .ambient-leaf--2 {
+    width: 24px;
+    height: 24px;
+    opacity: 0.38;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-ambient__side--left .ambient-leaf--2,
+  .admin-ambient__side--left .ambient-leaf--3,
+  .admin-ambient__side--left .ambient-leaf--4,
+  .admin-ambient__side--right .ambient-leaf--1,
+  .admin-ambient__side--right .ambient-leaf--2,
+  .admin-ambient__side--right .ambient-leaf--3,
+  .admin-ambient__side--right .ambient-leaf--4,
+  .ambient-network {
+    display: none;
+  }
+
+  .admin-ambient__side--left .ambient-leaf--1 {
+    width: 26px;
+    height: 26px;
+    opacity: 0.32;
+    left: 3vw;
+    top: 14%;
+  }
+
+  .admin-ambient__bleed-bg {
+    background-position: center top;
+
+    &::after {
+      background: linear-gradient(
+        180deg,
+        rgba(250, 252, 247, 0.88) 0%,
+        rgba(250, 252, 247, 0.84) 100%
+      );
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-leaf,
+  .ambient-network,
+  .ambient-network__node {
+    animation: none !important;
+  }
+
+  .ambient-leaf {
+    opacity: 0.45 !important;
+    transform: none !important;
+  }
+
+  .ambient-network {
+    opacity: 0.2 !important;
+  }
+}

@@ -22,6 +22,18 @@ import { InsertAiAssetDto } from './dto/insert-ai-asset.dto';
 import { AiAsset, AiAssetRecord } from './entities/ai-asset.entity';
 import { PromptBuilderService } from './prompt-builder.service';
 
+interface HuggingFaceImageClient {
+  textToImage(
+    args: {
+      provider?: string;
+      model?: string;
+      inputs: string;
+      parameters?: Record<string, number>;
+    },
+    options?: { outputType?: 'blob' },
+  ): Promise<Blob>;
+}
+
 @Injectable()
 export class AiAssetsService {
   private readonly provider = 'huggingface';
@@ -31,7 +43,7 @@ export class AiAssetsService {
   private readonly imageProviderPolicy: 'auto' | 'hf-inference';
   private readonly publicBaseUrl: string;
   private readonly hfToken: string | null;
-  private readonly inferenceClient: InferenceClient | null;
+  private readonly inferenceClient: HuggingFaceImageClient | null;
 
   constructor(
     private readonly postgrest: PostgrestService,
@@ -50,7 +62,9 @@ export class AiAssetsService {
       'APP_PUBLIC_URL',
       `http://localhost:${this.configService.get<string>('PORT', '3000')}`,
     );
-    this.inferenceClient = this.hfToken ? new InferenceClient(this.hfToken) : null;
+    this.inferenceClient = this.hfToken
+      ? (new InferenceClient(this.hfToken) as unknown as HuggingFaceImageClient)
+      : null;
   }
 
   async generate(

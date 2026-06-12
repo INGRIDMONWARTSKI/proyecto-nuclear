@@ -1,5 +1,12 @@
-﻿<section class="siep-page grupos-page">
-  <p class="siep-brand" aria-hidden="true">SIEP · Grupos</p>
+﻿<section class="siep-page grupos-page" [class.admin-page]="authService.hasRole(Role.ADMIN)">
+  @if (authService.hasRole(Role.ADMIN)) {
+    <app-admin-ambient />
+  }
+
+  <div [class.admin-page__content]="authService.hasRole(Role.ADMIN)">
+  <p class="siep-brand" aria-hidden="true">
+    {{ authService.hasRole(Role.ADMIN) ? 'MENTORA · Admin' : 'SIEP · Grupos' }}
+  </p>
 
   <app-page-header
     title="Grupos académicos"
@@ -75,4 +82,5 @@
     (confirmed)="confirmarAccionDialogo()"
     (cancelled)="cerrarConfirmacion()"
   />
+  </div>
 </section>

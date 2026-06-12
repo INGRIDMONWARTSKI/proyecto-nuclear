@@ -5,43 +5,6 @@
 .evidencias {
   position: relative;
   padding: 0.25rem 0 1.25rem;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100vw;
-    background:
-      radial-gradient(ellipse 65% 50% at 12% 0%, var(--siep-glow-soft), transparent 70%),
-      radial-gradient(ellipse 55% 45% at 88% 8%, var(--siep-mist), transparent 65%),
-      linear-gradient(180deg, var(--siep-surface) 0%, var(--siep-success-bg) 100% 100%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  ::ng-deep .siep-page-header {
-    margin-bottom: 1rem;
-  }
-
-  ::ng-deep .siep-page-header h1 {
-    font-weight: 800;
-    letter-spacing: 0.015em;
-  }
-
-  ::ng-deep .siep-page-header__subtitle {
-    max-width: 54ch;
-    font-size: 0.86rem;
-    line-height: 1.45;
-  }
 }
 
 .evidencias__count {
@@ -66,10 +29,14 @@
   gap: 0.85rem 1rem;
   padding: 0.85rem 1rem;
   margin: 0;
-  background: var(--siep-white);
+  background: rgba(255, 252, 247, 0.84);
   border: 1px solid var(--siep-border);
   border-radius: var(--siep-radius-lg);
-  box-shadow: var(--siep-shadow-sm);
+  box-shadow:
+    0 12px 32px rgba(16, 42, 29, 0.08),
+    inset 0 1px 0 rgba(255, 252, 247, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   animation: siep-fade-up 0.5s ease both;
   transition:
     transform var(--siep-transition-spring),

@@ -12,6 +12,7 @@ import { LoadingStateComponent } from '../../../../../shared/ui/loading-state/lo
 import { PageHeaderComponent } from '../../../../../shared/ui/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../../../shared/ui/status-badge/status-badge.component';
 import { GruposService } from '../../../services/grupos.service';
+import { AdminAmbientComponent } from '../../../../admin/shared/admin-ambient/admin-ambient.component';
 
 @Component({
   selector: 'app-grupos-list',
@@ -25,6 +26,7 @@ import { GruposService } from '../../../services/grupos.service';
     LoadingStateComponent,
     PageHeaderComponent,
     StatusBadgeComponent,
+    AdminAmbientComponent,
   ],
   templateUrl: './grupos-list.component.html',
   styleUrl: './grupos-list.component.scss',

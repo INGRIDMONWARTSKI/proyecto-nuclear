@@ -1,6 +1,6 @@
-:host {
-  display: block;
-}
+@use '../../shared/admin-page-shell' as adminShell;
+
+@include adminShell.admin-page-shell;
 
 .usuarios__panel,
 .usuarios__list {

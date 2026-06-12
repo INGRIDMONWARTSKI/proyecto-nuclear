@@ -1,0 +1,155 @@
+@if (open) {
+  <div
+    class="import-dialog__backdrop"
+    role="presentation"
+    (click)="onBackdropClick()"
+  ></div>
+
+  <div
+    class="import-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="import-dialog-title"
+  >
+    <header class="import-dialog__head">
+      <h2 id="import-dialog-title">Importar estudiantes desde Excel</h2>
+      <p class="import-dialog__subtitle">
+        Carga una lista de estudiantes para crear sus usuarios y asociarlos a este grupo académico.
+      </p>
+    </header>
+
+    @if (errorMessage) {
+      <p class="import-dialog__error" role="alert">{{ errorMessage }}</p>
+    }
+
+    @if (!result) {
+      <section class="import-dialog__upload">
+        <div
+          class="import-dialog__dropzone"
+          [class.import-dialog__dropzone--active]="dragOver()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event)"
+        >
+          <span class="import-dialog__dropzone-icon" aria-hidden="true">📄</span>
+          <p class="import-dialog__dropzone-title">Arrastra tu archivo aquí</p>
+          <p class="import-dialog__dropzone-hint">Formatos permitidos: .csv, .xlsx</p>
+          <p class="import-dialog__dropzone-hint">
+            Columnas obligatorias: <strong>fullName</strong>, <strong>email</strong>
+          </p>
+
+          @if (selectedFile(); as file) {
+            <p class="import-dialog__file-name">{{ file.name }}</p>
+          }
+
+          <input
+            #fileInput
+            type="file"
+            class="import-dialog__file-input"
+            accept=".csv,.xlsx,.xls"
+            [disabled]="importing"
+            (change)="onFileInput($event)"
+          />
+          <button
+            type="button"
+            class="siep-btn-secondary"
+            [disabled]="importing"
+            (click)="triggerFilePicker(fileInput)"
+          >
+            Seleccionar archivo
+          </button>
+        </div>
+
+        <ul class="import-dialog__options" aria-label="Opciones de importación">
+          <li>Generar usuario automáticamente</li>
+          <li>Generar contraseña temporal</li>
+          <li>Asignar al grupo actual</li>
+        </ul>
+
+        <div class="import-dialog__template">
+          <button type="button" class="siep-btn-secondary" (click)="downloadPlantilla()">
+            Descargar plantilla
+          </button>
+        </div>
+      </section>
+    } @else {
+      <section class="import-dialog__summary" aria-label="Resumen de importación">
+        <div class="import-dialog__stats">
+          <article class="import-dialog__stat">
+            <span class="import-dialog__stat-value">{{ result.totalFilas }}</span>
+            <span class="import-dialog__stat-label">Total filas</span>
+          </article>
+          <article class="import-dialog__stat">
+            <span class="import-dialog__stat-value">{{ result.creados.length }}</span>
+            <span class="import-dialog__stat-label">Creados</span>
+          </article>
+          <article class="import-dialog__stat">
+            <span class="import-dialog__stat-value">{{ result.existentesAsignados.length }}</span>
+            <span class="import-dialog__stat-label">Existentes asignados</span>
+          </article>
+          <article class="import-dialog__stat">
+            <span class="import-dialog__stat-value">{{ result.duplicados.length }}</span>
+            <span class="import-dialog__stat-label">Duplicados</span>
+          </article>
+          <article class="import-dialog__stat">
+            <span class="import-dialog__stat-value">{{ result.errores.length }}</span>
+            <span class="import-dialog__stat-label">Errores</span>
+          </article>
+        </div>
+
+        <div class="import-dialog__table-wrap">
+          <table class="import-dialog__table">
+            <thead>
+              <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">Correo</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Observación</th>
+                <th scope="col">Contraseña temporal</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of resultRows(); track row.email + row.estado + row.observacion) {
+                <tr [class.import-dialog__row--error]="row.categoria === 'error'">
+                  <td>{{ row.fullName }}</td>
+                  <td>{{ row.email }}</td>
+                  <td>
+                    <span class="import-dialog__badge import-dialog__badge--{{ row.categoria }}">
+                      {{ estadoLabel(row.estado) }}
+                    </span>
+                  </td>
+                  <td>{{ row.observacion }}</td>
+                  <td>{{ row.temporaryPassword ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (result.reporteCredenciales.length > 0) {
+          <div class="import-dialog__template">
+            <button type="button" class="siep-btn-primary" (click)="downloadReporte()">
+              Descargar reporte de credenciales
+            </button>
+          </div>
+        }
+      </section>
+    }
+
+    <footer class="import-dialog__actions">
+      <button type="button" class="siep-btn-secondary" [disabled]="importing" (click)="onCancel()">
+        {{ result ? 'Cerrar' : 'Cancelar' }}
+      </button>
+      @if (!result) {
+        <button
+          type="button"
+          class="siep-btn-primary"
+          [disabled]="importing || !selectedFile()"
+          (click)="submitImport()"
+        >
+          {{ importing ? 'Importando...' : 'Validar e importar' }}
+        </button>
+      }
+    </footer>
+  </div>
+}

@@ -1,3 +1,7 @@
+@use '../../../../admin/shared/admin-page-shell' as adminShell;
+
+@include adminShell.admin-page-shell;
+
 .grupo-form {
   max-width: 560px;
 }

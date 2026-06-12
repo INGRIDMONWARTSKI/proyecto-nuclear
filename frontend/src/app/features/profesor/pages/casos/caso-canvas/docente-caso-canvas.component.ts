@@ -90,8 +90,8 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly workspace = signal<EditorWorkspace>('scene');
   protected readonly selectedEscenarioId = signal<string | null>(null);
   protected readonly selectedElementId = signal<string | null>(null);
-  protected readonly leftPanelCollapsed = signal(false);
-  protected readonly rightPanelCollapsed = signal(false);
+  protected readonly resourcesPanelOpen = signal(false);
+  protected readonly propertiesPanelOpen = signal(false);
   protected readonly selectedLibraryCategory = signal<LibraryCategory>('backgrounds');
   protected readonly selectedLibraryItemId = signal('ambientes-consultorio');
   protected readonly searchTerm = signal('');
@@ -588,13 +588,47 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     this.previewSelectedOptionId.set(null);
   }
 
-  toggleLibraryPanel(): void {
-    this.leftPanelCollapsed.update((value) => !value);
+  toggleResourcesPanel(): void {
+    this.resourcesPanelOpen.update((value) => !value);
+    if (this.resourcesPanelOpen()) {
+      this.propertiesPanelOpen.set(false);
+    }
+    this.scheduleFitSceneToViewport();
+  }
+
+  openResourcesPanel(): void {
+    this.resourcesPanelOpen.set(true);
+    this.propertiesPanelOpen.set(false);
+    this.scheduleFitSceneToViewport();
+  }
+
+  closeResourcesPanel(): void {
+    this.resourcesPanelOpen.set(false);
     this.scheduleFitSceneToViewport();
   }
 
   togglePropertiesPanel(): void {
-    this.rightPanelCollapsed.update((value) => !value);
+    this.propertiesPanelOpen.update((value) => !value);
+    if (this.propertiesPanelOpen()) {
+      this.resourcesPanelOpen.set(false);
+    }
+    this.scheduleFitSceneToViewport();
+  }
+
+  openPropertiesPanel(): void {
+    this.propertiesPanelOpen.set(true);
+    this.resourcesPanelOpen.set(false);
+    this.scheduleFitSceneToViewport();
+  }
+
+  closePropertiesPanel(): void {
+    this.propertiesPanelOpen.set(false);
+    this.scheduleFitSceneToViewport();
+  }
+
+  closeAllPanels(): void {
+    this.resourcesPanelOpen.set(false);
+    this.propertiesPanelOpen.set(false);
     this.scheduleFitSceneToViewport();
   }
 

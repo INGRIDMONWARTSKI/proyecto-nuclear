@@ -42,6 +42,21 @@ interface HuggingFaceImageClient {
   ): Promise<Blob>;
 }
 
+interface PersistedAssetPaths {
+  finalRelativePath: string;
+  originalRelativePath: string;
+  processedRelativePath?: string;
+  backgroundRemoved: boolean;
+  backgroundRemovalWarning?: string;
+}
+
+interface AiAssetSidecar {
+  originalRelativePath: string;
+  processedRelativePath?: string;
+  backgroundRemoved: boolean;
+  backgroundRemovalWarning?: string;
+}
+
 @Injectable()
 export class AiAssetsService {
   private readonly provider = 'huggingface';

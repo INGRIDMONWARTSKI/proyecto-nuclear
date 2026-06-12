@@ -171,7 +171,7 @@
                 <div class="ai-generator__header">
                   <div>
                     <p class="panel__eyebrow">Generar con IA</p>
-                    <h4>Fondo de escenario</h4>
+                    <h4>Recursos visuales</h4>
                   </div>
                   <span class="ai-generator__pill">MVP</span>
                 </div>
@@ -179,17 +179,32 @@
                 <div class="property-note ai-generator__type">
                   <div>
                     <strong>Tipo</strong>
-                    <p>FONDO</p>
+                    <p>{{ aiTypeBadge() }}</p>
                   </div>
-                  <span>16:9</span>
+                  <span>{{ aiVisibleType() === 'background' ? '16:9' : 'Elemento' }}</span>
                 </div>
+
+                <label class="field">
+                  <span>Que deseas generar</span>
+                  <select [value]="aiVisibleType()" (change)="updateAiVisibleType($any($event.target).value)">
+                    @for (type of aiVisibleTypeOptions; track type.id) {
+                      <option [value]="type.id">{{ type.label }}</option>
+                    }
+                  </select>
+                </label>
 
                 <label class="field">
                   <span>Descripcion</span>
                   <textarea
                     rows="4"
                     [value]="aiDescription()"
-                    placeholder="Ej: consultorio sereno con luz natural, plantas suaves y atmosfera de escucha profesional."
+                    [placeholder]="aiVisibleType() === 'background'
+                      ? 'Ej: consultorio sereno con luz natural, plantas suaves y atmosfera de escucha profesional.'
+                      : aiVisibleType() === 'character'
+                        ? 'Ej: nino triste sentado en un salon de clase.'
+                        : aiVisibleType() === 'symbol'
+                          ? 'Ej: burbuja de dialogo vacia.'
+                          : 'Ej: mochila azul en el piso.'"
                     (input)="updateAiDescription($any($event.target).value)"
                   ></textarea>
                 </label>
@@ -203,7 +218,7 @@
                   </select>
                 </label>
 
-                <button class="siep-btn-primary ai-generator__action" type="button" [disabled]="aiGenerating()" (click)="generateAiBackground()">
+                <button class="siep-btn-primary ai-generator__action" type="button" [disabled]="aiGenerating()" (click)="generateAiAsset()">
                   {{ aiGenerating() ? 'Generando...' : 'Generar' }}
                 </button>
 
@@ -219,7 +234,7 @@
                         <div class="ai-preview-card__thumb" [style.background-image]="'url(' + asset.publicUrl + ')'"></div>
                         <div class="ai-preview-card__meta">
                           <strong>{{ asset.nombre }}</strong>
-                          <span>{{ asset.estilo }}</span>
+                          <span>{{ asset.visibleType || asset.tipo }} · {{ asset.estilo }}</span>
                         </div>
                       </button>
                     }
@@ -233,8 +248,8 @@
                       <strong>Preview lista</strong>
                       <span>{{ asset.estilo }} · {{ asset.proveedor }}</span>
                     </div>
-                    <button class="siep-btn-secondary ai-generator__action" type="button" [disabled]="aiApplying()" (click)="applyLatestAiBackground()">
-                      {{ aiApplying() ? 'Aplicando...' : 'Usar como fondo' }}
+                    <button class="siep-btn-secondary ai-generator__action" type="button" [disabled]="aiApplying()" (click)="applyLatestAiAsset()">
+                      {{ aiApplying() ? 'Aplicando...' : latestAiActionLabel() }}
                     </button>
                   </div>
                 }
@@ -355,15 +370,29 @@
                             (pointerdown)="startDrag($event, element.id)"
                             (click)="$event.stopPropagation(); selectElement(element.id)"
                           >
-                            <header>
-                              <span class="scene-question__tag">Pregunta</span>
-                              <small>{{ getQuestionElementSummary() }}</small>
-                            </header>
-                            <h4>{{ contentLabel(element, 'enunciado') || escenarioSeleccionado()!.pregunta?.enunciado }}</h4>
-                          </div>
-                        } @else {
-                          <div
-                            class="scene-note"
+                        <header>
+                          <span class="scene-question__tag">Pregunta</span>
+                          <small>{{ getQuestionElementSummary() }}</small>
+                        </header>
+                        <h4>{{ contentLabel(element, 'enunciado') || escenarioSeleccionado()!.pregunta?.enunciado }}</h4>
+                      </div>
+                    } @else if (element.type === 'image') {
+                      <div
+                        class="scene-image"
+                        [class.scene-image--selected]="selectedElement()?.id === element.id"
+                        [ngStyle]="stageElementStyle(element)"
+                        (pointerdown)="startDrag($event, element.id)"
+                        (click)="$event.stopPropagation(); selectElement(element.id)"
+                      >
+                        <img
+                          [src]="elementImageUrl(element)"
+                          [alt]="contentLabel(element, 'nombre') || elementAiType(element) || 'Elemento IA'"
+                          [style.object-fit]="elementObjectFit(element)"
+                        />
+                      </div>
+                    } @else {
+                      <div
+                        class="scene-note"
                             [class.scene-note--selected]="selectedElement()?.id === element.id"
                             [ngStyle]="stageElementStyle(element)"
                             (pointerdown)="startDrag($event, element.id)"

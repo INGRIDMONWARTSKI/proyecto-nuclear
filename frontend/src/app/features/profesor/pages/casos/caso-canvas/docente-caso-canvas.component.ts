@@ -130,6 +130,8 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   private readonly onPointerMoveBound = (event: PointerEvent) => this.onPointerMove(event);
   private readonly onPointerUpBound = () => this.stopDragging();
   private readonly onWindowResizeBound = () => this.handleWindowResize();
+  private readonly onWindowKeyDownBound = (event: KeyboardEvent) =>
+    this.handleWindowKeyDown(event);
   @ViewChild('sceneViewport') private sceneViewport?: ElementRef<HTMLElement>;
 
   protected readonly libraryCategories = [
@@ -453,6 +455,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   ngOnDestroy(): void {
     this.stopDragging();
     window.removeEventListener('resize', this.onWindowResizeBound);
+    window.removeEventListener('keydown', this.onWindowKeyDownBound);
     if (this.fitSceneTimeoutId) {
       clearTimeout(this.fitSceneTimeoutId);
     }
@@ -460,6 +463,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   ngAfterViewInit(): void {
     window.addEventListener('resize', this.onWindowResizeBound);
+    window.addEventListener('keydown', this.onWindowKeyDownBound);
     this.scheduleFitSceneToViewport();
   }
 
@@ -478,7 +482,9 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         const insertedElement = pendingElementId
           ? currentScenario?.layout.elements.find((item) => item.id === pendingElementId)
           : null;
-        this.selectedElementId.set(insertedElement?.id ?? currentScenario?.layout.elements[0]?.id ?? null);
+        const preferredElement =
+          insertedElement ?? this.getPreferredSelectedElement(currentScenario ?? null);
+        this.selectedElementId.set(preferredElement?.id ?? null);
         this.pendingAiInsertedElementId = null;
         this.ensureLibrarySelection();
         this.syncQuestionDraft();
@@ -507,7 +513,9 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   selectEscenario(escenarioId: string): void {
     this.selectedEscenarioId.set(escenarioId);
-    const firstElement = this.escenarios().find((item) => item.id === escenarioId)?.layout.elements[0] ?? null;
+    const firstElement = this.getPreferredSelectedElement(
+      this.escenarios().find((item) => item.id === escenarioId) ?? null,
+    );
     this.selectedElementId.set(firstElement?.id ?? null);
     this.syncQuestionDraft();
     this.syncDecisionSelection();
@@ -533,6 +541,17 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   selectElement(elementId: string): void {
     this.selectedElementId.set(elementId);
+    this.openPropertySection.set('general');
+  }
+
+  selectScenarioBackground(): void {
+    const escenario = this.escenarioSeleccionado();
+    if (!escenario) {
+      return;
+    }
+
+    const background = this.ensureScenarioBackground(escenario);
+    this.selectedElementId.set(background.id);
     this.openPropertySection.set('general');
   }
 
@@ -1038,14 +1057,22 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     }
 
     if (selectedElement.type === 'background') {
-      this.errorMessage.set('El fondo base del escenario no se puede eliminar.');
+      this.clearSelectedBackground();
       return;
     }
 
     this.patchScenario((escenario) => {
       escenario.layout.elements = escenario.layout.elements.filter((item) => item.id !== selectedId);
     });
-    this.selectedElementId.set(this.escenarioSeleccionado()?.layout.elements[0]?.id ?? null);
+    const preferredElement = this.getPreferredSelectedElement(this.escenarioSeleccionado());
+    this.selectedElementId.set(preferredElement?.id ?? null);
+  }
+
+  clearSelectedBackground(): void {
+    this.patchScenario((escenario) => {
+      this.resetScenarioBackground(escenario);
+    });
+    this.successMessage.set('Fondo del escenario limpiado.');
   }
 
   bringForward(): void {
@@ -1523,6 +1550,20 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     }
   }
 
+  private getPreferredSelectedElement(
+    escenario: CasoEditorEscenario | null,
+  ): EditorElement | null {
+    if (!escenario) {
+      return null;
+    }
+
+    return (
+      escenario.layout.elements.find((item) => item.type !== 'background') ??
+      escenario.layout.elements[0] ??
+      null
+    );
+  }
+
   private syncQuestionDraft(): void {
     const pregunta = this.escenarioSeleccionado()?.pregunta;
     this.questionDraft.set(pregunta?.enunciado ?? '');
@@ -1708,10 +1749,75 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     return background;
   }
 
+  private resetScenarioBackground(escenario: CasoEditorEscenario): void {
+    const background = this.ensureScenarioBackground(escenario);
+    const defaultBackgroundCode = this.editor()?.catalogos.backgrounds[0] ?? 'consultorio';
+
+    escenario.fondoCodigo = defaultBackgroundCode;
+    escenario.aiBackgroundAssetId = null;
+    escenario.aiBackgroundUrl = null;
+
+    background.content = {
+      ...background.content,
+      backgroundCode: defaultBackgroundCode,
+      aiAssetId: null,
+      imageUrl: null,
+    };
+    background.style = {
+      ...background.style,
+      backgroundCode: defaultBackgroundCode,
+      aiAssetId: null,
+      imageUrl: null,
+    };
+  }
+
   private handleWindowResize(): void {
     if (this.workspace() === 'scene') {
       this.scheduleFitSceneToViewport();
     }
+  }
+
+  private handleWindowKeyDown(event: KeyboardEvent): void {
+    if (this.workspace() !== 'scene') {
+      return;
+    }
+
+    if (this.isTypingTarget(event.target)) {
+      return;
+    }
+
+    if (event.key === 'Delete' || event.key === 'Del') {
+      if (!this.selectedElement()) {
+        return;
+      }
+
+      event.preventDefault();
+      this.deleteSelectedElement();
+      return;
+    }
+
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') {
+      if (!this.selectedElement()) {
+        return;
+      }
+
+      event.preventDefault();
+      this.duplicateSelectedElement();
+    }
+  }
+
+  private isTypingTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) {
+      return false;
+    }
+
+    const tagName = target.tagName;
+    return (
+      target.isContentEditable ||
+      tagName === 'INPUT' ||
+      tagName === 'TEXTAREA' ||
+      tagName === 'SELECT'
+    );
   }
 
   private setZoomLevel(value: number): void {

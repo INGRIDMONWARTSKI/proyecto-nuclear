@@ -323,7 +323,7 @@
                     [style.height.px]="sceneBaseHeight"
                     [style.transform]="'scale(' + zoomLevel() + ')'"
                     [ngStyle]="canvasBackgroundStyle()"
-                    (click)="clearSelectedElement()"
+                    (click)="selectScenarioBackground()"
                   >
                     <div class="scene-stage__grid"></div>
                     @if (!hasAiBackground()) {
@@ -344,7 +344,7 @@
                     }
 
                     @for (element of orderedElements(); track element.id) {
-                      @if (!element.hidden) {
+                      @if (!element.hidden && element.type !== 'background') {
                         @if (element.type === 'character') {
                           <div
                             class="scene-persona"
@@ -516,6 +516,15 @@
                                 <span>Contenido</span>
                                 <textarea rows="4" [value]="contentText(element) || contentText(element, 'mensaje') || contentLabel(element, 'nombre')" (input)="updateSelectedContent(element.type === 'feedback' ? 'mensaje' : contentText(element) ? 'texto' : 'nombre', $any($event.target).value)"></textarea>
                               </label>
+                              @if (selectedElementIsBackground()) {
+                                <div class="property-note">
+                                  <strong>Fondo base del escenario</strong>
+                                  <p>Este elemento controla el ambiente del lienzo. Al limpiarlo se restaura el fondo base y se quita la imagen aplicada.</p>
+                                </div>
+                                <button class="siep-btn-secondary property-action" type="button" (click)="clearSelectedBackground()">
+                                  Limpiar fondo
+                                </button>
+                              }
                             }
                           }
 
@@ -778,7 +787,7 @@
             }
 
             @for (element of orderedElements(); track element.id) {
-              @if (!element.hidden) {
+              @if (!element.hidden && element.type !== 'background') {
                 @if (element.type === 'character') {
                   <div class="scene-persona" [ngStyle]="stageElementStyle(element)">
                     @if (contentText(element, 'dialogo')) {

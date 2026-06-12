@@ -15,7 +15,7 @@ export class EscenarioViewerComponent {
 
   visibleElements(): EditorElement[] {
     return [...this.escenario.layout.elements]
-      .filter((item) => !item.hidden)
+      .filter((item) => !item.hidden && item.type !== 'background')
       .sort((a, b) => a.zIndex - b.zIndex);
   }
 
@@ -38,6 +38,36 @@ export class EscenarioViewerComponent {
       transform: `translate(-50%, -50%) rotate(${element.rotation}deg)`,
       zIndex: String(element.zIndex),
     };
+  }
+
+  stageBackgroundStyle(): Record<string, string> {
+    const imageUrl = this.backgroundImageUrl();
+
+    if (imageUrl) {
+      return {
+        backgroundImage: `linear-gradient(rgba(31, 61, 46, 0.08), rgba(31, 61, 46, 0.08)), url('${imageUrl}')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      };
+    }
+
+    return {
+      background: this.backgroundStyle(),
+    };
+  }
+
+  hasBackgroundImage(): boolean {
+    return Boolean(this.backgroundImageUrl());
+  }
+
+  elementImageUrl(element: EditorElement): string {
+    return this.contentLabel(element, 'imageUrl');
+  }
+
+  elementObjectFit(element: EditorElement): string {
+    const value = element.style['objectFit'];
+    return typeof value === 'string' ? value : 'contain';
   }
 
   backgroundStyle(): string {
@@ -63,16 +93,36 @@ export class EscenarioViewerComponent {
   }
 
   characterGradient(element: EditorElement): string {
-    const palette = this.contentLabel(element, 'avatar') || this.contentLabel(element, 'rol');
+    const avatar = this.contentLabel(element, 'avatar').toLowerCase();
+    const rol = this.contentLabel(element, 'rol').toLowerCase();
 
-    if (palette.toLowerCase().includes('therapist') || palette.toLowerCase().includes('psico')) {
+    if (avatar.includes('therapist') || rol.includes('psico')) {
       return 'linear-gradient(180deg, #CDE8B5 0%, #7CB342 100%)';
     }
 
-    if (palette.toLowerCase().includes('family')) {
+    if (rol.includes('familiar')) {
       return 'linear-gradient(180deg, #ffe0b2 0%, #ffb74d 100%)';
     }
 
     return 'linear-gradient(180deg, #f4c7ab 0%, #d79a7a 100%)';
+  }
+
+  private backgroundImageUrl(): string {
+    const background = this.escenario.layout.elements.find((item) => item.type === 'background');
+    if (!background) {
+      return '';
+    }
+
+    const styleUrl = background.style['imageUrl'];
+    if (typeof styleUrl === 'string' && styleUrl.trim()) {
+      return styleUrl.trim();
+    }
+
+    const contentUrl = background.content['imageUrl'];
+    if (typeof contentUrl === 'string' && contentUrl.trim()) {
+      return contentUrl.trim();
+    }
+
+    return '';
   }
 }

@@ -1,25 +1,16 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AlertMessageComponent } from '../../../../shared/ui/alert-message/alert-message.component';
-import { LoadingStateComponent } from '../../../../shared/ui/loading-state/loading-state.component';
-import { PageHeaderComponent } from '../../../../shared/ui/page-header/page-header.component';
 import { getErrorMessage } from '../../../../core/utils/http-error.util';
 import { FeedbackPanelComponent, FeedbackView } from '../../../../shared/simulacion/feedback-panel/feedback-panel.component';
 import { OpcionesRespuestaComponent } from '../../../../shared/simulacion/opciones-respuesta/opciones-respuesta.component';
+import { EscenarioViewerComponent } from '../../../../shared/simulacion/escenario-viewer/escenario-viewer.component';
 import { SimulacionProgressComponent } from '../../../../shared/simulacion/simulacion-progress/simulacion-progress.component';
-import {
-  AvatarMotion,
-  MentoraHotspotConfig,
-  MentoraHotspotSelection,
-  MentoraSceneComponent,
-  getHotspotConfigsForEscenario,
-  getHotspotTotalForEscenario,
-} from '../../../../shared/simulacion/mentora-scene/mentora-scene.component';
+import { AlertMessageComponent } from '../../../../shared/ui/alert-message/alert-message.component';
+import { LoadingStateComponent } from '../../../../shared/ui/loading-state/loading-state.component';
+import { PageHeaderComponent } from '../../../../shared/ui/page-header/page-header.component';
 import { EscenarioActualResponse, OpcionEscenario } from '../../../simulacion/models/escenario-actual.model';
 import { RespuestaSubmitResponse } from '../../../simulacion/models/respuesta-submit.model';
 import { SimulacionEstudianteService } from '../../../simulacion/services/simulacion-estudiante.service';
-
-export type { AvatarMotion };
 
 @Component({
   selector: 'app-estudiante-simulacion-player',
@@ -31,8 +22,8 @@ export type { AvatarMotion };
     PageHeaderComponent,
     FeedbackPanelComponent,
     OpcionesRespuestaComponent,
+    EscenarioViewerComponent,
     SimulacionProgressComponent,
-    MentoraSceneComponent,
   ],
   templateUrl: './estudiante-simulacion-player.component.html',
   styleUrl: './estudiante-simulacion-player.component.scss',
@@ -49,9 +40,6 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
   protected readonly selectedOpcion = signal<OpcionEscenario | null>(null);
   protected readonly feedback = signal<FeedbackView | null>(null);
   protected readonly completed = signal(false);
-  protected readonly avatarMotion = signal<AvatarMotion>('idle');
-  protected readonly selectedHotspot = signal<MentoraHotspotSelection | null>(null);
-  protected readonly exploredHotspotIds = signal<ReadonlySet<string>>(new Set());
 
   private sesionId = '';
 
@@ -61,6 +49,7 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
       void this.router.navigate(['/estudiante/casos']);
       return;
     }
+
     this.loadEscenarioActual();
   }
 
@@ -69,9 +58,6 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
     this.errorMessage.set(null);
     this.selectedOpcion.set(null);
     this.feedback.set(null);
-    this.avatarMotion.set('idle');
-    this.selectedHotspot.set(null);
-    this.exploredHotspotIds.set(new Set());
 
     this.simulacionService.getEscenarioActual(this.sesionId).subscribe({
       next: (res) => {
@@ -90,55 +76,6 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
 
   seleccionarOpcion(opcion: OpcionEscenario) {
     this.selectedOpcion.set(opcion);
-  }
-
-  onHotspotSelected(hotspot: MentoraHotspotSelection) {
-    this.selectedHotspot.set(hotspot);
-    this.exploredHotspotIds.update((current) => {
-      const next = new Set(current);
-      next.add(hotspot.id);
-      return next;
-    });
-  }
-
-  protected hotspotPistas(): MentoraHotspotConfig[] {
-    return getHotspotConfigsForEscenario(this.data()?.escenario ?? null);
-  }
-
-  protected isHotspotExplored(id: string): boolean {
-    return this.exploredHotspotIds().has(id);
-  }
-
-  protected selectHotspotPista(pista: MentoraHotspotConfig) {
-    this.onHotspotSelected({
-      id: pista.id,
-      title: pista.title,
-      description: pista.description,
-      category: pista.category,
-    });
-  }
-
-  protected exploredCount(): number {
-    return this.exploredHotspotIds().size;
-  }
-
-  protected hotspotTotal(): number {
-    return getHotspotTotalForEscenario(this.data()?.escenario ?? null);
-  }
-
-  protected explorationPedagogyMessage(): string {
-    const count = this.exploredCount();
-    const total = this.hotspotTotal();
-
-    if (count >= total) {
-      return 'Análisis completo. Puedes elegir una intervención con mayor criterio.';
-    }
-
-    if (count > 0) {
-      return 'Ya identificaste información inicial del caso.';
-    }
-
-    return 'Explora la escena antes de tomar una decisión.';
   }
 
   responder() {
@@ -176,32 +113,6 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
     void this.router.navigate(['/estudiante/resultados', this.sesionId]);
   }
 
-  protected consequenceTitle(): string {
-    switch (this.avatarMotion()) {
-      case 'advance':
-        return 'Avance hacia zona segura';
-      case 'pause':
-        return 'Pausa en reflexión';
-      case 'retreat':
-        return 'Retroceso hacia zona de alerta';
-      default:
-        return 'Momento de intervención';
-    }
-  }
-
-  protected consequenceDetail(): string {
-    switch (this.avatarMotion()) {
-      case 'advance':
-        return 'Tu decisión favorece el recorrido formativo. El practicante avanza con criterio.';
-      case 'pause':
-        return 'Hay aprendizaje pendiente. Detente, reflexiona y ajusta tu intervención.';
-      case 'retreat':
-        return 'La intervención elegida aleja del objetivo. Revisa la consecuencia en la reflexión.';
-      default:
-        return 'Elige una acción para mover al practicante en el recorrido MENTORA.';
-    }
-  }
-
   private handleRespuesta(res: RespuestaSubmitResponse) {
     this.sending.set(false);
     const feedbackView: FeedbackView = res.retroalimentacion
@@ -217,34 +128,9 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
         };
 
     this.feedback.set(feedbackView);
-    const motion = this.resolveAvatarMotion(feedbackView.puntajeObtenido, feedbackView.tipo);
-    this.avatarMotion.set(motion);
 
     if (res.completed) {
       this.completed.set(true);
     }
-  }
-
-  private resolveAvatarMotion(
-    puntajeObtenido: number | undefined,
-    tipo: FeedbackView['tipo'],
-  ): AvatarMotion {
-    if (puntajeObtenido !== undefined && !Number.isNaN(puntajeObtenido)) {
-      if (puntajeObtenido >= 8) {
-        return 'advance';
-      }
-
-      if (puntajeObtenido >= 4) {
-        return 'pause';
-      }
-
-      return 'retreat';
-    }
-
-    if (tipo === 'correctiva') {
-      return 'pause';
-    }
-
-    return 'advance';
   }
 }

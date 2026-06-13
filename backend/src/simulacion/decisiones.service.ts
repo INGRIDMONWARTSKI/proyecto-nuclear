@@ -87,6 +87,7 @@ export class DecisionesService {
     this.casosService.assertCanAccessCasoDocente(context.caso, currentUser);
     this.assertCaseEditable(context.caso);
     await this.ensureUniqueOptionOrder(preguntaId, dto.orden);
+    this.assertPuntajeOpcionCoherente(dto.puntaje, context.pregunta);
     await this.assertEscenarioDestinoValido(
       dto.escenarioDestinoId,
       context.caso.id,
@@ -142,6 +143,10 @@ export class DecisionesService {
     }
 
     if (dto.puntajeMaximo !== undefined) {
+      await this.assertPuntajePreguntaCompatible(
+        preguntaId,
+        dto.puntajeMaximo,
+      );
       payload.puntaje_maximo = dto.puntajeMaximo;
     }
 
@@ -190,6 +195,7 @@ export class DecisionesService {
       payload.orden = dto.orden;
     }
     if (dto.puntaje !== undefined) {
+      this.assertPuntajeOpcionCoherente(dto.puntaje, context.pregunta);
       payload.puntaje = dto.puntaje;
     }
     if (dto.isCorrecta !== undefined) {
@@ -335,6 +341,40 @@ export class DecisionesService {
     if (destino.caso_id !== casoId) {
       throw new BadRequestException(
         'El escenario destino debe pertenecer al mismo caso.',
+      );
+    }
+  }
+
+  private assertPuntajeOpcionCoherente(
+    puntaje: number,
+    pregunta: PreguntaDecisionRecord,
+  ): void {
+    if (puntaje > pregunta.puntaje_maximo) {
+      throw new BadRequestException(
+        'El puntaje de la respuesta no puede superar el puntaje maximo de la pregunta.',
+      );
+    }
+  }
+
+  private async assertPuntajePreguntaCompatible(
+    preguntaId: string,
+    puntajeMaximo: number,
+  ): Promise<void> {
+    const opciones = await this.postgrest.select<OpcionRespuestaRecord>(
+      'opciones_respuesta',
+      {
+        filters: { pregunta_id: preguntaId },
+      },
+    );
+
+    const mayorPuntaje = opciones.reduce(
+      (max, opcion) => Math.max(max, opcion.puntaje),
+      0,
+    );
+
+    if (mayorPuntaje > puntajeMaximo) {
+      throw new BadRequestException(
+        'El puntaje maximo de la pregunta no puede ser menor al mayor puntaje asignado en sus respuestas.',
       );
     }
   }

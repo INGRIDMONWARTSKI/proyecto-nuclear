@@ -297,6 +297,25 @@
                   Propiedades
                 </button>
                 <span class="canvas-floating-toolbar__divider" aria-hidden="true"></span>
+                <button
+                  class="canvas-floating-toolbar__btn canvas-floating-toolbar__btn--icon"
+                  type="button"
+                  [disabled]="!canUndoScene()"
+                  title="Deshacer (Ctrl+Z)"
+                  (click)="undoSceneChange()"
+                >
+                  Deshacer
+                </button>
+                <button
+                  class="canvas-floating-toolbar__btn canvas-floating-toolbar__btn--icon"
+                  type="button"
+                  [disabled]="!canRedoScene()"
+                  title="Rehacer (Ctrl+Y)"
+                  (click)="redoSceneChange()"
+                >
+                  Rehacer
+                </button>
+                <span class="canvas-floating-toolbar__divider" aria-hidden="true"></span>
                 <button class="canvas-floating-toolbar__btn canvas-floating-toolbar__btn--icon" type="button" (click)="fitSceneToViewport()">
                   Ajustar vista
                 </button>
@@ -326,13 +345,6 @@
                     (click)="selectScenarioBackground()"
                   >
                     <div class="scene-stage__grid"></div>
-                    @if (!hasAiBackground()) {
-                      <div class="scene-stage__backdrop">
-                        <div class="scene-stage__window"></div>
-                        <div class="scene-stage__sofa"></div>
-                        <div class="scene-stage__table"></div>
-                      </div>
-                    }
 
                     @if (selectedElement()) {
                       <div class="floating-toolbar" (click)="$event.stopPropagation()">
@@ -778,14 +790,6 @@
           </div>
 
           <article class="student-stage" [ngStyle]="canvasBackgroundStyle()">
-            @if (!hasAiBackground()) {
-              <div class="student-stage__backdrop">
-                <div class="scene-stage__window"></div>
-                <div class="scene-stage__sofa"></div>
-                <div class="scene-stage__table"></div>
-              </div>
-            }
-
             @for (element of orderedElements(); track element.id) {
               @if (!element.hidden && element.type !== 'background') {
                 @if (element.type === 'character') {

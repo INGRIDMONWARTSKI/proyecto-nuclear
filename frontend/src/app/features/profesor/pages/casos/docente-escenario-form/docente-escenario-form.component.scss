@@ -4,6 +4,13 @@
   gap: var(--siep-space-1);
 }
 
+.field-error {
+  margin: 0.35rem 0 0;
+  color: #9d2f2f;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .checkbox-row {
   display: flex;
   align-items: center;

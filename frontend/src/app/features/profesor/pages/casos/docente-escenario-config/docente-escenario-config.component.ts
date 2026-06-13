@@ -1,5 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlertMessageComponent } from '../../../../../shared/ui/alert-message/alert-message.component';
 import { LoadingStateComponent } from '../../../../../shared/ui/loading-state/loading-state.component';
@@ -48,13 +55,18 @@ export class DocenteEscenarioConfigComponent implements OnInit {
     puntajeMaximo: [10, [Validators.required, Validators.min(0)]],
   });
 
-  protected readonly opcionForm = this.fb.nonNullable.group({
-    texto: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(500)]],
-    orden: [1, [Validators.required, Validators.min(1)]],
-    puntaje: [0, [Validators.required, Validators.min(0)]],
-    isCorrecta: [false],
-    escenarioDestinoId: [''],
-  });
+  protected readonly opcionForm = this.fb.nonNullable.group(
+    {
+      texto: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(500)]],
+      orden: [1, [Validators.required, Validators.min(1)]],
+      puntaje: [0, [Validators.required, Validators.min(0)]],
+      isCorrecta: [false],
+      escenarioDestinoId: [''],
+    },
+    {
+      validators: [this.puntajeDentroDelMaximoValidator()],
+    },
+  );
 
   protected readonly retroForm = this.fb.nonNullable.group({
     mensaje: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(1200)]],
@@ -96,6 +108,8 @@ export class DocenteEscenarioConfigComponent implements OnInit {
           const nextOrden = escenario.pregunta.opciones.length + 1;
           this.opcionForm.patchValue({ orden: nextOrden });
         }
+
+        this.opcionForm.updateValueAndValidity();
 
         this.loading.set(false);
       },
@@ -200,6 +214,7 @@ export class DocenteEscenarioConfigComponent implements OnInit {
       isCorrecta: opcion.isCorrecta,
       escenarioDestinoId: opcion.escenarioDestinoId ?? '',
     });
+    this.opcionForm.updateValueAndValidity();
   }
 
   labelEscenarioDestino(destinoId: string | null | undefined): string {
@@ -294,5 +309,31 @@ export class DocenteEscenarioConfigComponent implements OnInit {
       return null;
     }
     return this.pregunta()?.opciones.find((o) => o.id === id) ?? null;
+  }
+
+  puntajeMaximoPregunta(): number | null {
+    return this.pregunta()?.puntajeMaximo ?? null;
+  }
+
+  puntajeOpcionExcedeMaximo(): boolean {
+    return Boolean(
+      this.opcionForm.errors?.['puntajeMayorQuePregunta'] &&
+        (this.opcionForm.touched || this.opcionForm.dirty),
+    );
+  }
+
+  private puntajeDentroDelMaximoValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const puntajeMaximo = this.pregunta()?.puntajeMaximo;
+      const puntaje = Number(control.get('puntaje')?.value ?? 0);
+
+      if (puntajeMaximo === null || puntajeMaximo === undefined || Number.isNaN(puntaje)) {
+        return null;
+      }
+
+      return puntaje <= puntajeMaximo
+        ? null
+        : { puntajeMayorQuePregunta: true };
+    };
   }
 }

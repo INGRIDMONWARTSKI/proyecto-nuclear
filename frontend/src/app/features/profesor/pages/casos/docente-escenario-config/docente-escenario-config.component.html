@@ -102,7 +102,19 @@
           </div>
           <div class="siep-field">
             <label for="opcion-puntaje">Puntaje</label>
-            <input id="opcion-puntaje" type="number" min="0" formControlName="puntaje" />
+            <input
+              id="opcion-puntaje"
+              type="number"
+              min="0"
+              [attr.max]="puntajeMaximoPregunta()"
+              formControlName="puntaje"
+            />
+            <small class="muted">Este valor no puede superar {{ p.puntajeMaximo }} puntos.</small>
+            @if (puntajeOpcionExcedeMaximo()) {
+              <small class="warn">
+                El puntaje de esta respuesta debe ser menor o igual al puntaje de la pregunta.
+              </small>
+            }
           </div>
           <label class="checkbox-row">
             <input type="checkbox" formControlName="isCorrecta" />

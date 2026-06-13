@@ -297,6 +297,25 @@
                   Propiedades
                 </button>
                 <span class="canvas-floating-toolbar__divider" aria-hidden="true"></span>
+                <button
+                  class="canvas-floating-toolbar__btn canvas-floating-toolbar__btn--icon"
+                  type="button"
+                  [disabled]="!canUndoScene()"
+                  title="Deshacer (Ctrl+Z)"
+                  (click)="undoSceneChange()"
+                >
+                  Deshacer
+                </button>
+                <button
+                  class="canvas-floating-toolbar__btn canvas-floating-toolbar__btn--icon"
+                  type="button"
+                  [disabled]="!canRedoScene()"
+                  title="Rehacer (Ctrl+Y)"
+                  (click)="redoSceneChange()"
+                >
+                  Rehacer
+                </button>
+                <span class="canvas-floating-toolbar__divider" aria-hidden="true"></span>
                 <button class="canvas-floating-toolbar__btn canvas-floating-toolbar__btn--icon" type="button" (click)="fitSceneToViewport()">
                   Ajustar vista
                 </button>

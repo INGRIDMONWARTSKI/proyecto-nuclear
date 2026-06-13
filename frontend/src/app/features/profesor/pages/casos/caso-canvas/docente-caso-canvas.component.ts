@@ -62,6 +62,16 @@ interface DragState {
   originY: number;
 }
 
+interface ScenarioHistoryState {
+  baseline: CasoEditorEscenario['layout'];
+  past: CasoEditorEscenario['layout'][];
+  future: CasoEditorEscenario['layout'][];
+}
+
+interface PatchScenarioOptions {
+  trackHistory?: boolean;
+}
+
 @Component({
   selector: 'app-docente-caso-canvas',
   standalone: true,
@@ -125,8 +135,11 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly sceneBaseHeight = 720;
 
   private dragState: DragState | null = null;
+  private dragHistorySnapshot: CasoEditorEscenario['layout'] | null = null;
   private pendingAiInsertedElementId: string | null = null;
   private fitSceneTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private scenarioHistory = new Map<string, ScenarioHistoryState>();
+  private readonly historyRevision = signal(0);
   private readonly onPointerMoveBound = (event: PointerEvent) => this.onPointerMove(event);
   private readonly onPointerUpBound = () => this.stopDragging();
   private readonly onWindowResizeBound = () => this.handleWindowResize();
@@ -439,6 +452,16 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   });
 
   protected readonly zoomPercentLabel = computed(() => `${Math.round(this.zoomLevel() * 100)}%`);
+  protected readonly canUndoScene = computed(() => {
+    this.historyRevision();
+    const scenarioId = this.selectedEscenarioId();
+    return scenarioId ? (this.scenarioHistory.get(scenarioId)?.past.length ?? 0) > 0 : false;
+  });
+  protected readonly canRedoScene = computed(() => {
+    this.historyRevision();
+    const scenarioId = this.selectedEscenarioId();
+    return scenarioId ? (this.scenarioHistory.get(scenarioId)?.future.length ?? 0) > 0 : false;
+  });
 
   ngOnInit(): void {
     this.casoId = this.route.snapshot.paramMap.get('casoId') ?? '';
@@ -473,7 +496,9 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
     this.simulacionService.obtenerEditorCaso(this.casoId).subscribe({
       next: (editor) => {
+        this.initializeScenarioHistory(editor.escenarios);
         this.editor.set(editor);
+        this.dirtyScenarioIds.set([]);
         const currentScenario = this.selectedEscenarioId()
           ? editor.escenarios.find((item) => item.id === this.selectedEscenarioId())
           : editor.escenarios[0];
@@ -700,6 +725,50 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   resetZoom(): void {
     this.setZoomLevel(1);
+  }
+
+  undoSceneChange(): void {
+    const scenarioId = this.selectedEscenarioId();
+    if (!scenarioId) {
+      return;
+    }
+
+    const history = this.scenarioHistory.get(scenarioId);
+    const currentScenario = this.escenarioSeleccionado();
+    const previousLayout = history?.past.at(-1);
+
+    if (!history || !currentScenario || !previousLayout) {
+      return;
+    }
+
+    const currentLayout = structuredClone(currentScenario.layout);
+    history.past = history.past.slice(0, -1);
+    history.future = [currentLayout, ...history.future];
+    this.bumpHistoryRevision();
+
+    this.applyScenarioLayout(scenarioId, previousLayout);
+  }
+
+  redoSceneChange(): void {
+    const scenarioId = this.selectedEscenarioId();
+    if (!scenarioId) {
+      return;
+    }
+
+    const history = this.scenarioHistory.get(scenarioId);
+    const currentScenario = this.escenarioSeleccionado();
+    const nextLayout = history?.future[0];
+
+    if (!history || !currentScenario || !nextLayout) {
+      return;
+    }
+
+    const currentLayout = structuredClone(currentScenario.layout);
+    history.past = [...history.past, currentLayout];
+    history.future = history.future.slice(1);
+    this.bumpHistoryRevision();
+
+    this.applyScenarioLayout(scenarioId, nextLayout);
   }
 
   saveCurrentLayout(): void {
@@ -937,6 +1006,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   startDrag(event: PointerEvent, elementId: string): void {
     const element = this.selectedScenarioElement(elementId);
+    const escenario = this.escenarioSeleccionado();
     if (!element || element.locked) {
       return;
     }
@@ -944,6 +1014,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     event.preventDefault();
     event.stopPropagation();
     this.selectedElementId.set(elementId);
+    this.dragHistorySnapshot = escenario ? structuredClone(escenario.layout) : null;
     this.dragState = {
       elementId,
       startX: event.clientX,
@@ -957,7 +1028,16 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   }
 
   stopDragging(): void {
+    if (this.dragState && this.dragHistorySnapshot) {
+      const escenario = this.escenarioSeleccionado();
+      if (escenario && !this.layoutsEqual(this.dragHistorySnapshot, escenario.layout)) {
+        this.pushScenarioHistory(escenario.id, this.dragHistorySnapshot);
+        this.updateDirtyState(escenario.id, escenario.layout);
+      }
+    }
+
     this.dragState = null;
+    this.dragHistorySnapshot = null;
     window.removeEventListener('pointermove', this.onPointerMoveBound);
     window.removeEventListener('pointerup', this.onPointerUpBound);
   }
@@ -1615,19 +1695,27 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     const deltaX = (event.clientX - this.dragState.startX) / (12 * zoom);
     const deltaY = (event.clientY - this.dragState.startY) / (12 * zoom);
 
-    this.updateElement(this.dragState.elementId, (element) => {
-      element.position.x = this.clamp(this.dragState!.originX + deltaX, -20, 120);
-      element.position.y = this.clamp(this.dragState!.originY + deltaY, -20, 120);
-    });
+    this.updateElement(
+      this.dragState.elementId,
+      (element) => {
+        element.position.x = this.clamp(this.dragState!.originX + deltaX, -20, 120);
+        element.position.y = this.clamp(this.dragState!.originY + deltaY, -20, 120);
+      },
+      { trackHistory: false },
+    );
   }
 
-  private updateElement(elementId: string, mutator: (element: EditorElement) => void): void {
+  private updateElement(
+    elementId: string,
+    mutator: (element: EditorElement) => void,
+    options?: PatchScenarioOptions,
+  ): void {
     this.patchScenario((escenario) => {
       const element = escenario.layout.elements.find((item) => item.id === elementId);
       if (element) {
         mutator(element);
       }
-    });
+    }, options);
   }
 
   private patchQuestionOption(opcionId: string, mutator: (opcion: CasoEditorOpcion) => void): void {
@@ -1663,8 +1751,12 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     });
   }
 
-  private patchScenario(mutator: (escenario: CasoEditorEscenario) => void): void {
+  private patchScenario(
+    mutator: (escenario: CasoEditorEscenario) => void,
+    options: PatchScenarioOptions = {},
+  ): void {
     const scenarioId = this.selectedEscenarioId();
+    const trackHistory = options.trackHistory ?? true;
 
     this.editor.update((editor) => {
       if (!editor || !scenarioId) {
@@ -1678,18 +1770,19 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
             return escenario;
           }
 
+          const previousLayout = structuredClone(escenario.layout);
           const clone = structuredClone(escenario);
           mutator(clone);
           this.ensureScenarioBackground(clone);
           clone.layout.elements = [...clone.layout.elements].sort((a, b) => a.zIndex - b.zIndex);
+          if (trackHistory && !this.layoutsEqual(previousLayout, clone.layout)) {
+            this.pushScenarioHistory(scenarioId, previousLayout);
+          }
+          this.updateDirtyState(scenarioId, clone.layout);
           return clone;
         }),
       };
     });
-
-    if (scenarioId && !this.dirtyScenarioIds().includes(scenarioId)) {
-      this.dirtyScenarioIds.set([...this.dirtyScenarioIds(), scenarioId]);
-    }
   }
 
   private clamp(value: number, min: number, max: number): number {
@@ -1792,6 +1885,22 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       return;
     }
 
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+      event.preventDefault();
+      if (event.shiftKey) {
+        this.redoSceneChange();
+      } else {
+        this.undoSceneChange();
+      }
+      return;
+    }
+
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+      event.preventDefault();
+      this.redoSceneChange();
+      return;
+    }
+
     if (event.key === 'Delete' || event.key === 'Del') {
       if (!this.selectedElement()) {
         return;
@@ -1829,6 +1938,122 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   private setZoomLevel(value: number): void {
     this.zoomLevel.set(this.clamp(Number(value.toFixed(2)), 0.5, 2));
     this.centerViewport();
+  }
+
+  private initializeScenarioHistory(escenarios: CasoEditorEscenario[]): void {
+    this.scenarioHistory = new Map(
+      escenarios.map((escenario) => [
+        escenario.id,
+        {
+          baseline: structuredClone(escenario.layout),
+          past: [],
+          future: [],
+        },
+      ]),
+    );
+    this.bumpHistoryRevision();
+  }
+
+  private pushScenarioHistory(
+    scenarioId: string,
+    layout: CasoEditorEscenario['layout'],
+  ): void {
+    const history = this.scenarioHistory.get(scenarioId);
+    if (!history) {
+      return;
+    }
+
+    const snapshot = structuredClone(layout);
+    const lastSnapshot = history.past.at(-1);
+    if (lastSnapshot && this.layoutsEqual(lastSnapshot, snapshot)) {
+      history.future = [];
+      this.bumpHistoryRevision();
+      return;
+    }
+
+    history.past = [...history.past, snapshot].slice(-100);
+    history.future = [];
+    this.bumpHistoryRevision();
+  }
+
+  private applyScenarioLayout(
+    scenarioId: string,
+    layout: CasoEditorEscenario['layout'],
+  ): void {
+    this.editor.update((editor) => {
+      if (!editor) {
+        return editor;
+      }
+
+      return {
+        ...editor,
+        escenarios: editor.escenarios.map((escenario) => {
+          if (escenario.id !== scenarioId) {
+            return escenario;
+          }
+
+          const clone = structuredClone(escenario);
+          clone.layout = structuredClone(layout);
+          this.ensureScenarioBackground(clone);
+          clone.layout.elements = [...clone.layout.elements].sort((a, b) => a.zIndex - b.zIndex);
+          return clone;
+        }),
+      };
+    });
+
+    const escenario = this.escenarios().find((item) => item.id === scenarioId) ?? null;
+    this.selectedElementId.set(this.resolveSelectedElementIdAfterLayoutChange(escenario));
+    if (escenario) {
+      this.updateDirtyState(scenarioId, escenario.layout);
+    }
+  }
+
+  private resolveSelectedElementIdAfterLayoutChange(
+    escenario: CasoEditorEscenario | null,
+  ): string | null {
+    if (!escenario) {
+      return null;
+    }
+
+    const currentSelection = this.selectedElementId();
+    if (currentSelection && escenario.layout.elements.some((item) => item.id === currentSelection)) {
+      return currentSelection;
+    }
+
+    return this.getPreferredSelectedElement(escenario)?.id ?? null;
+  }
+
+  private updateDirtyState(
+    scenarioId: string,
+    currentLayout: CasoEditorEscenario['layout'],
+  ): void {
+    const history = this.scenarioHistory.get(scenarioId);
+    if (!history) {
+      return;
+    }
+
+    const isDirty = !this.layoutsEqual(history.baseline, currentLayout);
+    const dirtyIds = this.dirtyScenarioIds();
+
+    if (isDirty && !dirtyIds.includes(scenarioId)) {
+      this.dirtyScenarioIds.set([...dirtyIds, scenarioId]);
+      return;
+    }
+
+    if (!isDirty && dirtyIds.includes(scenarioId)) {
+      this.dirtyScenarioIds.set(dirtyIds.filter((item) => item !== scenarioId));
+    }
+  }
+
+  private layoutsEqual(
+    first: CasoEditorEscenario['layout'],
+    second: CasoEditorEscenario['layout'],
+  ): boolean {
+    return JSON.stringify(first) === JSON.stringify(second);
+  }
+
+  private bumpHistoryRevision(): void {
+    this.historyRevision.update((value) => value + 1);
   }
 
   private centerViewport(): void {

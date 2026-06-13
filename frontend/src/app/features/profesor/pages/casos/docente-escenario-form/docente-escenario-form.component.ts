@@ -39,7 +39,7 @@ export class DocenteEscenarioFormComponent implements OnInit {
   protected readonly form = this.fb.nonNullable.group({
     orden: [1, [Validators.required, Validators.min(1)]],
     titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    situacionTexto: ['', [Validators.required, Validators.minLength(10)]],
+    situacionTexto: ['', [Validators.required, Validators.minLength(3)]],
     fondoCodigo: ['aula', [Validators.required]],
     isFinal: [false],
   });
@@ -70,6 +70,7 @@ export class DocenteEscenarioFormComponent implements OnInit {
   submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.errorMessage.set('Revisa los campos obligatorios antes de guardar.');
       return;
     }
 
@@ -105,6 +106,14 @@ export class DocenteEscenarioFormComponent implements OnInit {
 
   volverLink(): string[] {
     return ['/profesor/casos', this.casoId];
+  }
+
+  protected hasError(
+    field: 'orden' | 'titulo' | 'situacionTexto' | 'fondoCodigo',
+    error: string,
+  ): boolean {
+    const control = this.form.controls[field];
+    return control.touched && control.hasError(error);
   }
 
   private sugerirOrden() {

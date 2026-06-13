@@ -11,7 +11,7 @@ export class CreateEscenarioDto {
   titulo: string;
 
   @IsString()
-  @MinLength(10)
+  @MinLength(3)
   situacionTexto: string;
 
   @IsString()

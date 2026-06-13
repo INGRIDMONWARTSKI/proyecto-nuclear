@@ -18,16 +18,37 @@
       <div class="siep-field">
         <label for="orden">Orden</label>
         <input id="orden" type="number" min="1" formControlName="orden" />
+        @if (hasError('orden', 'required')) {
+          <p class="field-error">El orden es obligatorio.</p>
+        }
+        @if (hasError('orden', 'min')) {
+          <p class="field-error">El orden debe ser mayor o igual a 1.</p>
+        }
       </div>
 
       <div class="siep-field">
-        <label for="titulo">Título</label>
+        <label for="titulo">Titulo</label>
         <input id="titulo" type="text" formControlName="titulo" />
+        @if (hasError('titulo', 'required')) {
+          <p class="field-error">El titulo es obligatorio.</p>
+        }
+        @if (hasError('titulo', 'minlength')) {
+          <p class="field-error">El titulo debe tener al menos 3 caracteres.</p>
+        }
+        @if (hasError('titulo', 'maxlength')) {
+          <p class="field-error">El titulo no puede superar 120 caracteres.</p>
+        }
       </div>
 
       <div class="siep-field">
-        <label for="situacionTexto">Texto de situación</label>
+        <label for="situacionTexto">Texto de situacion</label>
         <textarea id="situacionTexto" rows="5" formControlName="situacionTexto"></textarea>
+        @if (hasError('situacionTexto', 'required')) {
+          <p class="field-error">El texto de situacion es obligatorio.</p>
+        }
+        @if (hasError('situacionTexto', 'minlength')) {
+          <p class="field-error">El texto de situacion debe tener al menos 3 caracteres.</p>
+        }
       </div>
 
       <div class="siep-field">
@@ -37,6 +58,9 @@
             <option [value]="bg.code">{{ bg.label }}</option>
           }
         </select>
+        @if (hasError('fondoCodigo', 'required')) {
+          <p class="field-error">Debes seleccionar un fondo.</p>
+        }
       </div>
 
       <label class="checkbox-row">

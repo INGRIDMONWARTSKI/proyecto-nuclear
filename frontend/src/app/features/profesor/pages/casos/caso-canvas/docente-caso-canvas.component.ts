@@ -232,7 +232,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       icono: '▦',
       descripcion: 'Ambiente sereno para entrevista y escucha activa.',
       tag: 'Base',
-      content: { backgroundCode: 'consultorio' },
+      content: { backgroundCode: 'oficina_psicologica' },
     },
     {
       id: 'ambientes-aula',
@@ -764,7 +764,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         orden: nextOrder,
         titulo: `Escenario ${nextOrder}`,
         situacionTexto: 'Describe aqui el momento narrativo, el contexto y la tension pedagogica.',
-        fondoCodigo: editor.catalogos.backgrounds[0] ?? 'consultorio',
+        fondoCodigo: editor.catalogos.backgrounds[0] ?? 'oficina_psicologica',
         isFinal: false,
       })
       .subscribe({
@@ -1256,7 +1256,10 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   canvasBackground(): string {
     const escenario = this.escenarioSeleccionado();
-    return escenario?.aiBackgroundUrl || this.backgroundGradient(escenario?.fondoCodigo ?? 'consultorio');
+    return (
+      escenario?.aiBackgroundUrl ||
+      this.backgroundGradient(escenario?.fondoCodigo ?? 'oficina_psicologica')
+    );
   }
 
   canvasBackgroundStyle(escenario = this.escenarioSeleccionado()): Record<string, string> {
@@ -1272,7 +1275,9 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     }
 
     return {
-      background: this.backgroundGradient(escenario?.fondoCodigo ?? 'consultorio'),
+      background: this.backgroundGradient(
+        escenario?.fondoCodigo ?? 'oficina_psicologica',
+      ),
     };
   }
 
@@ -1751,7 +1756,8 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   private resetScenarioBackground(escenario: CasoEditorEscenario): void {
     const background = this.ensureScenarioBackground(escenario);
-    const defaultBackgroundCode = this.editor()?.catalogos.backgrounds[0] ?? 'consultorio';
+    const defaultBackgroundCode =
+      this.editor()?.catalogos.backgrounds[0] ?? 'oficina_psicologica';
 
     escenario.fondoCodigo = defaultBackgroundCode;
     escenario.aiBackgroundAssetId = null;

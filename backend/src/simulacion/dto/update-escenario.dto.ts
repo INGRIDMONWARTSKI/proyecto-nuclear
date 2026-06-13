@@ -14,7 +14,7 @@ export class UpdateEscenarioDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(10)
+  @MinLength(3)
   situacionTexto?: string;
 
   @IsOptional()

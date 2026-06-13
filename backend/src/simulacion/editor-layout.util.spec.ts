@@ -8,7 +8,7 @@ describe('editor-layout.util', () => {
     orden: 1,
     titulo: 'Escena de prueba',
     situacion_texto: 'Situacion inicial del caso.',
-    fondo_codigo: 'consultorio',
+    fondo_codigo: 'oficina_psicologica',
     is_final: false,
     layout_version: 1,
     layout_data: null,

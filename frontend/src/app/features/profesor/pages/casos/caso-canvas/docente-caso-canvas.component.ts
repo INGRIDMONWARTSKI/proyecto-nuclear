@@ -370,11 +370,234 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     },
   ]);
 
+  protected readonly curatedLibraryItems = computed((): BibliotecaItem[] => [
+    {
+      id: 'ambientes-consultorio',
+      nombre: 'Consultorio',
+      tipo: 'background',
+      categoria: 'Fondo',
+      categoriaClave: 'backgrounds',
+      icono: 'C',
+      descripcion: 'Escena profesional y serena para entrevistas clinicas.',
+      tag: 'Sereno',
+      content: { backgroundCode: 'oficina_psicologica' },
+    },
+    {
+      id: 'ambientes-aula',
+      nombre: 'Aula',
+      tipo: 'background',
+      categoria: 'Fondo',
+      categoriaClave: 'backgrounds',
+      icono: 'A',
+      descripcion: 'Contexto pedagogico para convivencia, observacion y apoyo.',
+      tag: 'Academico',
+      content: { backgroundCode: 'aula' },
+    },
+    {
+      id: 'personaje-estudiante',
+      nombre: 'Estudiante',
+      tipo: 'character',
+      categoria: 'Personaje',
+      categoriaClave: 'characters',
+      icono: 'E',
+      descripcion: 'Personaje central del caso con tono vulnerable y cercano.',
+      tag: 'Caso',
+      content: {
+        nombre: 'Valeria',
+        rol: 'Estudiante',
+        avatar: 'student-support',
+        expresion: 'Reservada',
+        estadoEmocional: 'Ansiedad social',
+        dialogo: 'No se como explicar lo que me pasa cuando entro al aula.',
+      },
+      style: {
+        avatarGradient: 'linear-gradient(180deg, #ffd7ba 0%, #e99e75 100%)',
+        accentColor: '#bf6d45',
+        bubbleColor: 'rgba(255,255,255,0.94)',
+      },
+      size: { width: 196, height: 268 },
+    },
+    {
+      id: 'personaje-psicologo',
+      nombre: 'Docente orientador',
+      tipo: 'character',
+      categoria: 'Personaje',
+      categoriaClave: 'characters',
+      icono: 'D',
+      descripcion: 'Figura de acompanamiento que estructura la intervencion.',
+      tag: 'Guia',
+      content: {
+        nombre: 'Laura',
+        rol: 'Orientadora',
+        avatar: 'mentor-guide',
+        expresion: 'Serena',
+        estadoEmocional: 'Regulacion',
+        dialogo: 'Vamos a leer la situacion con calma antes de intervenir.',
+      },
+      style: {
+        avatarGradient: 'linear-gradient(180deg, #d9efc2 0%, #74a95b 100%)',
+        accentColor: '#4f7d3d',
+        bubbleColor: 'rgba(246,251,242,0.96)',
+      },
+      size: { width: 196, height: 268 },
+    },
+    {
+      id: 'personaje-familiar',
+      nombre: 'Familiar',
+      tipo: 'character',
+      categoria: 'Personaje',
+      categoriaClave: 'characters',
+      icono: 'F',
+      descripcion: 'Actor del entorno cercano para tension o apoyo contextual.',
+      tag: 'Entorno',
+      content: {
+        nombre: 'Acudiente',
+        rol: 'Familiar',
+        avatar: 'family-context',
+        expresion: 'Preocupada',
+        estadoEmocional: 'Tension contenida',
+        dialogo: 'En casa tambien hemos notado cambios estas semanas.',
+      },
+      style: {
+        avatarGradient: 'linear-gradient(180deg, #ffe2b8 0%, #d79d4e 100%)',
+        accentColor: '#b0711b',
+        bubbleColor: 'rgba(255,249,239,0.96)',
+      },
+      size: { width: 188, height: 256 },
+    },
+    {
+      id: 'texto-dialogo',
+      nombre: 'Globo narrativo',
+      tipo: 'text',
+      categoria: 'Texto',
+      categoriaClave: 'texts',
+      icono: 'T',
+      descripcion: 'Texto breve para clima emocional, pensamiento o voz interna.',
+      tag: 'Narrativa',
+      content: {
+        nombre: 'Clima del momento',
+        texto: 'El silencio en el espacio hace visible la incomodidad de la escena.',
+      },
+      style: {
+        backgroundColor: 'rgba(255,255,255,0.93)',
+        borderColor: 'rgba(123,161,97,0.28)',
+        accentColor: '#6f9358',
+        textColor: '#24412d',
+      },
+      size: { width: 290, height: 96 },
+    },
+    {
+      id: 'texto-instruccion',
+      nombre: 'Guia pedagogica',
+      tipo: 'instruction',
+      categoria: 'Texto',
+      categoriaClave: 'texts',
+      icono: 'G',
+      descripcion: 'Marco corto para orientar observacion, escucha o decision.',
+      tag: 'Pedagogico',
+      content: {
+        nombre: 'Foco de observacion',
+        texto: 'Identifica senales emocionales, lenguaje no verbal y factores del contexto.',
+      },
+      style: {
+        backgroundColor: 'rgba(237,247,255,0.96)',
+        borderColor: 'rgba(90,145,194,0.26)',
+        accentColor: '#4f7fa8',
+        textColor: '#21405a',
+      },
+      size: { width: 308, height: 108 },
+    },
+    {
+      id: 'objeto-nota',
+      nombre: 'Ficha de caso',
+      tipo: 'object',
+      categoria: 'Objeto',
+      categoriaClave: 'objects',
+      icono: 'R',
+      descripcion: 'Tarjeta visual para antecedentes, factores o hallazgos.',
+      tag: 'Apoyo',
+      content: {
+        nombre: 'Registro breve',
+        texto: 'Antecedente relevante: evita la participacion oral frente al grupo.',
+      },
+      style: {
+        backgroundColor: 'rgba(255,250,240,0.95)',
+        borderColor: 'rgba(205,162,91,0.24)',
+        accentColor: '#b07a2f',
+        textColor: '#59411d',
+      },
+      size: { width: 248, height: 104 },
+    },
+    {
+      id: 'audio-ambiente',
+      nombre: 'Ambiente sonoro',
+      tipo: 'audio',
+      categoria: 'Audio',
+      categoriaClave: 'audio',
+      icono: 'S',
+      descripcion: 'Indicador de sonido, murmullo o tension del entorno.',
+      tag: 'Audio',
+      content: {
+        nombre: 'Murmullo del aula',
+        texto: 'Se percibe ruido leve y varias miradas dirigidas hacia la estudiante.',
+      },
+      style: {
+        backgroundColor: 'rgba(246,240,255,0.95)',
+        borderColor: 'rgba(141,118,191,0.24)',
+        accentColor: '#7c63a8',
+        textColor: '#45345f',
+      },
+      size: { width: 250, height: 92 },
+    },
+    {
+      id: 'pregunta-bloque',
+      nombre: 'Decision principal',
+      tipo: 'question',
+      categoria: 'Pregunta',
+      categoriaClave: 'questions',
+      icono: 'P',
+      descripcion: 'Tarjeta central para la intervencion o decision del estudiante.',
+      tag: 'Clave',
+      content: {
+        enunciado: 'Que accion inicial favorece un abordaje seguro y empatico?',
+        apoyo: 'Selecciona la respuesta que mejor cuide el contexto y la relacion de ayuda.',
+      },
+      style: {
+        backgroundColor: 'rgba(255,255,255,0.97)',
+        borderColor: 'rgba(86,140,98,0.22)',
+        accentColor: '#4f7d57',
+        textColor: '#1f3d2e',
+      },
+      size: { width: 364, height: 158 },
+    },
+    {
+      id: 'feedback-bloque',
+      nombre: 'Retroalimentacion',
+      tipo: 'feedback',
+      categoria: 'Pregunta',
+      categoriaClave: 'questions',
+      icono: 'F',
+      descripcion: 'Refuerzo visual para el por que de una decision.',
+      tag: 'Refuerzo',
+      content: {
+        nombre: 'Clave de aprendizaje',
+        mensaje: 'La respuesta mas util valida la experiencia antes de explorar soluciones.',
+      },
+      style: {
+        backgroundColor: 'rgba(241,249,242,0.96)',
+        borderColor: 'rgba(103,165,110,0.24)',
+        accentColor: '#5b8f62',
+        textColor: '#27462d',
+      },
+      size: { width: 296, height: 120 },
+    },
+  ]);
+
   protected readonly library = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const category = this.selectedLibraryCategory();
 
-    return this.allLibraryItems().filter((item) => {
+    return this.curatedLibraryItems().filter((item) => {
       const matchesCategory = item.categoriaClave === category;
       const matchesTerm = term
         ? [item.nombre, item.categoria, item.descripcion, item.tag]
@@ -838,13 +1061,33 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       })
       .subscribe({
         next: (escenario) => {
-          this.saving.set(false);
           this.selectedEscenarioId.set(escenario.id);
-          this.loadEditor();
+          this.seedScenarioWithStarterElements(escenario);
         },
         error: (error) => {
           this.saving.set(false);
           this.errorMessage.set(getErrorMessage(error, 'No fue posible crear el escenario.'));
+        },
+      });
+  }
+
+  private seedScenarioWithStarterElements(
+    escenario: Pick<CasoEditorEscenario, 'id' | 'titulo' | 'situacionTexto' | 'fondoCodigo'>,
+  ): void {
+    const starterLayout = this.buildStarterSceneLayout(escenario);
+
+    this.simulacionService
+      .actualizarLayoutEscenario(escenario.id, starterLayout)
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.successMessage.set('Escena inicial creada con elementos base editables.');
+          this.loadEditor();
+        },
+        error: () => {
+          this.saving.set(false);
+          this.successMessage.set('Escena creada. El layout inicial no pudo preconfigurarse.');
+          this.loadEditor();
         },
       });
   }
@@ -1324,11 +1567,27 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   }
 
   stageElementStyle(element: EditorElement): Record<string, string> {
+    const shouldAutoSizeHeight = [
+      'text',
+      'instruction',
+      'object',
+      'audio',
+      'question',
+      'feedback',
+    ].includes(element.type);
+
     return {
       left: `${element.position.x}%`,
       top: `${element.position.y}%`,
       width: `${element.size.width}px`,
-      height: `${element.size.height}px`,
+      ...(shouldAutoSizeHeight
+        ? {
+            minHeight: `${element.size.height}px`,
+            height: 'auto',
+          }
+        : {
+            height: `${element.size.height}px`,
+          }),
       transform: `translate(-50%, -50%) rotate(${element.rotation}deg)`,
       zIndex: String(element.zIndex),
     };
@@ -1419,6 +1678,221 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   elementObjectFit(element: EditorElement): string {
     const value = element.style['objectFit'];
     return typeof value === 'string' ? value : 'contain';
+  }
+
+  elementSurfaceStyle(element: EditorElement): Record<string, string> {
+    const backgroundColor = element.style['backgroundColor'];
+    const borderColor = element.style['borderColor'];
+    const textColor = element.style['textColor'];
+    const accentColor = element.style['accentColor'];
+
+    return {
+      background: typeof backgroundColor === 'string' ? backgroundColor : 'rgba(255, 255, 255, 0.92)',
+      borderColor: typeof borderColor === 'string' ? borderColor : 'rgba(31, 61, 46, 0.08)',
+      color: typeof textColor === 'string' ? textColor : 'var(--siep-text)',
+      '--element-accent': typeof accentColor === 'string' ? accentColor : '#4f7d57',
+    };
+  }
+
+  combinedElementStyle(element: EditorElement): Record<string, string> {
+    return {
+      ...this.stageElementStyle(element),
+      ...this.elementSurfaceStyle(element),
+    };
+  }
+
+  characterAvatarStyle(element: EditorElement): Record<string, string> {
+    const avatarGradient = element.style['avatarGradient'];
+    const accentColor = element.style['accentColor'];
+
+    return {
+      background:
+        typeof avatarGradient === 'string' ? avatarGradient : this.characterGradient(element),
+      borderColor: typeof accentColor === 'string' ? accentColor : '#ffffff',
+    };
+  }
+
+  characterBubbleStyle(element: EditorElement): Record<string, string> {
+    const bubbleColor = element.style['bubbleColor'];
+    const accentColor = element.style['accentColor'];
+
+    return {
+      background:
+        typeof bubbleColor === 'string' ? bubbleColor : 'rgba(255, 255, 255, 0.9)',
+      borderColor: typeof accentColor === 'string' ? `${accentColor}33` : 'rgba(31, 61, 46, 0.08)',
+    };
+  }
+
+  characterInitials(element: EditorElement): string {
+    const base = this.contentLabel(element, 'nombre') || this.contentLabel(element, 'rol') || 'P';
+    return base
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('');
+  }
+
+  noteTitle(element: EditorElement): string {
+    return (
+      this.contentLabel(element, 'nombre') ||
+      this.contentLabel(element, 'titulo') ||
+      this.noteTypeLabel(element)
+    );
+  }
+
+  noteBody(element: EditorElement): string {
+    return (
+      this.contentText(element) ||
+      this.contentText(element, 'mensaje') ||
+      this.contentLabel(element, 'enunciado') ||
+      this.contentLabel(element, 'nombre') ||
+      element.type
+    );
+  }
+
+  noteTypeLabel(element: EditorElement): string {
+    switch (element.type) {
+      case 'instruction':
+        return 'Guia';
+      case 'feedback':
+        return 'Retroalimentacion';
+      case 'audio':
+        return 'Audio';
+      case 'object':
+        return 'Registro';
+      case 'text':
+        return 'Narrativa';
+      default:
+        return 'Elemento';
+    }
+  }
+
+  questionSupportText(element: EditorElement): string {
+    return this.contentLabel(element, 'apoyo');
+  }
+
+  libraryCardStyle(item: BibliotecaItem): Record<string, string> {
+    const palette = this.libraryPalette(item);
+    return {
+      background: palette.surface,
+      borderColor: palette.border,
+      '--library-accent': palette.accent,
+    };
+  }
+
+  libraryIconStyle(item: BibliotecaItem): Record<string, string> {
+    const palette = this.libraryPalette(item);
+    return {
+      background: palette.icon,
+      color: palette.accentText,
+      borderColor: palette.border,
+    };
+  }
+
+  libraryPreviewStyle(item: BibliotecaItem): Record<string, string> {
+    const palette = this.libraryPalette(item);
+    return {
+      background: palette.preview,
+      borderColor: palette.border,
+    };
+  }
+
+  libraryPreviewBadge(item: BibliotecaItem): string {
+    switch (item.tipo) {
+      case 'background':
+        return 'Escena base';
+      case 'character':
+        return 'Actor';
+      case 'question':
+        return 'Decision';
+      case 'instruction':
+        return 'Guia';
+      case 'feedback':
+        return 'Refuerzo';
+      case 'audio':
+        return 'Ambiente';
+      default:
+        return 'Recurso';
+    }
+  }
+
+  libraryPreviewTitle(item: BibliotecaItem): string {
+    const contentTitle =
+      (typeof item.content['nombre'] === 'string' && item.content['nombre']) ||
+      (typeof item.content['enunciado'] === 'string' && item.content['enunciado']) ||
+      (typeof item.content['texto'] === 'string' && item.content['texto']) ||
+      (typeof item.content['mensaje'] === 'string' && item.content['mensaje']);
+
+    return contentTitle || item.nombre;
+  }
+
+  libraryPreviewBody(item: BibliotecaItem): string {
+    const contentBody =
+      (typeof item.content['texto'] === 'string' && item.content['texto']) ||
+      (typeof item.content['dialogo'] === 'string' && item.content['dialogo']) ||
+      (typeof item.content['mensaje'] === 'string' && item.content['mensaje']) ||
+      (typeof item.content['apoyo'] === 'string' && item.content['apoyo']) ||
+      item.descripcion;
+
+    return contentBody;
+  }
+
+  private libraryPalette(item: BibliotecaItem): {
+    surface: string;
+    preview: string;
+    icon: string;
+    border: string;
+    accent: string;
+    accentText: string;
+  } {
+    switch (item.categoriaClave) {
+      case 'backgrounds':
+        return {
+          surface: 'linear-gradient(180deg, rgba(248,250,255,0.98) 0%, rgba(239,245,255,0.96) 100%)',
+          preview: 'linear-gradient(145deg, #f5f8ff 0%, #dde9fb 48%, #c6d8f2 100%)',
+          icon: 'rgba(219, 232, 252, 0.95)',
+          border: 'rgba(108, 142, 196, 0.22)',
+          accent: '#557cab',
+          accentText: '#34506f',
+        };
+      case 'characters':
+        return {
+          surface: 'linear-gradient(180deg, rgba(255,251,246,0.98) 0%, rgba(255,245,234,0.96) 100%)',
+          preview: 'linear-gradient(145deg, #fff3e6 0%, #ffd7ba 55%, #f0b184 100%)',
+          icon: 'rgba(255, 228, 204, 0.94)',
+          border: 'rgba(201, 132, 81, 0.22)',
+          accent: '#b56f42',
+          accentText: '#804a27',
+        };
+      case 'questions':
+        return {
+          surface: 'linear-gradient(180deg, rgba(255,252,241,0.99) 0%, rgba(255,247,224,0.96) 100%)',
+          preview: 'linear-gradient(145deg, #fff8de 0%, #ffe9a8 52%, #ffd26f 100%)',
+          icon: 'rgba(255, 241, 195, 0.95)',
+          border: 'rgba(204, 159, 45, 0.2)',
+          accent: '#a67912',
+          accentText: '#7b5700',
+        };
+      case 'audio':
+        return {
+          surface: 'linear-gradient(180deg, rgba(249,245,255,0.98) 0%, rgba(243,236,255,0.96) 100%)',
+          preview: 'linear-gradient(145deg, #f5efff 0%, #dccdf7 52%, #bca0ea 100%)',
+          icon: 'rgba(232, 221, 255, 0.95)',
+          border: 'rgba(131, 104, 187, 0.2)',
+          accent: '#785cb1',
+          accentText: '#564085',
+        };
+      default:
+        return {
+          surface: 'linear-gradient(180deg, rgba(247,251,246,0.98) 0%, rgba(239,247,237,0.96) 100%)',
+          preview: 'linear-gradient(145deg, #f4fbf1 0%, #d9eccf 52%, #b9d8a7 100%)',
+          icon: 'rgba(217, 238, 204, 0.95)',
+          border: 'rgba(98, 152, 92, 0.2)',
+          accent: '#5f8b53',
+          accentText: '#44683c',
+        };
+    }
   }
 
   latestAiActionLabel(): string {
@@ -1620,6 +2094,145 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       default:
         return 'FONDO';
     }
+  }
+
+  private buildStarterSceneLayout(
+    escenario: Pick<CasoEditorEscenario, 'id' | 'titulo' | 'situacionTexto' | 'fondoCodigo'>,
+  ): { version: number; elements: EditorElement[] } {
+    return {
+      version: 1,
+      elements: [
+        {
+          id: `bg-${escenario.id}`,
+          type: 'background',
+          position: { x: 50, y: 50 },
+          size: { width: 1000, height: 560 },
+          rotation: 0,
+          zIndex: 0,
+          locked: true,
+          hidden: false,
+          style: {
+            backgroundCode: escenario.fondoCodigo,
+          },
+          content: {
+            title: escenario.titulo,
+            situacionTexto: escenario.situacionTexto,
+          },
+          bindings: {},
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'instruction',
+          position: { x: 24, y: 20 },
+          size: { width: 330, height: 112 },
+          rotation: 0,
+          zIndex: 1,
+          locked: false,
+          hidden: false,
+          style: {
+            backgroundColor: 'rgba(237,247,255,0.96)',
+            borderColor: 'rgba(90,145,194,0.26)',
+            accentColor: '#4f7fa8',
+            textColor: '#21405a',
+          },
+          content: {
+            nombre: 'Foco de observacion',
+            texto: 'Explora senales emocionales, contexto y factores de apoyo antes de intervenir.',
+          },
+          bindings: {},
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'character',
+          position: { x: 27, y: 64 },
+          size: { width: 196, height: 268 },
+          rotation: 0,
+          zIndex: 2,
+          locked: false,
+          hidden: false,
+          style: {
+            avatarGradient: 'linear-gradient(180deg, #d9efc2 0%, #74a95b 100%)',
+            accentColor: '#4f7d3d',
+            bubbleColor: 'rgba(246,251,242,0.96)',
+          },
+          content: {
+            nombre: 'Laura',
+            rol: 'Orientadora',
+            avatar: 'mentor-guide',
+            expresion: 'Serena',
+            estadoEmocional: 'Contencion',
+            dialogo: 'Inicia con una pregunta abierta y una escucha sin juicio.',
+          },
+          bindings: {},
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'character',
+          position: { x: 72, y: 67 },
+          size: { width: 196, height: 268 },
+          rotation: 0,
+          zIndex: 3,
+          locked: false,
+          hidden: false,
+          style: {
+            avatarGradient: 'linear-gradient(180deg, #ffd7ba 0%, #e99e75 100%)',
+            accentColor: '#bf6d45',
+            bubbleColor: 'rgba(255,255,255,0.94)',
+          },
+          content: {
+            nombre: 'Valeria',
+            rol: 'Estudiante',
+            avatar: 'student-support',
+            expresion: 'Reservada',
+            estadoEmocional: 'Ansiedad social',
+            dialogo: 'Siento que todos me miran cuando tengo que participar.',
+          },
+          bindings: {},
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'object',
+          position: { x: 77, y: 22 },
+          size: { width: 264, height: 108 },
+          rotation: 0,
+          zIndex: 4,
+          locked: false,
+          hidden: false,
+          style: {
+            backgroundColor: 'rgba(255,250,240,0.95)',
+            borderColor: 'rgba(205,162,91,0.24)',
+            accentColor: '#b07a2f',
+            textColor: '#59411d',
+          },
+          content: {
+            nombre: 'Registro breve',
+            texto: 'Antecedente: evita exposiciones orales y reporta malestar anticipatorio.',
+          },
+          bindings: {},
+        },
+        {
+          id: crypto.randomUUID(),
+          type: 'question',
+          position: { x: 50, y: 28 },
+          size: { width: 368, height: 162 },
+          rotation: 0,
+          zIndex: 5,
+          locked: false,
+          hidden: false,
+          style: {
+            backgroundColor: 'rgba(255,255,255,0.97)',
+            borderColor: 'rgba(86,140,98,0.22)',
+            accentColor: '#4f7d57',
+            textColor: '#1f3d2e',
+          },
+          content: {
+            enunciado: 'Que primera intervencion ayuda a contener y comprender la situacion?',
+            apoyo: 'Conviene priorizar escucha, validacion y lectura del contexto.',
+          },
+          bindings: {},
+        },
+      ],
+    };
   }
 
   private ensureLibrarySelection(): void {

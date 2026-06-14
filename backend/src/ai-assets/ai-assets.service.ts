@@ -10,7 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs/promises';
-import { join } from 'path';
+import { extname, join } from 'path';
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { PostgrestService } from '../postgrest/postgrest.service';
@@ -29,6 +29,21 @@ import {
   type AiAssetVisibleType,
 } from './entities/ai-asset.entity';
 import { PromptBuilderService } from './prompt-builder.service';
+import {
+  DOCENTE_ASSET_UPLOAD_TYPES,
+  type DocenteAssetUploadType,
+  UploadDocenteAssetDto,
+} from './dto/upload-docente-asset.dto';
+import type { UploadedImageFile } from './interfaces/uploaded-image-file.interface';
+
+export interface DocenteAssetListItem {
+  id: string;
+  nombre: string;
+  tipo: DocenteAssetUploadType;
+  url: string;
+  origen: 'DOCENTE';
+  createdAt: string;
+}
 
 interface HuggingFaceImageClient {
   textToImage(
@@ -56,6 +71,20 @@ interface AiAssetSidecar {
   backgroundRemoved: boolean;
   backgroundRemovalWarning?: string;
 }
+
+const DOCENTE_ASSET_ALLOWED_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+]);
+
+const DOCENTE_ASSET_ALLOWED_EXTENSIONS = new Set([
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+]);
 
 @Injectable()
 export class AiAssetsService {
@@ -144,6 +173,70 @@ export class AiAssetsService {
     }
 
     return Promise.all(records.map((item) => this.toAiAsset(item)));
+  }
+
+  async uploadDocenteAsset(
+    dto: UploadDocenteAssetDto,
+    file: UploadedImageFile | undefined,
+    currentUser: AuthenticatedUser,
+  ): Promise<DocenteAssetListItem> {
+    this.assertValidDocenteUploadFile(file);
+
+    const caso = await this.casosService.findCasoById(dto.casoId);
+    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+
+    const safeRelativePath = await this.writeDocenteAssetFile(file);
+    const dbType = this.mapDocenteUploadType(dto.tipo);
+    const publicUrl = this.buildPublicUrl(safeRelativePath);
+
+    const inserted = await this.postgrest.insert<AiAssetRecord>(
+      'recursos_visuales',
+      {
+        caso_id: dto.casoId,
+        escenario_id: null,
+        docente_id: currentUser.sub,
+        tipo: dbType,
+        nombre: dto.nombre.trim(),
+        // Guardamos el tipo original para mostrarlo en la biblioteca docente.
+        prompt_original: dto.tipo,
+        prompt_final: 'Subido por docente',
+        url_externa: publicUrl,
+        ruta_archivo: safeRelativePath,
+        ancho: null,
+        alto: null,
+        estilo: 'docente_manual',
+        proveedor: 'docente_upload',
+      },
+      {
+        select: '*',
+      },
+    );
+
+    return this.toDocenteAssetListItem(inserted);
+  }
+
+  async listDocenteAssetsByCaso(
+    casoId: string,
+    currentUser: AuthenticatedUser,
+  ): Promise<DocenteAssetListItem[]> {
+    const caso = await this.casosService.findCasoById(casoId);
+    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+
+    const filters: Record<string, string> = {
+      caso_id: casoId,
+      proveedor: 'docente_upload',
+    };
+
+    if (currentUser.role !== Role.ADMIN) {
+      filters.docente_id = currentUser.sub;
+    }
+
+    const records = await this.postgrest.select<AiAssetRecord>('recursos_visuales', {
+      filters,
+      order: 'created_at.desc',
+    });
+
+    return records.map((item) => this.toDocenteAssetListItem(item));
   }
 
   async insertIntoScenario(
@@ -473,6 +566,85 @@ export class AiAssetsService {
 
   private buildPublicUrl(relativePath: string): string {
     return `${this.publicBaseUrl.replace(/\/$/, '')}${relativePath}`;
+  }
+
+  private assertValidDocenteUploadFile(
+    file: UploadedImageFile | undefined,
+  ): asserts file is UploadedImageFile {
+    if (!file) {
+      throw new BadRequestException('Debes seleccionar un archivo de imagen.');
+    }
+
+    if (file.size <= 0) {
+      throw new BadRequestException('El archivo recibido esta vacio.');
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('El archivo supera el maximo permitido de 5 MB.');
+    }
+
+    const extension = extname(file.originalname ?? '').toLowerCase();
+    const mime = (file.mimetype ?? '').toLowerCase();
+
+    if (!DOCENTE_ASSET_ALLOWED_MIME_TYPES.has(mime)) {
+      throw new BadRequestException('Formato no permitido. Usa PNG, JPG o WEBP.');
+    }
+
+    if (!DOCENTE_ASSET_ALLOWED_EXTENSIONS.has(extension)) {
+      throw new BadRequestException('Extension no permitida. Usa .png, .jpg, .jpeg o .webp.');
+    }
+  }
+
+  private async writeDocenteAssetFile(file: UploadedImageFile): Promise<string> {
+    const extension = extname(file.originalname).toLowerCase();
+    const safeFilename = `${Date.now()}-${randomUUID()}${extension}`;
+    const directory = join(process.cwd(), 'uploads', 'docente-assets');
+    await fs.mkdir(directory, { recursive: true });
+
+    const relativePath = `/uploads/docente-assets/${safeFilename}`;
+    const absolutePath = this.resolveAbsoluteUploadPath(relativePath);
+    await fs.writeFile(absolutePath, file.buffer);
+    return relativePath;
+  }
+
+  private mapDocenteUploadType(tipo: DocenteAssetUploadType): AiAssetType {
+    if (tipo === 'FONDO') {
+      return 'FONDO';
+    }
+
+    if (tipo === 'PERSONAJE') {
+      return 'PERSONAJE';
+    }
+
+    return 'OBJETO';
+  }
+
+  private resolveDocenteAssetType(record: AiAssetRecord): DocenteAssetUploadType {
+    const rawType = (record.prompt_original ?? '').trim().toUpperCase();
+    if (
+      DOCENTE_ASSET_UPLOAD_TYPES.includes(rawType as DocenteAssetUploadType)
+    ) {
+      return rawType as DocenteAssetUploadType;
+    }
+
+    if (record.tipo === 'FONDO') {
+      return 'FONDO';
+    }
+    if (record.tipo === 'PERSONAJE') {
+      return 'PERSONAJE';
+    }
+    return 'OBJETO';
+  }
+
+  private toDocenteAssetListItem(record: AiAssetRecord): DocenteAssetListItem {
+    return {
+      id: record.id,
+      nombre: record.nombre,
+      tipo: this.resolveDocenteAssetType(record),
+      url: this.buildPublicUrl(record.ruta_archivo),
+      origen: 'DOCENTE',
+      createdAt: record.created_at,
+    };
   }
 
   private resolveAbsoluteUploadPath(relativePath: string): string {

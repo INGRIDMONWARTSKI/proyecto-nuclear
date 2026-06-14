@@ -210,6 +210,75 @@ export class EscenariosService {
     return this.toEscenario(created);
   }
 
+  async remove(
+    casoId: string,
+    escenarioId: string,
+    currentUser: AuthenticatedUser,
+  ): Promise<{
+    success: true;
+    deletedScenarioId: string;
+    remainingScenarios: Escenario[];
+  }> {
+    this.assertDocenteRole(currentUser);
+    const escenario = await this.findEscenarioById(escenarioId);
+
+    if (escenario.caso_id !== casoId) {
+      throw new BadRequestException(
+        'El escenario indicado no pertenece al caso seleccionado.',
+      );
+    }
+
+    const caso = await this.casosService.findCasoById(casoId);
+    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+
+    if (caso.estado === 'published') {
+      throw new ConflictException(
+        'No puedes eliminar escenas de un caso publicado. Crea una nueva versión o despublica el caso si el sistema lo permite.',
+      );
+    }
+
+    if (caso.estado === 'archived') {
+      throw new ConflictException(
+        'No se permiten cambios en escenarios de un caso archivado.',
+      );
+    }
+
+    const escenarios = await this.postgrest.select<EscenarioRecord>('escenarios', {
+      filters: { caso_id: casoId },
+      order: 'orden.asc',
+    });
+
+    if (escenarios.length <= 1) {
+      throw new ConflictException('El caso debe conservar al menos una escena.');
+    }
+
+    const sesiones = await this.postgrest.select<{ id: string }>('sesiones_simulacion', {
+      filters: { caso_id: casoId },
+      limit: 1,
+    });
+
+    if (sesiones.length > 0) {
+      throw new ConflictException(
+        'No se puede eliminar la escena porque el caso tiene sesiones registradas.',
+      );
+    }
+
+    await this.postgrest.remove('escenarios', {
+      filters: { id: escenarioId },
+    });
+
+    const remaining = await this.postgrest.select<EscenarioRecord>('escenarios', {
+      filters: { caso_id: casoId },
+      order: 'orden.asc',
+    });
+
+    return {
+      success: true,
+      deletedScenarioId: escenarioId,
+      remainingScenarios: remaining.map((item) => this.toEscenario(item)),
+    };
+  }
+
   async listByCaso(casoId: string, currentUser: AuthenticatedUser): Promise<Escenario[]> {
     this.assertDocenteRole(currentUser);
     const caso = await this.casosService.findCasoById(casoId);

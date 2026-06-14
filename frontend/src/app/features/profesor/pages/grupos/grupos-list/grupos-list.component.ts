@@ -1,8 +1,10 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { Role } from '../../../../../core/models/role.enum';
 import { Grupo } from '../../../../../core/models/grupo.model';
+import { Usuario } from '../../../../../core/models/usuario.model';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { getErrorMessage } from '../../../../../core/utils/http-error.util';
 import { AlertMessageComponent } from '../../../../../shared/ui/alert-message/alert-message.component';
@@ -12,6 +14,7 @@ import { LoadingStateComponent } from '../../../../../shared/ui/loading-state/lo
 import { PageHeaderComponent } from '../../../../../shared/ui/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../../../shared/ui/status-badge/status-badge.component';
 import { GruposService } from '../../../services/grupos.service';
+import { UsuariosApiService } from '../../../services/usuarios-api.service';
 import { AdminAmbientComponent } from '../../../../admin/shared/admin-ambient/admin-ambient.component';
 
 @Component({
@@ -33,6 +36,7 @@ import { AdminAmbientComponent } from '../../../../admin/shared/admin-ambient/ad
 })
 export class GruposListComponent implements OnInit {
   private readonly gruposService = inject(GruposService);
+  private readonly usuariosApi = inject(UsuariosApiService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly authService = inject(AuthService);
@@ -42,6 +46,46 @@ export class GruposListComponent implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly grupos = signal<Grupo[]>([]);
+  protected readonly usuarios = signal<Usuario[]>([]);
+  protected readonly busqueda = signal('');
+
+  // Mapa de profesorId → nombre para lookup O(1)
+  protected readonly profesoresPorId = computed(() => {
+    const map = new Map<string, string>();
+    for (const u of this.usuarios()) {
+      if (u.role === Role.PROFESOR) {
+        map.set(u.id, u.fullName);
+      }
+    }
+    return map;
+  });
+
+  protected nombreProfesor(profesorId: string | null): string | null {
+    if (!profesorId) return null;
+    return this.profesoresPorId().get(profesorId) ?? null;
+  }
+
+  protected readonly gruposFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return this.grupos();
+    return this.grupos().filter((g) => {
+      const nombreDocente = g.profesorId
+        ? (this.profesoresPorId().get(g.profesorId) ?? '').toLowerCase()
+        : '';
+      return (
+        g.nombre.toLowerCase().includes(q) ||
+        (g.descripcion ?? '').toLowerCase().includes(q) ||
+        (g.isActive ? 'activo' : 'inactivo').includes(q) ||
+        nombreDocente.includes(q)
+      );
+    });
+  });
+
+  protected readonly hayResultados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    return !q || this.gruposFiltrados().length > 0;
+  });
+
   protected readonly confirmOpen = signal(false);
   protected readonly confirmTitle = signal('');
   protected readonly confirmMessage = signal('');
@@ -59,9 +103,14 @@ export class GruposListComponent implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    this.gruposService.listar().subscribe({
-      next: (grupos) => {
+    // Cargamos grupos y usuarios en paralelo para mostrar nombres de docentes
+    forkJoin({
+      grupos: this.gruposService.listar(),
+      usuarios: this.usuariosApi.listarUsuarios(),
+    }).subscribe({
+      next: ({ grupos, usuarios }) => {
         this.grupos.set(grupos);
+        this.usuarios.set(usuarios);
         this.loading.set(false);
       },
       error: (error) => {

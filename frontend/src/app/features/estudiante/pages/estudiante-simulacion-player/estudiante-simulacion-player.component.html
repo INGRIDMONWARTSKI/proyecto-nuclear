@@ -1,95 +1,110 @@
-<section class="siep-page player">
-  <p class="player__brand" aria-hidden="true">SIEP · Simulación</p>
-
-  @if (errorMessage()) {
-    <app-alert-message [message]="errorMessage()!" type="error" />
+<section
+  class="siep-page player"
+  [class.player--video-active]="videoPhase() !== 'none'"
+  [class.player--scene-entering]="sceneEntering()"
+>
+  @if (videoPhase() !== 'none') {
+    <app-video-overlay
+      [src]="videoSrc()"
+      [titulo]="videoTitle()"
+      [descripcion]="videoDesc()"
+      (ended)="onVideoEnded()"
+    />
   }
 
-  <header class="player-hero">
-    @if (loading()) {
-      <app-page-header
-        title="Simulación en curso"
-        subtitle="Vive el caso, elige con criterio y aprende de cada decisión."
-        icon="🌿"
-      >
-        <a actions class="siep-btn-secondary player__back" routerLink="/estudiante/casos">Volver</a>
-      </app-page-header>
-    } @else {
-      @if (data(); as state) {
+  @if (videoPhase() === 'none') {
+    <p class="player__brand" aria-hidden="true">SIEP · Simulación</p>
+
+    @if (errorMessage()) {
+      <app-alert-message [message]="errorMessage()!" type="error" />
+    }
+
+    <header class="player-hero">
+      @if (loading()) {
         <app-page-header
-          [title]="state.escenario?.titulo ?? 'Simulación en curso'"
+          title="Simulación en curso"
           subtitle="Vive el caso, elige con criterio y aprende de cada decisión."
           icon="🌿"
         >
           <a actions class="siep-btn-secondary player__back" routerLink="/estudiante/casos">Volver</a>
         </app-page-header>
+      } @else {
+        @if (data(); as state) {
+          <app-page-header
+            [title]="state.escenario?.titulo ?? 'Simulación en curso'"
+            subtitle="Vive el caso, elige con criterio y aprende de cada decisión."
+            icon="🌿"
+          >
+            <a actions class="siep-btn-secondary player__back" routerLink="/estudiante/casos">Volver</a>
+          </app-page-header>
 
-        @if (state.escenario) {
-          <div class="player-hero__progress">
-            <app-simulacion-progress
-              [respondidas]="state.progreso.respondidas"
-              [total]="state.progreso.totalPreguntas"
-            />
-          </div>
+          @if (state.escenario) {
+            <div class="player-hero__progress">
+              <app-simulacion-progress
+                [respondidas]="state.progreso.respondidas"
+                [total]="state.progreso.totalPreguntas"
+              />
+            </div>
+          }
         }
       }
-    }
-  </header>
+    </header>
 
-  @if (loading()) {
-    <app-loading-state message="Cargando escenario..." />
-  } @else {
-    @if (data(); as state) {
-      @if (state.escenario) {
-        <div class="player-experience">
-          <section class="player-panel player-experience__board" aria-label="Escenario del caso">
-            <app-escenario-viewer [escenario]="state.escenario" />
-          </section>
+    @if (loading()) {
+      <app-loading-state message="Cargando escenario..." />
+    } @else {
+      @if (data(); as state) {
+        @if (state.escenario) {
+          <div class="player-experience">
+            <section class="player-panel player-experience__board" aria-label="Escenario del caso">
+              <app-escenario-viewer [escenario]="state.escenario" />
+            </section>
 
-          <section class="player-panel player-experience__decisions" aria-label="Opciones de respuesta">
-            <app-opciones-respuesta
-              [pregunta]="state.escenario.pregunta"
-              [selectedOpcionId]="selectedOpcion()?.id ?? null"
-              [locked]="feedback() !== null || sending()"
-              (select)="seleccionarOpcion($event)"
-            />
-          </section>
-        </div>
-
-        @if (feedback(); as fb) {
-          <div class="player-feedback">
-            <app-feedback-panel [feedback]="fb" />
+            <section class="player-panel player-experience__decisions" aria-label="Opciones de respuesta">
+              <app-opciones-respuesta
+                [pregunta]="state.escenario.pregunta"
+                [selectedOpcionId]="selectedOpcion()?.id ?? null"
+                [locked]="feedback() !== null || sending()"
+                (select)="seleccionarOpcion($event)"
+              />
+            </section>
           </div>
-        }
 
-        <section class="player-actions">
-          @if (!feedback()) {
-            <button
-              class="siep-btn-primary"
-              type="button"
-              [disabled]="!selectedOpcion() || sending()"
-              (click)="responder()"
-            >
-              {{ sending() ? 'Enviando...' : 'Confirmar decisión' }}
-            </button>
-          } @else if (completed()) {
-            <button class="siep-btn-primary" type="button" (click)="verResultado()">
+          @if (feedback(); as fb) {
+            <div class="player-feedback">
+              <app-feedback-panel [feedback]="fb" />
+            </div>
+          }
+
+          <section class="player-actions">
+            @if (!feedback()) {
+              <button
+                class="siep-btn-primary"
+                type="button"
+                [disabled]="!selectedOpcion() || sending()"
+                (click)="responder()"
+              >
+                {{ sending() ? 'Registrando...' : 'Confirmar intervención' }}
+              </button>
+            } @else if (completed()) {
+              <button class="siep-btn-primary" type="button" (click)="handleVerResultadoClick()">
+                Ver resultado del recorrido
+              </button>
+            } @else {
+              <button class="siep-btn-primary" type="button" (click)="handleContinuarClick()">
+                Continuar recorrido
+              </button>
+            }
+          </section>
+        } @else {
+          <section class="siep-card player-complete">
+            <h2>La sesión no tiene más escenarios pendientes.</h2>
+            <p>Puedes consultar el resultado final para cerrar la simulación.</p>
+            <button class="siep-btn-primary" type="button" (click)="handleVerResultadoClick()">
               Ver resultado del recorrido
             </button>
-          } @else {
-            <button class="siep-btn-primary" type="button" (click)="continuar()">
-              Continuar recorrido
-            </button>
-          }
-        </section>
-      } @else {
-        <section class="siep-card player-complete">
-          <h2>La sesión no tiene más escenarios pendientes.</h2>
-          <p>Puedes consultar el resultado final para cerrar la simulación.</p>
-          <button class="siep-btn-primary" type="button" (click)="verResultado()">
-            Ver resultado del recorrido
-          </button>
-        </section>
+          </section>
+        }
       }
     }
   }

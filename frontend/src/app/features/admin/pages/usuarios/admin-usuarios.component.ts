@@ -63,6 +63,43 @@ export class AdminUsuariosComponent implements OnInit {
   protected readonly usuarios = signal<Usuario[]>([]);
   protected readonly gruposConEstudiantes = signal<GrupoEstudiantesView[]>([]);
   protected readonly estudiantesSinGrupo = signal<Usuario[]>([]);
+  protected readonly todosLosGrupos = signal<Grupo[]>([]);
+
+  // ── Buscador global ──────────────────────────────────────
+  protected readonly busqueda = signal('');
+
+  // ── Acordeón de sección profesores ───────────────────────
+  protected readonly profesoresSeccionAbierta = signal(false);
+
+  protected toggleProfesores(): void {
+    this.profesoresSeccionAbierta.update((v) => !v);
+  }
+
+  // ── Acordeón de grupos (existente) ───────────────────────
+  protected readonly gruposAbiertos = signal<Set<string>>(new Set());
+
+  protected isGrupoAbierto(id: string): boolean {
+    return this.gruposAbiertos().has(id);
+  }
+
+  protected toggleGrupo(id: string): void {
+    const current = new Set(this.gruposAbiertos());
+    current.has(id) ? current.delete(id) : current.add(id);
+    this.gruposAbiertos.set(current);
+  }
+
+  // ── Detalle de usuario individual ─────────────────────────
+  protected readonly usuariosAbiertos = signal<Set<string>>(new Set());
+
+  protected isUsuarioAbierto(id: string): boolean {
+    return this.usuariosAbiertos().has(id);
+  }
+
+  protected toggleUsuario(id: string): void {
+    const current = new Set(this.usuariosAbiertos());
+    current.has(id) ? current.delete(id) : current.add(id);
+    this.usuariosAbiertos.set(current);
+  }
 
   protected readonly panelMode = signal<PanelMode>('none');
   protected readonly editingUsuario = signal<Usuario | null>(null);
@@ -78,23 +115,120 @@ export class AdminUsuariosComponent implements OnInit {
     () => this.authService.user()?.id ?? null,
   );
 
+  // ── Listas base (sin filtro) ──────────────────────────────
   protected readonly adminsActivos = computed(() =>
     this.usuarios()
-      .filter((usuario) => usuario.role === Role.ADMIN && usuario.isActive)
+      .filter((u) => u.role === Role.ADMIN && u.isActive)
       .sort((a, b) => a.fullName.localeCompare(b.fullName)),
   );
 
   protected readonly profesoresActivos = computed(() =>
     this.usuarios()
-      .filter((usuario) => usuario.role === Role.PROFESOR && usuario.isActive)
+      .filter((u) => u.role === Role.PROFESOR && u.isActive)
       .sort((a, b) => a.fullName.localeCompare(b.fullName)),
   );
 
   protected readonly usuariosArchivados = computed(() =>
     this.usuarios()
-      .filter((usuario) => !usuario.isActive)
+      .filter((u) => !u.isActive)
       .sort((a, b) => a.fullName.localeCompare(b.fullName)),
   );
+
+  // ── Listas filtradas por búsqueda ─────────────────────────
+  private matchesQuery(u: Usuario, q: string): boolean {
+    return (
+      u.fullName.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      this.roleLabel(u.role).toLowerCase().includes(q)
+    );
+  }
+
+  protected readonly adminsActivosFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return this.adminsActivos();
+    return this.adminsActivos().filter((u) => this.matchesQuery(u, q));
+  });
+
+  // Admins que no pueden archivarse → cuenta(s) del sistema / protegidas
+  protected readonly adminsSistema = computed(() =>
+    this.adminsActivosFiltrados().filter((u) => !this.puedeArchivar(u)),
+  );
+
+  // Admins que sí pueden archivarse → administradores institucionales
+  protected readonly adminsInstitucionales = computed(() =>
+    this.adminsActivosFiltrados().filter((u) => this.puedeArchivar(u)),
+  );
+
+  protected readonly profesoresActivosFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return this.profesoresActivos();
+    return this.profesoresActivos().filter((u) => this.matchesQuery(u, q));
+  });
+
+  protected readonly gruposFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return this.gruposConEstudiantes();
+    return this.gruposConEstudiantes()
+      .map((gv) => {
+        const grupoMatch = gv.grupo.nombre.toLowerCase().includes(q);
+        const estudiantesFiltrados = grupoMatch
+          ? gv.estudiantes
+          : gv.estudiantes.filter((e) => this.matchesQuery(e, q));
+        return { grupo: gv.grupo, estudiantes: estudiantesFiltrados };
+      })
+      .filter((gv) => gv.estudiantes.length > 0);
+  });
+
+  protected readonly sinGrupoFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return this.estudiantesSinGrupo();
+    return this.estudiantesSinGrupo().filter((u) => this.matchesQuery(u, q));
+  });
+
+  protected readonly archivadosFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return this.usuariosArchivados();
+    return this.usuariosArchivados().filter((u) => this.matchesQuery(u, q));
+  });
+
+  // ── Archivados por rol ────────────────────────────────────
+  protected readonly adminsArchivados = computed(() =>
+    this.archivadosFiltrados().filter((u) => u.role === Role.ADMIN),
+  );
+  protected readonly profesoresArchivados = computed(() =>
+    this.archivadosFiltrados().filter((u) => u.role === Role.PROFESOR),
+  );
+  protected readonly estudiantesArchivados = computed(() =>
+    this.archivadosFiltrados().filter((u) => u.role === Role.ESTUDIANTE),
+  );
+
+  protected readonly hayResultados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return true;
+    return (
+      this.adminsActivosFiltrados().length > 0 ||
+      this.profesoresActivosFiltrados().length > 0 ||
+      this.gruposFiltrados().length > 0 ||
+      this.sinGrupoFiltrados().length > 0 ||
+      this.archivadosFiltrados().length > 0
+    );
+  });
+
+  // ── Helpers de relación usuario-grupo ────────────────────
+  protected gruposDelProfesor(profesorId: string): Grupo[] {
+    return this.todosLosGrupos()
+      .filter((g) => g.profesorId === profesorId && g.isActive)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }
+
+  protected grupoDelEstudiante(estudianteId: string): string | null {
+    for (const gv of this.gruposConEstudiantes()) {
+      if (gv.estudiantes.some((e) => e.id === estudianteId)) {
+        return gv.grupo.nombre;
+      }
+    }
+    return null;
+  }
 
   protected readonly createForm = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(3)]],
@@ -132,6 +266,7 @@ export class AdminUsuariosComponent implements OnInit {
     }).subscribe({
       next: ({ usuarios, grupos }) => {
         this.usuarios.set(usuarios);
+        this.todosLosGrupos.set(grupos);
         this.cargarAgrupacionEstudiantes(usuarios, grupos);
       },
       error: (error) => {

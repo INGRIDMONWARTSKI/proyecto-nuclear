@@ -113,25 +113,28 @@
         </div>
       </div>
 
-      <aside class="hoja-mentora" aria-label="Hoja MENTORA">
-        <div class="hoja-mentora__float">
-          <span class="hoja-mentora__vein" aria-hidden="true"></span>
-          <div class="hoja-mentora__body">
-            <span class="hoja-mentora__icon" aria-hidden="true">
-              <svg viewBox="0 0 32 32" fill="none">
-                <path d="M16 4C10 10 7 16 9 24C10 27 13 29 16 30C19 29 22 27 23 24C25 16 22 10 16 4Z" fill="currentColor" />
-                <path d="M16 8V28" stroke="currentColor" stroke-width="1.1" opacity="0.35" />
-              </svg>
-            </span>
-            <div
-              class="hoja-mentora__content"
-              [class.hoja-mentora__content--visible]="tipVisible()"
-            >
-              <strong>{{ currentTip().title }}</strong>
-              <p>{{ currentTip().message }}</p>
-            </div>
+      <aside class="hoja-guia" aria-label="Guía MENTORA">
+        <div class="hoja-guia__float">
+          <img
+            class="hoja-guia__image"
+            src="assets/mentora/ui/hoja-guia.png"
+            alt=""
+            aria-hidden="true"
+            width="520"
+            height="320"
+            loading="eager"
+            decoding="async"
+          />
+
+          <div
+            class="hoja-guia__content"
+            [class.hoja-guia__content--visible]="tipVisible()"
+          >
+            <span class="hoja-guia__kicker">Guía MENTORA</span>
+            <p class="hoja-guia__message">{{ currentTip().message }}</p>
           </div>
-          <span class="hoja-mentora__glow" aria-hidden="true"></span>
+
+          <span class="hoja-guia__glow" aria-hidden="true"></span>
         </div>
       </aside>
     </aside>

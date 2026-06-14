@@ -29,6 +29,8 @@ import {
   AiAsset,
   AiAssetStyle,
   AiAssetVisibleType,
+  DocenteAsset,
+  DocenteAssetType,
 } from '../../../../simulacion/models/docente/ai-asset.model';
 import {
   EditorElement,
@@ -95,6 +97,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly duplicating = signal(false);
+  protected readonly deletingScenario = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly editor = signal<CasoEditor | null>(null);
@@ -129,6 +132,16 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly aiApplying = signal(false);
   protected readonly aiAssets = signal<AiAsset[]>([]);
   protected readonly selectedAiAssetId = signal<string | null>(null);
+  protected readonly docenteAssets = signal<DocenteAsset[]>([]);
+  protected readonly docenteAssetName = signal('');
+  protected readonly docenteAssetType = signal<DocenteAssetType>('OBJETO');
+  protected readonly docenteAssetFile = signal<File | null>(null);
+  protected readonly docenteUploading = signal(false);
+  protected readonly docenteMessage = signal<string | null>(null);
+  protected readonly docenteErrorMessage = signal<string | null>(null);
+  protected readonly libraryPanelTab = signal<'sistema' | 'docente' | 'ia' | 'capas'>('sistema');
+  protected readonly aiErrorMessage = signal<string | null>(null);
+  protected readonly deleteScenarioDialogId = signal<string | null>(null);
 
   protected casoId = '';
   protected readonly sceneBaseWidth = 1280;
@@ -189,6 +202,34 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     { id: 'symbol', label: 'Símbolo/emoción' },
   ] as const;
 
+  protected readonly docenteAssetTypeOptions = [
+    {
+      id: 'FONDO',
+      label: 'Como fondo de escena',
+      description: 'Queda detrás de todos los elementos de la escena.',
+    },
+    {
+      id: 'PERSONAJE',
+      label: 'Como personaje',
+      description: 'Se inserta como figura principal en primer plano.',
+    },
+    {
+      id: 'OBJETO',
+      label: 'Como objeto de escena',
+      description: 'Se agrega como elemento visual manipulable.',
+    },
+    {
+      id: 'PISTA',
+      label: 'Como pista visual',
+      description: 'Representa una señal, evidencia o clave narrativa.',
+    },
+    {
+      id: 'DECORACION',
+      label: 'Como decoración',
+      description: 'Acompaña la escena sin afectar la narrativa principal.',
+    },
+  ] as const;
+
   protected readonly escenarios = computed(() => this.editor()?.escenarios ?? []);
 
   protected readonly escenarioSeleccionado = computed(() => {
@@ -219,7 +260,19 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     ),
   );
 
+  protected readonly layersDescending = computed(() =>
+    [...this.orderedElements()].reverse(),
+  );
+
   protected readonly validationErrors = computed(() => this.editor()?.validationErrors ?? []);
+  protected readonly deleteScenarioTarget = computed(() => {
+    const scenarioId = this.deleteScenarioDialogId();
+    if (!scenarioId) {
+      return null;
+    }
+
+    return this.escenarios().find((item) => item.id === scenarioId) ?? null;
+  });
   protected readonly latestAiAsset = computed(() => {
     const selectedId = this.selectedAiAssetId();
     const assets = this.aiAssets();
@@ -686,6 +739,23 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     return scenarioId ? (this.scenarioHistory.get(scenarioId)?.future.length ?? 0) > 0 : false;
   });
 
+  protected readonly currentDocenteTypeDescription = computed((): string => {
+    switch (this.docenteAssetType()) {
+      case 'FONDO':
+        return 'Queda detrás de todos los elementos de la escena.';
+      case 'PERSONAJE':
+        return 'Se inserta como figura principal en primer plano.';
+      case 'OBJETO':
+        return 'Se agrega como elemento visual manipulable.';
+      case 'PISTA':
+        return 'Representa una señal, evidencia o clave narrativa.';
+      case 'DECORACION':
+        return 'Acompaña la escena sin afectar la narrativa principal.';
+      default:
+        return '';
+    }
+  });
+
   ngOnInit(): void {
     this.casoId = this.route.snapshot.paramMap.get('casoId') ?? '';
 
@@ -739,6 +809,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         this.syncDecisionSelection();
         this.resetStudentPreview();
         this.loadAiAssets();
+        this.loadDocenteAssets();
         this.loading.set(false);
         this.scheduleFitSceneToViewport();
       },
@@ -1043,6 +1114,80 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     });
   }
 
+  canDeleteScenario(escenario: CasoEditorEscenario | null = this.escenarioSeleccionado()): boolean {
+    return this.deleteScenarioBlockedReason(escenario) === null;
+  }
+
+  deleteScenarioBlockedReason(
+    escenario: CasoEditorEscenario | null = this.escenarioSeleccionado(),
+  ): string | null {
+    const editor = this.editor();
+    if (!editor || !escenario) {
+      return 'Selecciona una escena para continuar.';
+    }
+
+    if (editor.estado === 'published') {
+      return 'No puedes eliminar escenas de un caso publicado. Crea una nueva versión o despublica el caso si el sistema lo permite.';
+    }
+
+    if (editor.estado === 'archived') {
+      return 'No puedes eliminar escenas de un caso archivado.';
+    }
+
+    if (this.escenarios().length <= 1) {
+      return 'El caso debe conservar al menos una escena.';
+    }
+
+    return null;
+  }
+
+  openDeleteScenarioDialog(escenarioId: string, event?: Event): void {
+    event?.stopPropagation();
+    const escenario = this.escenarios().find((item) => item.id === escenarioId) ?? null;
+    if (!this.canDeleteScenario(escenario)) {
+      return;
+    }
+
+    this.deleteScenarioDialogId.set(escenarioId);
+  }
+
+  closeDeleteScenarioDialog(): void {
+    this.deleteScenarioDialogId.set(null);
+  }
+
+  confirmDeleteScenario(): void {
+    const target = this.deleteScenarioTarget();
+    if (!target || !this.canDeleteScenario(target)) {
+      return;
+    }
+
+    const currentSelectedId = this.selectedEscenarioId();
+    const nextScenarioId =
+      currentSelectedId === target.id
+        ? this.resolveFallbackScenarioId(target.id)
+        : currentSelectedId;
+    this.deletingScenario.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.simulacionService.eliminarEscenario(this.casoId, target.id).subscribe({
+      next: () => {
+        this.deletingScenario.set(false);
+        this.deleteScenarioDialogId.set(null);
+        this.selectedEscenarioId.set(nextScenarioId);
+        this.selectedElementId.set(null);
+        this.successMessage.set('Escena eliminada correctamente.');
+        this.loadEditor();
+      },
+      error: (error) => {
+        this.deletingScenario.set(false);
+        this.errorMessage.set(
+          getErrorMessage(error, 'No fue posible eliminar la escena seleccionada.'),
+        );
+      },
+    });
+  }
+
   createScenario(): void {
     const editor = this.editor();
     if (!editor) {
@@ -1153,11 +1298,12 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     }
 
     if (descripcion.length < 12) {
-      this.errorMessage.set('Describe el recurso con al menos 12 caracteres.');
+      this.aiErrorMessage.set('Describe el recurso con al menos 12 caracteres.');
       return;
     }
 
     this.aiGenerating.set(true);
+    this.aiErrorMessage.set(null);
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
@@ -1184,7 +1330,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         },
         error: (error) => {
           this.aiGenerating.set(false);
-          this.errorMessage.set(
+          this.aiErrorMessage.set(
             getErrorMessage(error, 'No fue posible generar el recurso con IA.'),
           );
         },
@@ -1240,7 +1386,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         },
         error: (error) => {
           this.aiApplying.set(false);
-          this.errorMessage.set(
+          this.aiErrorMessage.set(
             getErrorMessage(error, 'No fue posible insertar el recurso IA en la escena.'),
           );
         },
@@ -1418,6 +1564,188 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     this.updateElement(element.id, (item) => {
       item.zIndex = Math.max(item.zIndex - 1, 0);
     });
+  }
+
+  setLibraryPanelTab(tab: 'sistema' | 'docente' | 'ia' | 'capas'): void {
+    this.libraryPanelTab.set(tab);
+    this.aiErrorMessage.set(null);
+    this.docenteErrorMessage.set(null);
+  }
+
+  updateDocenteAssetName(value: string): void {
+    this.docenteAssetName.set(value);
+  }
+
+  updateDocenteAssetType(value: DocenteAssetType): void {
+    this.docenteAssetType.set(value);
+  }
+
+  updateDocenteAssetFile(input: Event): void {
+    const target = input.target as HTMLInputElement | null;
+    const file = target?.files?.[0] ?? null;
+    this.docenteAssetFile.set(file);
+
+    if (file && !this.docenteAssetName().trim()) {
+      const suggested = file.name
+        .replace(/\.[^.]+$/, '')
+        .replace(/[-_.]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+      if (suggested) {
+        this.docenteAssetName.set(suggested);
+      }
+    }
+  }
+
+  uploadDocenteAsset(): void {
+    const file = this.docenteAssetFile();
+    const nombre = this.docenteAssetName().trim();
+    const tipo = this.docenteAssetType();
+
+    this.docenteErrorMessage.set(null);
+    this.docenteMessage.set(null);
+
+    if (!nombre) {
+      this.docenteErrorMessage.set('El nombre del recurso es obligatorio.');
+      return;
+    }
+
+    if (!file) {
+      this.docenteErrorMessage.set('Debes seleccionar una imagen para subir.');
+      return;
+    }
+
+    const mime = file.type.toLowerCase();
+    const allowedMime = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowedMime.includes(mime)) {
+      this.docenteErrorMessage.set('Formato no permitido. Usa PNG, JPG o WEBP.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.docenteErrorMessage.set('El archivo supera el máximo permitido de 5 MB.');
+      return;
+    }
+
+    this.docenteUploading.set(true);
+    this.simulacionService
+      .subirDocenteAsset({
+        casoId: this.casoId,
+        nombre,
+        tipo,
+        file,
+      })
+      .subscribe({
+        next: (asset) => {
+          this.docenteUploading.set(false);
+          this.docenteAssets.set([asset, ...this.docenteAssets().filter((item) => item.id !== asset.id)]);
+          this.docenteAssetName.set('');
+          this.docenteAssetFile.set(null);
+          this.docenteMessage.set('Recurso subido correctamente. Ya puedes agregarlo a la escena.');
+        },
+        error: (error) => {
+          this.docenteUploading.set(false);
+          this.docenteErrorMessage.set(
+            getErrorMessage(error, 'No fue posible subir el recurso del docente.'),
+          );
+        },
+      });
+  }
+
+  addDocenteAssetToScene(asset: DocenteAsset): void {
+    const escenario = this.escenarioSeleccionado();
+    if (!escenario) {
+      return;
+    }
+
+    if (asset.tipo === 'FONDO') {
+      this.patchScenario((item) => {
+        item.aiBackgroundAssetId = asset.id;
+        item.aiBackgroundUrl = asset.url;
+        const background = this.ensureScenarioBackground(item);
+        background.style = {
+          ...background.style,
+          aiAssetId: asset.id,
+          imageUrl: asset.url,
+        };
+        background.content = {
+          ...background.content,
+          aiAssetId: asset.id,
+          imageUrl: asset.url,
+          sourceType: 'docente',
+        };
+      });
+      this.docenteMessage.set('Fondo del docente aplicado a la escena.');
+      return;
+    }
+
+    const nextZ = Math.max(...escenario.layout.elements.map((item) => item.zIndex), 0) + 1;
+    const size =
+      asset.tipo === 'PERSONAJE'
+        ? { width: 240, height: 280 }
+        : asset.tipo === 'PISTA'
+          ? { width: 150, height: 150 }
+          : { width: 180, height: 180 };
+
+    const imageElement: EditorElement = {
+      id: crypto.randomUUID(),
+      type: 'image',
+      position: { x: 52, y: 52 },
+      size,
+      rotation: 0,
+      zIndex: nextZ,
+      locked: false,
+      hidden: false,
+      style: { objectFit: 'contain' },
+      content: {
+        nombre: asset.nombre,
+        imageUrl: asset.url,
+        aiAssetId: asset.id,
+        aiType: asset.tipo.toLowerCase(),
+        sourceType: 'docente',
+      },
+      bindings: {},
+    };
+
+    this.patchScenario((item) => {
+      item.layout.elements.push(imageElement);
+    });
+    this.selectedElementId.set(imageElement.id);
+    this.docenteMessage.set('Recurso del docente agregado a la escena.');
+  }
+
+  layerLabel(element: EditorElement): string {
+    const labels: Partial<Record<EditorElementType, string>> = {
+      background: 'Fondo',
+      character: 'Personaje',
+      text: 'Texto',
+      image: 'Imagen IA',
+      object: 'Objeto',
+      audio: 'Audio',
+      question: 'Pregunta',
+      instruction: 'Instrucción',
+      feedback: 'Retroalimentación',
+    };
+    const base = labels[element.type] ?? element.type;
+    const name = (element.content as Record<string, unknown>)['nombre'] as string | undefined;
+    return name ? `${base} · ${name}` : base;
+  }
+
+  bringForwardById(elementId: string): void {
+    this.updateElement(elementId, (item) => {
+      item.zIndex += 1;
+    });
+    this.selectElement(elementId);
+  }
+
+  sendBackwardById(elementId: string): void {
+    this.updateElement(elementId, (item) => {
+      item.zIndex = Math.max(item.zIndex - 1, 0);
+    });
+    this.selectElement(elementId);
   }
 
   saveQuestion(): void {
@@ -2281,6 +2609,22 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     this.feedbackReferenceDraft.set(option?.retroalimentacion?.referenciaTeorica ?? '');
   }
 
+  private resolveFallbackScenarioId(deletedScenarioId: string): string | null {
+    const escenarios = this.escenarios();
+    const deletedIndex = escenarios.findIndex((item) => item.id === deletedScenarioId);
+    if (deletedIndex === -1) {
+      return escenarios[0]?.id ?? null;
+    }
+
+    const previous = escenarios[deletedIndex - 1];
+    if (previous) {
+      return previous.id;
+    }
+
+    const next = escenarios[deletedIndex + 1];
+    return next?.id ?? null;
+  }
+
   private selectedScenarioElement(elementId: string): EditorElement | null {
     return this.escenarioSeleccionado()?.layout.elements.find((item) => item.id === elementId) ?? null;
   }
@@ -2295,6 +2639,17 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       },
       error: () => {
         this.aiAssets.set([]);
+      },
+    });
+  }
+
+  private loadDocenteAssets(): void {
+    this.simulacionService.listarDocenteAssetsCaso(this.casoId).subscribe({
+      next: (assets) => {
+        this.docenteAssets.set(assets);
+      },
+      error: () => {
+        this.docenteAssets.set([]);
       },
     });
   }

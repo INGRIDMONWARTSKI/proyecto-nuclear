@@ -2,64 +2,278 @@
 
 @include adminShell.admin-page-shell;
 
+// ── Buscador ─────────────────────────────────────────────
+.grupos-search-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.grupos-search-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 540px;
+}
+
+.grupos-search-icon {
+  position: absolute;
+  left: 0.9rem;
+  color: #7cb342;
+  pointer-events: none;
+}
+
+.grupos-search-input {
+  width: 100%;
+  padding: 0.68rem 2.5rem 0.68rem 2.4rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(124, 179, 66, 0.35);
+  background: rgba(255, 255, 255, 0.88);
+  font-family: var(--siep-font-body);
+  font-size: 0.9rem;
+  color: #2f5d34;
+  backdrop-filter: blur(6px);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+  appearance: none;
+
+  &::placeholder { color: #8fa995; }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(124, 179, 66, 0.7);
+    box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.12);
+  }
+
+  &::-webkit-search-cancel-button { display: none; }
+}
+
+.grupos-search-clear {
+  position: absolute;
+  right: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(205, 232, 181, 0.5);
+  color: #5f7368;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(205, 232, 181, 0.9);
+    color: #2f5d34;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7cb342;
+    outline-offset: 1px;
+  }
+}
+
+// Sin resultados
+.grupos-no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: #8fa995;
+
+  svg { opacity: 0.6; }
+
+  p {
+    margin: 0;
+    font-size: 0.88rem;
+    font-style: italic;
+  }
+}
+
+// ── Grilla de comunidades ─────────────────────────────────
 .grupos-grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: var(--siep-space-5);
+  grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+  gap: 1.2rem;
 }
 
-.grupo-card {
+// ── Tarjeta de comunidad ──────────────────────────────────
+.comunidad-card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  margin: 0;
-  padding: var(--siep-space-5);
+  background: rgba(255, 252, 247, 0.92);
+  border: 1px solid rgba(205, 232, 181, 0.65);
+  border-radius: 1.15rem;
+  padding: 1.35rem 1.35rem 1.15rem;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(16, 42, 29, 0.04);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(16, 42, 29, 0.09);
+    border-color: rgba(124, 179, 66, 0.5);
+  }
+
+  &--inactiva {
+    background: rgba(248, 248, 246, 0.75);
+    border-color: rgba(205, 232, 181, 0.35);
+    opacity: 0.88;
+  }
 }
 
-.grupo-card__title {
-  margin: 0 0 var(--siep-space-1);
-  font-family: var(--siep-font-title);
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--siep-forest);
+// Barra de acento superior
+.comunidad-card__accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: linear-gradient(
+    90deg,
+    #7cb342 0%,
+    #aed581 55%,
+    rgba(124, 179, 66, 0.15) 100%
+  );
+  border-radius: 1.15rem 1.15rem 0 0;
+
+  .comunidad-card--inactiva & {
+    background: linear-gradient(
+      90deg,
+      rgba(205, 232, 181, 0.5) 0%,
+      rgba(205, 232, 181, 0.18) 100%
+    );
+  }
 }
 
-.grupo-card__desc {
-  margin: 0 0 var(--siep-space-3);
-  font-size: 0.85rem;
-  color: var(--siep-text-soft);
-  line-height: 1.45;
-  min-height: 2.5em;
+// Decoración hoja en esquina superior derecha
+.comunidad-card__leaf {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.65rem;
+  pointer-events: none;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+
+  .comunidad-card:hover & {
+    opacity: 1;
+  }
+}
+
+// Cabecera
+.comunidad-card__head {
+  margin-bottom: 0.85rem;
   flex: 1;
 }
 
-.grupo-card__meta {
+.comunidad-card__badge-wrap {
+  margin-bottom: 0.55rem;
+}
+
+.comunidad-card__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--siep-font-title);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2f5d34;
+  line-height: 1.25;
+  padding-right: 2rem; // espacio para la hoja
+}
+
+.comunidad-card__desc {
+  margin: 0;
+  font-size: 0.83rem;
+  color: #5f7368;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Metadatos (chips)
+.comunidad-card__meta {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--siep-space-2);
-  margin-bottom: var(--siep-space-4);
   flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
 }
 
-.grupo-card__date {
+.comunidad-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(205, 232, 181, 0.35);
+  border: 1px solid rgba(124, 179, 66, 0.2);
   font-size: 0.72rem;
-  color: var(--siep-text-soft);
   font-weight: 600;
+  color: #5f7368;
+  font-family: var(--siep-font-title);
+
+  &--docente {
+    background: rgba(241, 248, 233, 0.65);
+    border-color: rgba(124, 179, 66, 0.28);
+    color: #2f5d34;
+  }
 }
 
-.grupo-card__actions {
+// Acciones — siempre en columna para evitar cortes de texto
+.comunidad-card__actions {
   display: flex;
   flex-direction: column;
-  gap: var(--siep-space-2);
+  gap: 0.45rem;
+  border-top: 1px solid rgba(205, 232, 181, 0.45);
+  padding-top: 0.85rem;
+  margin-top: auto;
+}
 
-  .siep-btn-primary,
-  .siep-btn-secondary,
-  .siep-btn-danger {
-    width: 100%;
-    text-align: center;
-    text-decoration: none;
+.comunidad-card__btn {
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+// Clase utilitaria
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ── Responsive ────────────────────────────────────────────
+@media (max-width: 860px) {
+  .grupos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .grupos-search-inner {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 540px) {
+  .grupos-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
   }
 }

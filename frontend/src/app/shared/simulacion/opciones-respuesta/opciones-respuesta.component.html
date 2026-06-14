@@ -1,44 +1,132 @@
-<section class="intervenciones" aria-label="Opciones de intervención">
-  <header class="intervenciones__head">
-    <p class="intervenciones__kicker">Decisión profesional</p>
-    <h3 class="intervenciones__title">Elige tu intervención</h3>
-    <div class="intervenciones__contexto">
-      <p class="intervenciones__contexto-label">Situación a intervenir</p>
-      <p class="intervenciones__contexto-texto">{{ pregunta.enunciado }}</p>
+<section class="senderos" aria-label="Senderos de intervención">
+
+  <!-- ── Header: título, subtítulo, pregunta ──────────────── -->
+  <header class="senderos__head">
+    <div class="senderos__kicker-row" aria-hidden="true">
+      <svg viewBox="0 0 24 28" fill="none" width="13" height="15">
+        <path d="M12 1C7.5 6.5 5 12 7 18.5C8.5 22.5 10.5 24 12 24C13.5 24 15.5 22.5 17 18.5C19 12 16.5 6.5 12 1Z"
+              fill="#7CB342" opacity="0.75"/>
+        <line x1="12" y1="3" x2="12" y2="23" stroke="#2F5D34" stroke-width="0.9" opacity="0.38"/>
+      </svg>
+      <p class="senderos__kicker">Decisión profesional</p>
+    </div>
+    <h3 class="senderos__title">Senderos de intervención</h3>
+    <p class="senderos__subtitle">
+      Cada decisión abre un camino distinto en el caso. Elige el sendero profesional que tomarías.
+    </p>
+    <div class="senderos__contexto">
+      <p class="senderos__contexto-label">Situación a intervenir</p>
+      <p class="senderos__contexto-texto">{{ pregunta.enunciado }}</p>
     </div>
   </header>
 
-  <ul class="intervenciones__list">
-    @for (opcion of pregunta.opciones; track opcion.id) {
-      <li>
+  <!-- ── Mapa visual: fondo bifurcación + señales ─────────── -->
+  <div class="senderos-map-wrap">
+
+    <div
+      class="senderos-map"
+      [class.senderos-map--count-2]="pregunta.opciones.length === 2"
+      [class.senderos-map--count-3]="pregunta.opciones.length === 3"
+      [class.senderos-map--count-4]="pregunta.opciones.length >= 4"
+    >
+      <!-- Overlay sutil para legibilidad -->
+      <div class="senderos-map__veil" aria-hidden="true"></div>
+
+      <!-- Señales de madera: una por opción -->
+      @for (opcion of pregunta.opciones; track opcion.id; let idx = $index) {
         <button
           type="button"
-          class="intervencion-card"
-          [class.intervencion-card--selected]="selectedOpcionId === opcion.id"
-          [class.intervencion-card--locked]="locked"
-          [attr.aria-pressed]="selectedOpcionId === opcion.id"
-          [attr.aria-label]="'Intervención ' + opcion.orden + ': ' + opcion.texto"
+          class="sendero-sign"
+          [class]="'sendero-sign sendero-sign--' + (idx + 1)"
+          [class.sendero-sign--selected]="selectedOpcionId === opcion.id"
+          [class.sendero-sign--dimmed]="selectedOpcionId !== null && selectedOpcionId !== opcion.id && !locked"
+          [class.sendero-sign--locked]="locked"
           [disabled]="locked"
+          [attr.aria-pressed]="selectedOpcionId === opcion.id"
+          [attr.aria-label]="'Sendero ' + ['A','B','C','D'][idx] + ': ' + opcion.texto"
           (click)="onSelect(opcion)"
         >
-          <span class="intervencion-card__marker" aria-hidden="true">
-            <span class="intervencion-card__marker-index">{{ opcion.orden }}</span>
+          <span class="sendero-sign__img" aria-hidden="true">
+            <!-- Letra tallada A / B / C / D — dinámica, no quemada en imagen -->
+            <span class="sendero-sign__letter">{{ ['A', 'B', 'C', 'D'][idx] }}</span>
           </span>
 
-          <span class="intervencion-card__body">
-            <span class="intervencion-card__tag">Acción profesional</span>
-            <span class="intervencion-card__texto">{{ opcion.texto }}</span>
-          </span>
-
-          <span class="intervencion-card__status" aria-hidden="true">
-            @if (selectedOpcionId === opcion.id) {
-              Seleccionada
-            } @else {
-              Elegir
-            }
+          <!-- Tooltip visible al hover/focus — texto completo de la opción -->
+          <span class="sendero-sign__tooltip" role="tooltip">
+            <span class="sendero-sign__tooltip-label">
+              Sendero {{ ['A', 'B', 'C', 'D'][idx] }}
+            </span>
+            <span class="sendero-sign__tooltip-text">{{ opcion.texto }}</span>
+            <span class="sendero-sign__tooltip-cta">
+              @if (selectedOpcionId === opcion.id) {
+                Camino seleccionado
+              } @else if (!locked) {
+                Tomar este camino
+              }
+            </span>
           </span>
         </button>
-      </li>
+      }
+
+      <!-- ── Piedra guía ───────────────────────────────────── -->
+      <!-- No selecciona respuesta. No llama submit. Solo togglea showHint. -->
+      <button
+        type="button"
+        class="pista-stone"
+        [class.pista-stone--active]="showHint"
+        (click)="toggleHint()"
+        aria-label="Ver guía de análisis"
+      >
+        <span class="pista-stone__img" aria-hidden="true">
+          <span class="pista-stone__label">Guía</span>
+        </span>
+        <!-- Tooltip pequeño en hover -->
+        <span class="pista-stone__tooltip" aria-hidden="true">Ver guía de análisis</span>
+      </button>
+
+    </div><!-- /senderos-map -->
+
+    <!-- Panel de opción elegida (aparece al seleccionar) -->
+    @if (selectedOpcionId !== null) {
+      @for (opcion of pregunta.opciones; track opcion.id; let idx = $index) {
+        @if (selectedOpcionId === opcion.id) {
+          <div class="senderos-map__panel" role="status" aria-live="polite">
+            <span class="senderos-map__panel-badge">
+              @if (locked) {
+                Sendero {{ ['A', 'B', 'C', 'D'][idx] }} — registrado
+              } @else {
+                Sendero {{ ['A', 'B', 'C', 'D'][idx] }} elegido
+              }
+            </span>
+            <p class="senderos-map__panel-text">{{ opcion.texto }}</p>
+            @if (!locked) {
+              <p class="senderos-map__panel-hint">
+                Has elegido este sendero. Confirma tu intervención para registrarlo en tu recorrido.
+              </p>
+            }
+          </div>
+        }
+      }
     }
-  </ul>
+
+    <!-- Panel de guía MENTORA (visible al hacer clic en la piedra) -->
+    @if (showHint) {
+      <div class="pista-panel" role="complementary" aria-label="Guía de análisis">
+        <p class="pista-panel__title">Guía MENTORA</p>
+        <p class="pista-panel__body">
+          No busques la respuesta más rápida. Observa cuál intervención protege, escucha y reduce el riesgo antes de avanzar.
+        </p>
+        <button
+          type="button"
+          class="pista-panel__close"
+          (click)="toggleHint()"
+          aria-label="Ocultar guía"
+        >
+          Ocultar guía
+        </button>
+      </div>
+    }
+
+  </div><!-- /senderos-map-wrap -->
+
 </section>

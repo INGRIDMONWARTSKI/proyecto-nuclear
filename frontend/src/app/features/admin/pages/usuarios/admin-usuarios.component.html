@@ -152,99 +152,736 @@
       />
     </section>
   } @else {
-    <section class="siep-card usuarios__section">
-      <header class="usuarios__section-head">
-        <h2>Administradores activos</h2>
-      </header>
-      @if (adminsActivos().length === 0) {
-        <p class="usuarios__section-empty">No hay administradores activos.</p>
-      } @else {
-        <ul class="user-rows">
-          @for (usuario of adminsActivos(); track usuario.id) {
-            <li class="siep-card-row user-row">
-              <ng-container *ngTemplateOutlet="filaUsuarioActivo; context: { $implicit: usuario }" />
-            </li>
-          }
-        </ul>
-      }
-    </section>
 
-    <section class="siep-card usuarios__section">
-      <header class="usuarios__section-head">
-        <h2>Profesores activos</h2>
-      </header>
-      @if (profesoresActivos().length === 0) {
-        <p class="usuarios__section-empty">No hay profesores activos.</p>
-      } @else {
-        <ul class="user-rows">
-          @for (usuario of profesoresActivos(); track usuario.id) {
-            <li class="siep-card-row user-row">
-              <ng-container *ngTemplateOutlet="filaUsuarioActivo; context: { $implicit: usuario }" />
-            </li>
-          }
-        </ul>
-      }
-    </section>
+    <!-- ── Buscador global ── -->
+    <div class="usuarios__search-wrap" role="search">
+      <label for="buscador-usuarios" class="visually-hidden">Buscar usuario</label>
+      <div class="usuarios__search-inner">
+        <svg class="usuarios__search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" width="18" height="18">
+          <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        <input
+          id="buscador-usuarios"
+          type="search"
+          class="usuarios__search-input"
+          placeholder="Buscar usuario por nombre, correo o rol..."
+          [value]="busqueda()"
+          (input)="busqueda.set($any($event.target).value)"
+          autocomplete="off"
+          aria-label="Buscar usuario por nombre, correo o rol"
+        />
+        @if (busqueda()) {
+          <button
+            type="button"
+            class="usuarios__search-clear"
+            (click)="busqueda.set('')"
+            aria-label="Limpiar búsqueda"
+          >
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+              <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+        }
+      </div>
+    </div>
 
-    <section class="siep-card usuarios__section">
-      <header class="usuarios__section-head">
-        <h2>Estudiantes activos por grupo</h2>
-        <p class="usuarios__section-desc">
-          Estudiantes con acceso activo, organizados por grupo académico.
-        </p>
-      </header>
-      @if (gruposConEstudiantes().length === 0 && estudiantesSinGrupo().length === 0) {
-        <p class="usuarios__section-empty">No hay estudiantes activos.</p>
-      } @else {
-        @for (grupoView of gruposConEstudiantes(); track grupoView.grupo.id) {
-          <div class="usuarios__grupo-block">
-            <h3 class="usuarios__grupo-title">{{ grupoView.grupo.nombre }}</h3>
-            <ul class="user-rows user-rows--nested">
-              @for (usuario of grupoView.estudiantes; track usuario.id) {
-                <li class="siep-card-row user-row user-row--nested">
-                  <ng-container *ngTemplateOutlet="filaUsuarioActivo; context: { $implicit: usuario }" />
+    <!-- Sin resultados -->
+    @if (busqueda() && !hayResultados()) {
+      <div class="usuarios__no-results" role="status" aria-live="polite">
+        <svg viewBox="0 0 24 24" fill="none" width="32" height="32" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M17 17L21 21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M8 11h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <p>No se encontraron usuarios con ese criterio.</p>
+      </div>
+    }
+
+    <!-- ── Administración del sistema ── -->
+    @if (adminsSistema().length > 0 || !busqueda()) {
+      <section class="siep-card usuarios__section">
+        <header class="usuarios__section-head">
+          <h2>Administración del sistema</h2>
+          <p class="usuarios__section-desc">Cuenta principal de gestión y trazabilidad de MENTORA.</p>
+        </header>
+
+        @if (adminsSistema().length === 0) {
+          <p class="usuarios__section-empty">No hay coincidencias para esa búsqueda.</p>
+        } @else {
+          @for (usuario of adminsSistema(); track usuario.id) {
+            <div class="admin-sistema-card">
+
+              <div class="admin-sistema-card__main">
+                <!-- Avatar + identidad -->
+                <div class="admin-sistema-card__identity">
+                  <div class="admin-sistema-card__avatar" aria-hidden="true">
+                    {{ usuario.fullName.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="admin-sistema-card__info">
+                    <span class="admin-sistema-card__name">
+                      {{ usuario.fullName }}
+                      @if (esAdminActual(usuario)) {
+                        <span class="tag-you">Tú</span>
+                      }
+                    </span>
+                    <span class="admin-sistema-card__email">{{ usuario.email }}</span>
+                  </div>
+                </div>
+
+                <!-- Badges -->
+                <div class="admin-sistema-card__badges">
+                  <span class="admin-sistema-badge admin-sistema-badge--general">Administrador General</span>
+                  <span class="admin-sistema-badge admin-sistema-badge--protected">
+                    <svg viewBox="0 0 14 14" fill="none" width="11" height="11" aria-hidden="true">
+                      <path d="M7 1L2 3.5v3.75C2 10.07 4.25 12.6 7 13.5c2.75-.9 5-3.43 5-6.25V3.5L7 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                    </svg>
+                    Cuenta protegida
+                  </span>
+                  <app-status-badge variant="status" status="active" label="Activo" />
+                </div>
+
+                <!-- Acciones -->
+                <div class="admin-sistema-card__actions">
+                  <button
+                    type="button"
+                    class="siep-btn-secondary siep-btn--compact"
+                    [disabled]="saving()"
+                    (click)="abrirEditar(usuario)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="siep-btn-archive siep-btn--compact admin-sistema-card__btn-protected"
+                    disabled
+                    title="Cuenta protegida: no se puede archivar"
+                    aria-label="Archivar deshabilitado: cuenta protegida"
+                  >
+                    Cuenta protegida
+                  </button>
+                </div>
+              </div>
+
+              <!-- Nota explicativa -->
+              <p class="admin-sistema-card__note">
+                Esta cuenta conserva el control principal del sistema.
+              </p>
+
+            </div>
+          }
+        }
+      </section>
+    }
+
+    <!-- ── Administradores institucionales ── -->
+    @if (adminsInstitucionales().length > 0 || !busqueda()) {
+      <section class="siep-card usuarios__section">
+        <header class="usuarios__section-head">
+          <h2>Administradores institucionales</h2>
+          <p class="usuarios__section-desc">Usuarios administradores creados para apoyar la gestión académica.</p>
+        </header>
+
+        @if (adminsInstitucionales().length === 0) {
+          <p class="usuarios__section-empty">No hay administradores institucionales adicionales.</p>
+        } @else {
+          <ul class="user-rows">
+            @for (usuario of adminsInstitucionales(); track usuario.id) {
+              <li class="siep-card-row user-row">
+                <ng-container *ngTemplateOutlet="filaUsuarioActivo; context: { $implicit: usuario }" />
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+
+    <!-- ── Profesores activos (acordeón de sección) ── -->
+    @if (profesoresActivosFiltrados().length > 0 || !busqueda()) {
+      <div
+        class="grupo-acordeon"
+        [class.grupo-acordeon--open]="profesoresSeccionAbierta() || (busqueda().trim().length > 0 && profesoresActivosFiltrados().length > 0)"
+      >
+        <button
+          type="button"
+          class="grupo-acordeon__header"
+          [attr.aria-expanded]="profesoresSeccionAbierta() || (busqueda().trim().length > 0 && profesoresActivosFiltrados().length > 0)"
+          aria-controls="profesores-panel"
+          (click)="toggleProfesores()"
+        >
+          <span class="grupo-acordeon__nombre">
+            Profesores activos
+            <span class="grupo-acordeon__section-sub">Docentes vinculados a comunidades académicas.</span>
+          </span>
+          <span class="grupo-acordeon__meta">
+            <span class="grupo-acordeon__badge">
+              {{ profesoresActivosFiltrados().length }}
+              {{ profesoresActivosFiltrados().length === 1 ? 'profesor' : 'profesores' }}
+            </span>
+            <svg class="grupo-acordeon__chevron" viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+              <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+
+        <div class="grupo-acordeon__panel" id="profesores-panel">
+          @if (profesoresActivosFiltrados().length === 0) {
+            <p class="usuarios__section-empty">No hay profesores que coincidan.</p>
+          } @else {
+            <ul class="user-rows">
+              @for (usuario of profesoresActivosFiltrados(); track usuario.id) {
+                <li class="user-wrap" [class.user-wrap--open]="isUsuarioAbierto(usuario.id)">
+                  <div class="siep-card-row user-row user-row--expandable">
+                    <div class="user-row__avatar" aria-hidden="true">
+                      {{ usuario.fullName.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="user-row__info">
+                      <span class="user-row__name">{{ usuario.fullName }}</span>
+                      <span class="user-row__email">{{ usuario.email }}</span>
+                    </div>
+                    <div class="user-row__badges">
+                      <app-status-badge
+                        variant="role"
+                        [role]="roleBadgeKey(usuario.role)"
+                        [label]="roleLabel(usuario.role)"
+                      />
+                      <app-status-badge variant="status" status="active" label="Activo" />
+                    </div>
+                    <div class="user-row__actions">
+                      <button
+                        type="button"
+                        class="siep-btn-secondary siep-btn--compact"
+                        [disabled]="saving()"
+                        (click)="abrirEditar(usuario)"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        class="siep-btn-archive siep-btn--compact"
+                        [disabled]="saving()"
+                        (click)="cambiarEstado(usuario)"
+                      >
+                        Archivar
+                      </button>
+                      <button
+                        type="button"
+                        class="user-row__toggle"
+                        [attr.aria-expanded]="isUsuarioAbierto(usuario.id)"
+                        [attr.aria-controls]="'detalle-' + usuario.id"
+                        [attr.aria-label]="isUsuarioAbierto(usuario.id) ? 'Cerrar detalle de ' + usuario.fullName : 'Ver detalle de ' + usuario.fullName"
+                        (click)="toggleUsuario(usuario.id)"
+                      >
+                        <svg class="user-row__toggle-icon" viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+                          <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  @if (isUsuarioAbierto(usuario.id)) {
+                    <div
+                      class="usuario-detalle"
+                      [id]="'detalle-' + usuario.id"
+                      role="region"
+                      [attr.aria-label]="'Detalle de ' + usuario.fullName"
+                    >
+                      <dl class="usuario-detalle__grid">
+                        <div class="usuario-detalle__item">
+                          <dt>Nombre completo</dt>
+                          <dd>{{ usuario.fullName }}</dd>
+                        </div>
+                        <div class="usuario-detalle__item">
+                          <dt>Correo</dt>
+                          <dd>{{ usuario.email }}</dd>
+                        </div>
+                        <div class="usuario-detalle__item">
+                          <dt>Rol</dt>
+                          <dd>{{ roleLabel(usuario.role) }}</dd>
+                        </div>
+                        <div class="usuario-detalle__item">
+                          <dt>Estado</dt>
+                          <dd class="usuario-detalle__estado usuario-detalle__estado--activo">Activo</dd>
+                        </div>
+                        <div class="usuario-detalle__item usuario-detalle__item--full">
+                          <dt>Grupos asociados</dt>
+                          <dd>
+                            @if (gruposDelProfesor(usuario.id).length === 0) {
+                              <span class="usuario-detalle__empty">No hay grupos asociados disponibles en esta vista.</span>
+                            } @else {
+                              <ul class="usuario-detalle__tags">
+                                @for (grupo of gruposDelProfesor(usuario.id); track grupo.id) {
+                                  <li class="usuario-detalle__tag">{{ grupo.nombre }}</li>
+                                }
+                              </ul>
+                            }
+                          </dd>
+                        </div>
+                      </dl>
+                      <div class="usuario-detalle__actions">
+                        <button
+                          type="button"
+                          class="siep-btn-secondary siep-btn--compact"
+                          [disabled]="saving()"
+                          (click)="abrirEditar(usuario)"
+                        >
+                          Editar usuario
+                        </button>
+                        <button
+                          type="button"
+                          class="siep-btn-archive siep-btn--compact"
+                          [disabled]="saving()"
+                          (click)="cambiarEstado(usuario)"
+                        >
+                          Archivar usuario
+                        </button>
+                      </div>
+                    </div>
+                  }
                 </li>
               }
             </ul>
-          </div>
-        }
-
-        @if (estudiantesSinGrupo().length > 0) {
-          <div class="usuarios__grupo-block">
-            <h3 class="usuarios__grupo-title">Estudiantes sin grupo</h3>
-            <ul class="user-rows user-rows--nested">
-              @for (usuario of estudiantesSinGrupo(); track usuario.id) {
-                <li class="siep-card-row user-row user-row--nested">
-                  <ng-container *ngTemplateOutlet="filaUsuarioActivo; context: { $implicit: usuario }" />
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      }
-    </section>
-
-    <section class="siep-card usuarios__section usuarios__section--archived">
-      <header class="usuarios__section-head">
-        <h2>Usuarios archivados</h2>
-        <p class="usuarios__section-desc">
-          Usuarios retirados del acceso activo. Su historial se conserva para trazabilidad académica.
-        </p>
-      </header>
-      @if (usuariosArchivados().length === 0) {
-        <p class="usuarios__section-empty">No hay usuarios archivados.</p>
-      } @else {
-        <ul class="user-rows">
-          @for (usuario of usuariosArchivados(); track usuario.id) {
-            <li class="siep-card-row user-row user-row--archived">
-              <ng-container *ngTemplateOutlet="filaUsuarioArchivado; context: { $implicit: usuario }" />
-            </li>
           }
-        </ul>
-      }
-    </section>
+        </div>
+      </div>
+    }
+
+    <!-- ── Estudiantes activos por grupo ── -->
+    @if (gruposFiltrados().length > 0 || sinGrupoFiltrados().length > 0 || !busqueda()) {
+      <section class="siep-card usuarios__section">
+        <header class="usuarios__section-head">
+          <h2>Estudiantes activos por grupo</h2>
+          <p class="usuarios__section-desc">
+            Estudiantes con acceso activo, organizados por grupo académico.
+          </p>
+        </header>
+
+        @if (gruposFiltrados().length === 0 && sinGrupoFiltrados().length === 0) {
+          <p class="usuarios__section-empty">No hay estudiantes que coincidan.</p>
+        } @else {
+
+          <!-- Acordeón por grupo -->
+          @for (grupoView of gruposFiltrados(); track grupoView.grupo.id) {
+            <div class="grupo-acordeon" [class.grupo-acordeon--open]="isGrupoAbierto(grupoView.grupo.id)">
+              <button
+                type="button"
+                class="grupo-acordeon__header"
+                [attr.aria-expanded]="isGrupoAbierto(grupoView.grupo.id)"
+                [attr.aria-controls]="'grupo-panel-' + grupoView.grupo.id"
+                (click)="toggleGrupo(grupoView.grupo.id)"
+              >
+                <span class="grupo-acordeon__nombre">{{ grupoView.grupo.nombre }}</span>
+                <span class="grupo-acordeon__meta">
+                  <span class="grupo-acordeon__badge">
+                    {{ grupoView.estudiantes.length }}
+                    {{ grupoView.estudiantes.length === 1 ? 'estudiante' : 'estudiantes' }}
+                  </span>
+                  <svg
+                    class="grupo-acordeon__chevron"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden="true"
+                    width="16" height="16"
+                  >
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+
+              <div
+                class="grupo-acordeon__panel"
+                [id]="'grupo-panel-' + grupoView.grupo.id"
+                role="region"
+                [attr.aria-label]="'Estudiantes del grupo ' + grupoView.grupo.nombre"
+              >
+                <ul class="user-rows user-rows--nested">
+                  @for (usuario of grupoView.estudiantes; track usuario.id) {
+                    <li class="user-wrap user-row--nested" [class.user-wrap--open]="isUsuarioAbierto(usuario.id)">
+                      <div class="siep-card-row user-row user-row--expandable">
+                        <div class="user-row__avatar" aria-hidden="true">
+                          {{ usuario.fullName.charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="user-row__info">
+                          <span class="user-row__name">{{ usuario.fullName }}</span>
+                          <span class="user-row__email">{{ usuario.email }}</span>
+                        </div>
+                        <div class="user-row__badges">
+                          <app-status-badge
+                            variant="role"
+                            [role]="roleBadgeKey(usuario.role)"
+                            [label]="roleLabel(usuario.role)"
+                          />
+                          <app-status-badge variant="status" status="active" label="Activo" />
+                        </div>
+                        <div class="user-row__actions">
+                          <button
+                            type="button"
+                            class="siep-btn-secondary siep-btn--compact"
+                            [disabled]="saving()"
+                            (click)="abrirEditar(usuario)"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            class="siep-btn-archive siep-btn--compact"
+                            [disabled]="saving()"
+                            (click)="cambiarEstado(usuario)"
+                          >
+                            Archivar
+                          </button>
+                          <button
+                            type="button"
+                            class="user-row__toggle"
+                            [attr.aria-expanded]="isUsuarioAbierto(usuario.id)"
+                            [attr.aria-controls]="'detalle-' + usuario.id"
+                            [attr.aria-label]="isUsuarioAbierto(usuario.id) ? 'Cerrar detalle de ' + usuario.fullName : 'Ver detalle de ' + usuario.fullName"
+                            (click)="toggleUsuario(usuario.id)"
+                          >
+                            <svg class="user-row__toggle-icon" viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+                              <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      @if (isUsuarioAbierto(usuario.id)) {
+                        <div
+                          class="usuario-detalle"
+                          [id]="'detalle-' + usuario.id"
+                          role="region"
+                          [attr.aria-label]="'Detalle de ' + usuario.fullName"
+                        >
+                          <dl class="usuario-detalle__grid">
+                            <div class="usuario-detalle__item">
+                              <dt>Nombre completo</dt>
+                              <dd>{{ usuario.fullName }}</dd>
+                            </div>
+                            <div class="usuario-detalle__item">
+                              <dt>Correo</dt>
+                              <dd>{{ usuario.email }}</dd>
+                            </div>
+                            <div class="usuario-detalle__item">
+                              <dt>Rol</dt>
+                              <dd>{{ roleLabel(usuario.role) }}</dd>
+                            </div>
+                            <div class="usuario-detalle__item">
+                              <dt>Estado</dt>
+                              <dd class="usuario-detalle__estado usuario-detalle__estado--activo">Activo</dd>
+                            </div>
+                            <div class="usuario-detalle__item usuario-detalle__item--full">
+                              <dt>Grupo actual</dt>
+                              <dd>
+                                <span class="usuario-detalle__tag">{{ grupoView.grupo.nombre }}</span>
+                              </dd>
+                            </div>
+                          </dl>
+                          <p class="usuario-detalle__nota">
+                            El historial del estudiante se conserva para trazabilidad académica.
+                          </p>
+                          <div class="usuario-detalle__actions">
+                            <button
+                              type="button"
+                              class="siep-btn-secondary siep-btn--compact"
+                              [disabled]="saving()"
+                              (click)="abrirEditar(usuario)"
+                            >
+                              Editar usuario
+                            </button>
+                            <button
+                              type="button"
+                              class="siep-btn-archive siep-btn--compact"
+                              [disabled]="saving()"
+                              (click)="cambiarEstado(usuario)"
+                            >
+                              Archivar usuario
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          }
+
+          <!-- Sin grupo asignado -->
+          @if (sinGrupoFiltrados().length > 0) {
+            <div class="grupo-acordeon grupo-acordeon--sin-grupo"
+                 [class.grupo-acordeon--open]="isGrupoAbierto('__sin_grupo__')">
+              <button
+                type="button"
+                class="grupo-acordeon__header"
+                [attr.aria-expanded]="isGrupoAbierto('__sin_grupo__')"
+                aria-controls="grupo-panel-sin-grupo"
+                (click)="toggleGrupo('__sin_grupo__')"
+              >
+                <span class="grupo-acordeon__nombre">Sin grupo asignado</span>
+                <span class="grupo-acordeon__meta">
+                  <span class="grupo-acordeon__badge grupo-acordeon__badge--neutral">
+                    {{ sinGrupoFiltrados().length }}
+                    {{ sinGrupoFiltrados().length === 1 ? 'estudiante' : 'estudiantes' }}
+                  </span>
+                  <svg
+                    class="grupo-acordeon__chevron"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden="true"
+                    width="16" height="16"
+                  >
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+
+              <div
+                class="grupo-acordeon__panel"
+                id="grupo-panel-sin-grupo"
+                role="region"
+                aria-label="Estudiantes sin grupo asignado"
+              >
+                <ul class="user-rows user-rows--nested">
+                  @for (usuario of sinGrupoFiltrados(); track usuario.id) {
+                    <li class="user-wrap user-row--nested" [class.user-wrap--open]="isUsuarioAbierto(usuario.id)">
+                      <div class="siep-card-row user-row user-row--expandable">
+                        <div class="user-row__avatar" aria-hidden="true">
+                          {{ usuario.fullName.charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="user-row__info">
+                          <span class="user-row__name">{{ usuario.fullName }}</span>
+                          <span class="user-row__email">{{ usuario.email }}</span>
+                        </div>
+                        <div class="user-row__badges">
+                          <app-status-badge
+                            variant="role"
+                            [role]="roleBadgeKey(usuario.role)"
+                            [label]="roleLabel(usuario.role)"
+                          />
+                          <app-status-badge variant="status" status="active" label="Activo" />
+                        </div>
+                        <div class="user-row__actions">
+                          <button
+                            type="button"
+                            class="siep-btn-secondary siep-btn--compact"
+                            [disabled]="saving()"
+                            (click)="abrirEditar(usuario)"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            class="siep-btn-archive siep-btn--compact"
+                            [disabled]="saving()"
+                            (click)="cambiarEstado(usuario)"
+                          >
+                            Archivar
+                          </button>
+                          <button
+                            type="button"
+                            class="user-row__toggle"
+                            [attr.aria-expanded]="isUsuarioAbierto(usuario.id)"
+                            [attr.aria-controls]="'detalle-' + usuario.id"
+                            [attr.aria-label]="isUsuarioAbierto(usuario.id) ? 'Cerrar detalle de ' + usuario.fullName : 'Ver detalle de ' + usuario.fullName"
+                            (click)="toggleUsuario(usuario.id)"
+                          >
+                            <svg class="user-row__toggle-icon" viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+                              <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      @if (isUsuarioAbierto(usuario.id)) {
+                        <div
+                          class="usuario-detalle"
+                          [id]="'detalle-' + usuario.id"
+                          role="region"
+                          [attr.aria-label]="'Detalle de ' + usuario.fullName"
+                        >
+                          <dl class="usuario-detalle__grid">
+                            <div class="usuario-detalle__item">
+                              <dt>Nombre completo</dt>
+                              <dd>{{ usuario.fullName }}</dd>
+                            </div>
+                            <div class="usuario-detalle__item">
+                              <dt>Correo</dt>
+                              <dd>{{ usuario.email }}</dd>
+                            </div>
+                            <div class="usuario-detalle__item">
+                              <dt>Rol</dt>
+                              <dd>{{ roleLabel(usuario.role) }}</dd>
+                            </div>
+                            <div class="usuario-detalle__item">
+                              <dt>Estado</dt>
+                              <dd class="usuario-detalle__estado usuario-detalle__estado--activo">Activo</dd>
+                            </div>
+                            <div class="usuario-detalle__item usuario-detalle__item--full">
+                              <dt>Grupo actual</dt>
+                              <dd><span class="usuario-detalle__empty">Sin grupo asignado.</span></dd>
+                            </div>
+                          </dl>
+                          <p class="usuario-detalle__nota">
+                            El historial del estudiante se conserva para trazabilidad académica.
+                          </p>
+                          <div class="usuario-detalle__actions">
+                            <button
+                              type="button"
+                              class="siep-btn-secondary siep-btn--compact"
+                              [disabled]="saving()"
+                              (click)="abrirEditar(usuario)"
+                            >
+                              Editar usuario
+                            </button>
+                            <button
+                              type="button"
+                              class="siep-btn-archive siep-btn--compact"
+                              [disabled]="saving()"
+                              (click)="cambiarEstado(usuario)"
+                            >
+                              Archivar usuario
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          }
+        }
+      </section>
+    }
+
+    <!-- ── Usuarios archivados (acordeón por rol) ── -->
+    @if (archivadosFiltrados().length > 0 || !busqueda()) {
+      <section class="siep-card usuarios__section usuarios__section--archived">
+        <header class="usuarios__section-head">
+          <h2>Usuarios archivados</h2>
+          <p class="usuarios__section-desc">
+            Usuarios retirados del acceso activo. Su historial se conserva para trazabilidad académica.
+          </p>
+        </header>
+        @if (archivadosFiltrados().length === 0) {
+          <p class="usuarios__section-empty">No hay usuarios archivados que coincidan.</p>
+        } @else {
+
+          <!-- Administradores archivados -->
+          @if (adminsArchivados().length > 0) {
+            <div class="grupo-acordeon" [class.grupo-acordeon--open]="isGrupoAbierto('__arch_admin__')">
+              <button
+                type="button"
+                class="grupo-acordeon__header"
+                [attr.aria-expanded]="isGrupoAbierto('__arch_admin__')"
+                aria-controls="arch-panel-admin"
+                (click)="toggleGrupo('__arch_admin__')"
+              >
+                <span class="grupo-acordeon__nombre">Administradores archivados</span>
+                <span class="grupo-acordeon__meta">
+                  <span class="grupo-acordeon__badge grupo-acordeon__badge--neutral">
+                    {{ adminsArchivados().length }}
+                  </span>
+                  <svg class="grupo-acordeon__chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true" width="16" height="16">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+              <div class="grupo-acordeon__panel" id="arch-panel-admin" role="region" aria-label="Administradores archivados">
+                <ul class="user-rows">
+                  @for (usuario of adminsArchivados(); track usuario.id) {
+                    <li class="user-wrap" [class.user-wrap--open]="isUsuarioAbierto(usuario.id)">
+                      <div class="siep-card-row user-row user-row--archived user-row--expandable">
+                        <ng-container *ngTemplateOutlet="filaArchivedRow; context: { $implicit: usuario }" />
+                      </div>
+                      @if (isUsuarioAbierto(usuario.id)) {
+                        <ng-container *ngTemplateOutlet="detalleArchivado; context: { $implicit: usuario }" />
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          }
+
+          <!-- Profesores archivados -->
+          @if (profesoresArchivados().length > 0) {
+            <div class="grupo-acordeon" [class.grupo-acordeon--open]="isGrupoAbierto('__arch_profesor__')">
+              <button
+                type="button"
+                class="grupo-acordeon__header"
+                [attr.aria-expanded]="isGrupoAbierto('__arch_profesor__')"
+                aria-controls="arch-panel-profesor"
+                (click)="toggleGrupo('__arch_profesor__')"
+              >
+                <span class="grupo-acordeon__nombre">Profesores archivados</span>
+                <span class="grupo-acordeon__meta">
+                  <span class="grupo-acordeon__badge grupo-acordeon__badge--neutral">
+                    {{ profesoresArchivados().length }}
+                  </span>
+                  <svg class="grupo-acordeon__chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true" width="16" height="16">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+              <div class="grupo-acordeon__panel" id="arch-panel-profesor" role="region" aria-label="Profesores archivados">
+                <ul class="user-rows">
+                  @for (usuario of profesoresArchivados(); track usuario.id) {
+                    <li class="user-wrap" [class.user-wrap--open]="isUsuarioAbierto(usuario.id)">
+                      <div class="siep-card-row user-row user-row--archived user-row--expandable">
+                        <ng-container *ngTemplateOutlet="filaArchivedRow; context: { $implicit: usuario }" />
+                      </div>
+                      @if (isUsuarioAbierto(usuario.id)) {
+                        <ng-container *ngTemplateOutlet="detalleArchivado; context: { $implicit: usuario }" />
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          }
+
+          <!-- Estudiantes archivados -->
+          @if (estudiantesArchivados().length > 0) {
+            <div class="grupo-acordeon" [class.grupo-acordeon--open]="isGrupoAbierto('__arch_estudiante__')">
+              <button
+                type="button"
+                class="grupo-acordeon__header"
+                [attr.aria-expanded]="isGrupoAbierto('__arch_estudiante__')"
+                aria-controls="arch-panel-estudiante"
+                (click)="toggleGrupo('__arch_estudiante__')"
+              >
+                <span class="grupo-acordeon__nombre">Estudiantes archivados</span>
+                <span class="grupo-acordeon__meta">
+                  <span class="grupo-acordeon__badge grupo-acordeon__badge--neutral">
+                    {{ estudiantesArchivados().length }}
+                  </span>
+                  <svg class="grupo-acordeon__chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true" width="16" height="16">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+              <div class="grupo-acordeon__panel" id="arch-panel-estudiante" role="region" aria-label="Estudiantes archivados">
+                <ul class="user-rows">
+                  @for (usuario of estudiantesArchivados(); track usuario.id) {
+                    <li class="user-wrap" [class.user-wrap--open]="isUsuarioAbierto(usuario.id)">
+                      <div class="siep-card-row user-row user-row--archived user-row--expandable">
+                        <ng-container *ngTemplateOutlet="filaArchivedRow; context: { $implicit: usuario }" />
+                      </div>
+                      @if (isUsuarioAbierto(usuario.id)) {
+                        <ng-container *ngTemplateOutlet="detalleArchivado; context: { $implicit: usuario }" />
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          }
+        }
+      </section>
+    }
   }
 
+  <!-- ── Template: fila de admin activo (sin detalle) ── -->
   <ng-template #filaUsuarioActivo let-usuario>
     <div class="user-row__avatar" aria-hidden="true">
       {{ usuario.fullName.charAt(0).toUpperCase() }}
@@ -306,7 +943,8 @@
     </div>
   </ng-template>
 
-  <ng-template #filaUsuarioArchivado let-usuario>
+  <!-- ── Template: fila de usuario archivado ── -->
+  <ng-template #filaArchivedRow let-usuario>
     <div class="user-row__avatar user-row__avatar--archived" aria-hidden="true">
       {{ usuario.fullName.charAt(0).toUpperCase() }}
     </div>
@@ -339,6 +977,57 @@
       >
         Reactivar
       </button>
+      <button
+        type="button"
+        class="user-row__toggle"
+        [attr.aria-expanded]="isUsuarioAbierto(usuario.id)"
+        [attr.aria-controls]="'detalle-' + usuario.id"
+        [attr.aria-label]="isUsuarioAbierto(usuario.id) ? 'Cerrar detalle de ' + usuario.fullName : 'Ver detalle de ' + usuario.fullName"
+        (click)="toggleUsuario(usuario.id)"
+      >
+        <svg class="user-row__toggle-icon" viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+          <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </ng-template>
+
+  <!-- ── Template: detalle de usuario archivado ── -->
+  <ng-template #detalleArchivado let-usuario>
+    <div
+      class="usuario-detalle"
+      [id]="'detalle-' + usuario.id"
+      role="region"
+      [attr.aria-label]="'Detalle de ' + usuario.fullName"
+    >
+      <dl class="usuario-detalle__grid">
+        <div class="usuario-detalle__item">
+          <dt>Nombre completo</dt>
+          <dd>{{ usuario.fullName }}</dd>
+        </div>
+        <div class="usuario-detalle__item">
+          <dt>Correo</dt>
+          <dd>{{ usuario.email }}</dd>
+        </div>
+        <div class="usuario-detalle__item">
+          <dt>Rol</dt>
+          <dd>{{ roleLabel(usuario.role) }}</dd>
+        </div>
+        <div class="usuario-detalle__item">
+          <dt>Estado</dt>
+          <dd class="usuario-detalle__estado usuario-detalle__estado--archivado">Archivado</dd>
+        </div>
+      </dl>
+      <div class="usuario-detalle__actions">
+        <button
+          type="button"
+          class="siep-btn-secondary siep-btn--compact"
+          [disabled]="saving()"
+          (click)="cambiarEstado(usuario)"
+        >
+          Reactivar usuario
+        </button>
+      </div>
     </div>
   </ng-template>
 

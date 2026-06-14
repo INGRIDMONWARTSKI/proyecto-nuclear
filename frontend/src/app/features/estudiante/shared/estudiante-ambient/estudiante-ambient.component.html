@@ -1,0 +1,33 @@
+<div class="estudiante-ambient__bleed" aria-hidden="true">
+  <div class="estudiante-ambient__bleed-bg"></div>
+
+  <div class="estudiante-ambient__leaves">
+    @for (leaf of leaves; track leaf.id) {
+      <svg
+        class="ambient-leaf ambient-leaf--{{ leaf.visibility }} ambient-leaf--{{ leaf.variant }}"
+        [style.top]="leaf.top"
+        [style.left]="leaf.left"
+        [style.width.px]="leaf.size"
+        [style.height.px]="leaf.size"
+        [style.color]="leaf.color"
+        [style.--leaf-opacity]="leaf.opacity"
+        [style.animationDuration.s]="leaf.duration"
+        [style.animationDelay.s]="'-' + leaf.delay + 's'"
+        viewBox="0 0 32 32"
+        fill="none"
+      >
+        <path
+          d="M16 2C10 8 6 14 8 22C9 26 12 28 16 30C20 28 23 26 24 22C26 14 22 8 16 2Z"
+          fill="currentColor"
+          opacity="0.92"
+        />
+        <path
+          d="M16 6V28"
+          stroke="currentColor"
+          stroke-width="1"
+          opacity="0.28"
+        />
+      </svg>
+    }
+  </div>
+</div>

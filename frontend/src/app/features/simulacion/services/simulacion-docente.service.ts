@@ -9,6 +9,8 @@ import {
   AiAsset,
   AiAssetStyle,
   AiAssetType,
+  DocenteAsset,
+  DocenteAssetType,
   AiAssetVisibleType,
 } from '../models/docente/ai-asset.model';
 import {
@@ -128,6 +130,14 @@ export class SimulacionDocenteService {
     );
   }
 
+  eliminarEscenario(casoId: string, escenarioId: string) {
+    return this.http.delete<{
+      success: boolean;
+      deletedScenarioId: string;
+      remainingScenarios: EscenarioDocente[];
+    }>(`${this.docenteUrl}/casos/${casoId}/escenarios/${escenarioId}`);
+  }
+
   generarAiAsset(payload: {
     casoId: string;
     escenarioId: string;
@@ -141,6 +151,27 @@ export class SimulacionDocenteService {
 
   listarAiAssetsCaso(casoId: string) {
     return this.http.get<AiAsset[]>(`${environment.apiUrl}/ai-assets/caso/${casoId}`);
+  }
+
+  subirDocenteAsset(payload: {
+    casoId: string;
+    nombre: string;
+    tipo: DocenteAssetType;
+    file: File;
+  }) {
+    const formData = new FormData();
+    formData.append('casoId', payload.casoId);
+    formData.append('nombre', payload.nombre);
+    formData.append('tipo', payload.tipo);
+    formData.append('file', payload.file);
+
+    return this.http.post<DocenteAsset>(`${environment.apiUrl}/ai-assets/upload`, formData);
+  }
+
+  listarDocenteAssetsCaso(casoId: string) {
+    return this.http.get<DocenteAsset[]>(
+      `${environment.apiUrl}/ai-assets/docente/caso/${casoId}`,
+    );
   }
 
   insertarAiAssetEnEscenario(

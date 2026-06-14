@@ -81,11 +81,13 @@
   <app-page-header
     class="admin-dashboard__header"
     title="Panel de administración"
-    subtitle="Gestiona usuarios, roles, grupos académicos y el acceso general a la plataforma."
-    icon="🌿"
+    subtitle="Gestiona usuarios, roles, comunidades académicas y el acceso general a la plataforma."
   >
     <a actions routerLink="/admin/usuarios" [queryParams]="{ crear: '1' }" class="siep-btn-primary">
-      <span aria-hidden="true">＋</span> Nuevo usuario
+      <svg viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true" style="flex-shrink:0">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Nuevo usuario
     </a>
   </app-page-header>
 
@@ -107,9 +109,18 @@
       </button>
     </section>
   } @else {
+    <!-- ── Métricas ── -->
     <section class="admin-dashboard__metrics" aria-label="Métricas del sistema">
+
       <article class="metric-card" style="animation-delay: 0.05s">
-        <span class="metric-card__icon" aria-hidden="true">👥</span>
+        <span class="metric-card__icon metric-card__icon--usuarios" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+            <circle cx="7.5" cy="6" r="2.8" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2 16.5c0-3.6 2.46-5.5 5.5-5.5s5.5 1.9 5.5 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="14.5" cy="6.5" r="2.2" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M15 11c2.5 0.4 4 2 4 5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </span>
         <div class="metric-card__body">
           <p class="metric-card__label">Total de usuarios</p>
           <p class="metric-card__value">{{ totalUsuarios() }}</p>
@@ -117,7 +128,13 @@
       </article>
 
       <article class="metric-card" style="animation-delay: 0.1s">
-        <span class="metric-card__icon metric-card__icon--profesor" aria-hidden="true">🎓</span>
+        <span class="metric-card__icon metric-card__icon--profesores" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+            <path d="M10 3.5L2 8l8 4.5L18 8 10 3.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M6 10v3.5c0 1.6 1.79 2.8 4 2.8s4-1.2 4-2.8V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M18 8v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
         <div class="metric-card__body">
           <p class="metric-card__label">Profesores activos</p>
           <p class="metric-card__value">{{ profesoresActivos() }}</p>
@@ -125,7 +142,13 @@
       </article>
 
       <article class="metric-card" style="animation-delay: 0.15s">
-        <span class="metric-card__icon metric-card__icon--estudiante" aria-hidden="true">📚</span>
+        <span class="metric-card__icon metric-card__icon--estudiantes" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+            <rect x="4" y="3" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="11" y="3" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6 3v14M13 3v14" stroke="currentColor" stroke-width="0.9" opacity="0.35"/>
+          </svg>
+        </span>
         <div class="metric-card__body">
           <p class="metric-card__label">Estudiantes activos</p>
           <p class="metric-card__value">{{ estudiantesActivos() }}</p>
@@ -133,49 +156,72 @@
       </article>
 
       <article class="metric-card" style="animation-delay: 0.2s">
-        <span class="metric-card__icon metric-card__icon--grupos" aria-hidden="true">🌱</span>
+        <span class="metric-card__icon metric-card__icon--grupos" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+            <path d="M3 17C4 11.5 7.5 6.5 17 4c0 9-4.5 12.5-10 13L3 17z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M3 17L10.5 9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </span>
         <div class="metric-card__body">
           <p class="metric-card__label">Grupos académicos</p>
           <p class="metric-card__value">{{ gruposAcademicos() }}</p>
         </div>
       </article>
+
     </section>
 
     <div class="admin-dashboard__layout">
       <div class="admin-dashboard__main">
+
+        <!-- ── Acciones principales ── -->
         <section class="siep-card admin-dashboard__actions" style="animation-delay: 0.12s">
           <header class="section-head">
             <h2>Acciones principales</h2>
             <p>Accesos directos para las tareas administrativas más frecuentes.</p>
           </header>
           <div class="action-grid">
-            <a routerLink="/admin/usuarios" [queryParams]="{ crear: '1' }" class="action-card">
-              <span class="action-card__icon" aria-hidden="true">＋</span>
+            <a routerLink="/admin/usuarios" [queryParams]="{ crear: '1' }" class="action-card" aria-label="Nuevo usuario: abrir formulario de registro">
+              <span class="action-card__icon action-card__icon--create" aria-hidden="true">
+                <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+                  <path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
               <span class="action-card__title">Nuevo usuario</span>
               <span class="action-card__desc">Abrir el formulario para registrar una cuenta.</span>
             </a>
-            <a routerLink="/admin/usuarios" class="action-card">
-              <span class="action-card__icon" aria-hidden="true">⚙</span>
+            <a routerLink="/admin/usuarios" class="action-card" aria-label="Gestionar usuarios: editar roles, estados y perfiles">
+              <span class="action-card__icon action-card__icon--manage" aria-hidden="true">
+                <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+                  <circle cx="9" cy="9" r="2.2" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M9 2v2M9 14v2M2 9h2M14 9h2M3.93 3.93l1.41 1.41M12.66 12.66l1.41 1.41M3.93 14.07l1.41-1.41M12.66 5.34l1.41-1.41" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+              </span>
               <span class="action-card__title">Gestionar usuarios</span>
               <span class="action-card__desc">Editar roles, estados y perfiles.</span>
             </a>
-            <a routerLink="/admin/grupos" class="action-card">
-              <span class="action-card__icon" aria-hidden="true">🌿</span>
-              <span class="action-card__title">Ver grupos</span>
-              <span class="action-card__desc">Consultar la organización académica.</span>
+            <a routerLink="/admin/grupos" class="action-card" aria-label="Ver comunidades académicas">
+              <span class="action-card__icon action-card__icon--groups" aria-hidden="true">
+                <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+                  <path d="M2 16C3 11 6.5 6.5 15 4c0 8-4 11.5-9 12L2 16z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                  <path d="M2 16l7-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="action-card__title">Ver comunidades</span>
+              <span class="action-card__desc">Consultar la organización de grupos académicos.</span>
             </a>
           </div>
           <div class="action-buttons">
             <a routerLink="/admin/usuarios" class="siep-btn-primary">Gestionar usuarios</a>
-            <a routerLink="/admin/grupos" class="siep-btn-secondary">Ver grupos académicos</a>
+            <a routerLink="/admin/grupos" class="siep-btn-secondary">Ver comunidades académicas</a>
           </div>
         </section>
 
+        <!-- ── Últimas cuentas registradas ── -->
         <section class="siep-card admin-dashboard__users" style="animation-delay: 0.18s">
           <header class="section-head section-head--row">
             <div>
-              <h2>Cuentas del sistema</h2>
-              <p>Últimos usuarios registrados en la plataforma.</p>
+              <h2>Últimas cuentas registradas</h2>
+              <p>Los usuarios más recientemente creados en la plataforma.</p>
             </div>
             <a routerLink="/admin/usuarios" class="siep-btn-secondary siep-btn--compact">Ver todos</a>
           </header>
@@ -221,11 +267,19 @@
         </section>
       </div>
 
+      <!-- ── Aside ── -->
       <aside class="admin-dashboard__aside" aria-label="Panel de apoyo administrativo">
+
+        <!-- Control de acceso -->
         <section class="siep-card aside-card" style="animation-delay: 0.14s">
           <header class="aside-card__head">
-            <span class="aside-card__icon" aria-hidden="true">🔐</span>
-            <h3>Seguridad de acceso</h3>
+            <span class="aside-card__icon aside-card__icon--access" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+                <path d="M10 2L3 5.5v4.75C3 14.2 6.1 17.4 10 18.5c3.9-1.1 7-4.3 7-8.25V5.5L10 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M7 10.5l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <h3>Control de acceso</h3>
           </header>
           <p>
             Controla quién puede ingresar a MENTORA activando o desactivando cuentas según el rol
@@ -243,10 +297,18 @@
           }
         </section>
 
+        <!-- Distribución de roles -->
         <section class="siep-card aside-card" style="animation-delay: 0.2s">
           <header class="aside-card__head">
-            <span class="aside-card__icon" aria-hidden="true">🏷</span>
-            <h3>Roles configurados</h3>
+            <span class="aside-card__icon aside-card__icon--roles" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+                <circle cx="7" cy="6" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M2 15.5c0-3 2.24-4.5 5-4.5s5 1.5 5 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <circle cx="15" cy="7" r="2" stroke="currentColor" stroke-width="1.3"/>
+                <path d="M13 12c1.5 0 3.5 0.8 4 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <h3>Distribución de roles</h3>
           </header>
           <p>Distribución actual de cuentas por tipo de acceso.</p>
           <ul class="roles-list">
@@ -263,39 +325,60 @@
           </ul>
         </section>
 
+        <!-- Estado de comunidades académicas -->
         <section class="siep-card aside-card" style="animation-delay: 0.23s">
           <header class="aside-card__head">
-            <span class="aside-card__icon" aria-hidden="true">🌿</span>
-            <h3>Estado de grupos</h3>
+            <span class="aside-card__icon aside-card__icon--groups" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+                <path d="M3 17C4 11.5 7.5 6.5 17 4c0 9-4.5 12.5-10 13L3 17z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M3 17l7.5-7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <h3>Estado de comunidades académicas</h3>
           </header>
-          <p>Los grupos académicos ahora se controlan con estados activo e inactivo.</p>
+          <p>Los grupos académicos se controlan con estados activo e inactivo.</p>
           <p class="aside-card__highlight aside-card__highlight--ok">
-            {{ gruposActivos() }} {{ gruposActivos() === 1 ? 'grupo activo' : 'grupos activos' }}
+            {{ gruposActivos() }} {{ gruposActivos() === 1 ? 'comunidad activa' : 'comunidades activas' }}
           </p>
-          <p class="aside-card__highlight">
-            {{ gruposInactivos() }}
-            {{ gruposInactivos() === 1 ? 'grupo inactivo' : 'grupos inactivos' }}
-          </p>
+          @if (gruposInactivos() > 0) {
+            <p class="aside-card__highlight">
+              {{ gruposInactivos() }}
+              {{ gruposInactivos() === 1 ? 'comunidad inactiva' : 'comunidades inactivas' }}
+            </p>
+          }
         </section>
 
+        <!-- Cuentas archivadas -->
         <section class="siep-card aside-card" style="animation-delay: 0.26s">
           <header class="aside-card__head">
-            <span class="aside-card__icon" aria-hidden="true">⏸</span>
-            <h3>Cuentas inactivas</h3>
+            <span class="aside-card__icon aside-card__icon--archive" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+                <path d="M3 5h14v2.5H3V5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M4 7.5l1.2 9H14.8l1.2-9" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M8 11h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <h3>Cuentas archivadas</h3>
           </header>
           <p>
-            Las cuentas desactivadas conservan su historial pero no pueden iniciar sesión hasta ser
+            Las cuentas archivadas conservan su historial pero no pueden iniciar sesión hasta ser
             reactivadas.
           </p>
           <p class="aside-card__stat">
             <span class="aside-card__stat-value">{{ cuentasInactivas() }}</span>
-            <span class="aside-card__stat-label">inactivas</span>
+            <span class="aside-card__stat-label">{{ cuentasInactivas() === 1 ? 'cuenta archivada' : 'cuentas archivadas' }}</span>
           </p>
         </section>
 
+        <!-- Consejo administrativo -->
         <section class="siep-card aside-card aside-card--tip" style="animation-delay: 0.32s">
           <header class="aside-card__head">
-            <span class="aside-card__icon" aria-hidden="true">💡</span>
+            <span class="aside-card__icon aside-card__icon--tip" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+                <path d="M10 2a6 6 0 014.8 9.6l-.8.9V14H6v-1.5l-.8-.9A6 6 0 0110 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M7.5 14h5M8.5 16h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </span>
             <h3>Consejo administrativo</h3>
           </header>
           <p>
@@ -303,6 +386,7 @@
             garantizar la continuidad operativa de la plataforma.
           </p>
         </section>
+
       </aside>
     </div>
   }

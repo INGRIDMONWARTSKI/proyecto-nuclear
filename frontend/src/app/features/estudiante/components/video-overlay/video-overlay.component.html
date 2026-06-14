@@ -1,0 +1,47 @@
+<div
+  class="video-overlay"
+  [class.video-overlay--exiting]="isExiting()"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Video de acompañamiento"
+>
+  <header class="video-overlay__header">
+    <p class="video-overlay__brand">MENTORA</p>
+    @if (titulo()) {
+      <h2 class="video-overlay__title">{{ titulo() }}</h2>
+    }
+    @if (descripcion()) {
+      <p class="video-overlay__desc">{{ descripcion() }}</p>
+    }
+  </header>
+
+  <div class="video-overlay__stage">
+    @if (videoError()) {
+      <div class="video-overlay__error">
+        <p class="video-overlay__error-title">No se pudo cargar el video</p>
+        <p class="video-overlay__error-copy">Puedes continuar con la experiencia.</p>
+        <button class="siep-btn-primary" type="button" (click)="onContinuarClick()">
+          Continuar
+        </button>
+      </div>
+    } @else {
+      <video
+        class="video-overlay__video"
+        [src]="src()"
+        autoplay
+        playsinline
+        muted
+        (ended)="onEnded()"
+        (error)="onError()"
+      ></video>
+    }
+  </div>
+
+  @if (!videoError()) {
+    <footer class="video-overlay__footer">
+      <button class="video-overlay__skip" type="button" (click)="onContinuarClick()">
+        Omitir video
+      </button>
+    </footer>
+  }
+</div>

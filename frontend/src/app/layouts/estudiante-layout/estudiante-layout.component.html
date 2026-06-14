@@ -1,28 +1,32 @@
-<header class="topbar topbar--estudiante">
-  <div class="container topbar__inner">
-    <a routerLink="/estudiante/dashboard" class="brand">
-      <span class="brand__text">MENTORA · Estudiante</span>
-    </a>
-    <nav class="nav">
-      <a routerLink="/estudiante/dashboard" routerLinkActive="active">Dashboard</a>
-      <a routerLink="/estudiante/casos" routerLinkActive="active">Mis casos</a>
-      <a routerLink="/estudiante/historial" routerLinkActive="active">Historial</a>
-    </nav>
-    @if (authService.user(); as user) {
-      <div class="user-box">
-        <span class="user-box__avatar">{{ userInitials(user.fullName) }}</span>
-        <div class="user-box__info">
-          <span class="user-box__name">{{ user.fullName }}</span>
-          <span class="user-box__role">{{ user.role }}</span>
-        </div>
-        <button type="button" class="btn btn-secondary btn--small" (click)="logout()">
-          Cerrar sesión
-        </button>
-      </div>
-    }
-  </div>
-</header>
+<div class="estudiante-shell">
+  <app-estudiante-ambient />
 
-<main class="container main-content">
-  <router-outlet />
-</main>
+  <header class="topbar topbar--estudiante estudiante-shell__content">
+    <div class="container topbar__inner">
+      <a routerLink="/estudiante/dashboard" class="brand">
+        <span class="brand__text">MENTORA · Estudiante</span>
+      </a>
+      <nav class="nav">
+        <a routerLink="/estudiante/dashboard" routerLinkActive="active">Dashboard</a>
+        <a routerLink="/estudiante/casos" routerLinkActive="active">Mis casos</a>
+        <a routerLink="/estudiante/historial" routerLinkActive="active">Historial</a>
+      </nav>
+      @if (authService.user(); as user) {
+        <div class="user-box">
+          <span class="user-box__avatar">{{ userInitials(user.fullName) }}</span>
+          <div class="user-box__info">
+            <span class="user-box__name">{{ user.fullName }}</span>
+            <span class="user-box__role">{{ user.role }}</span>
+          </div>
+          <button type="button" class="btn btn-secondary btn--small" (click)="logout()">
+            Cerrar sesión
+          </button>
+        </div>
+      }
+    </div>
+  </header>
+
+  <main class="container main-content estudiante-shell__content">
+    <router-outlet />
+  </main>
+</div>

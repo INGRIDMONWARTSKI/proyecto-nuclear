@@ -396,16 +396,41 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  font-size: 1.2rem;
-  background: linear-gradient(145deg, var(--siep-success-bg) 0%, var(--siep-white) 100%);
-  box-shadow: 0 4px 14px var(--siep-glow-soft);
-  border: 1px solid var(--siep-border);
+  box-shadow: 0 4px 14px rgba(47, 93, 52, 0.1);
+  border: 1px solid rgba(205, 232, 181, 0.6);
+  transition: box-shadow var(--siep-transition-base);
 
-  &--profesor,
-  &--estudiante,
-  &--grupos {
-    background: linear-gradient(145deg, var(--siep-success-bg) 0%, var(--siep-white) 100%);
+  // Variante: Total usuarios — verde bosque
+  &--usuarios {
+    background: linear-gradient(145deg, rgba(47, 93, 52, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #2f5d34;
+    border-color: rgba(47, 93, 52, 0.22);
   }
+
+  // Variante: Profesores — verde hoja
+  &--profesores {
+    background: linear-gradient(145deg, rgba(124, 179, 66, 0.14) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #558b2f;
+    border-color: rgba(124, 179, 66, 0.28);
+  }
+
+  // Variante: Estudiantes — salvia/gris-verde
+  &--estudiantes {
+    background: linear-gradient(145deg, rgba(95, 115, 104, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #5f7368;
+    border-color: rgba(95, 115, 104, 0.22);
+  }
+
+  // Variante: Grupos — dorado
+  &--grupos {
+    background: linear-gradient(145deg, rgba(243, 201, 107, 0.18) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #7a5a00;
+    border-color: rgba(243, 201, 107, 0.45);
+  }
+}
+
+.metric-card:hover .metric-card__icon {
+  box-shadow: 0 6px 18px rgba(47, 93, 52, 0.15);
 }
 
 .metric-card__body {
@@ -520,12 +545,34 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--siep-leaf);
-  background: linear-gradient(135deg, var(--siep-success-bg) 0%, var(--siep-white) 100%);
-  border: 1px solid var(--siep-border);
-  box-shadow: 0 3px 10px var(--siep-glow-soft);
+  border: 1px solid rgba(205, 232, 181, 0.55);
+  box-shadow: 0 3px 10px rgba(47, 93, 52, 0.08);
+  transition: box-shadow var(--siep-transition-base);
+
+  // Crear usuario — verde bosque
+  &--create {
+    background: linear-gradient(135deg, rgba(47, 93, 52, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #2f5d34;
+    border-color: rgba(47, 93, 52, 0.22);
+  }
+
+  // Gestionar — salvia
+  &--manage {
+    background: linear-gradient(135deg, rgba(95, 115, 104, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #5f7368;
+    border-color: rgba(95, 115, 104, 0.22);
+  }
+
+  // Grupos/comunidades — verde hoja
+  &--groups {
+    background: linear-gradient(135deg, rgba(124, 179, 66, 0.14) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #558b2f;
+    border-color: rgba(124, 179, 66, 0.28);
+  }
+}
+
+.action-card:hover .action-card__icon {
+  box-shadow: 0 5px 14px rgba(47, 93, 52, 0.14);
 }
 
 .action-card__title {
@@ -546,6 +593,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem;
+
+  .siep-btn-primary,
+  .siep-btn-secondary {
+    flex: 1 1 auto;
+    min-width: 150px;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+  }
 }
 
 .siep-btn--compact {
@@ -666,9 +722,43 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  font-size: 0.92rem;
-  background: var(--siep-success-bg);
-  border: 1px solid var(--siep-border);
+  border: 1px solid rgba(205, 232, 181, 0.55);
+  background: linear-gradient(135deg, rgba(241, 248, 233, 0.9) 0%, rgba(255, 252, 247, 0.8) 100%);
+
+  // Control de acceso — verde bosque + escudo
+  &--access {
+    background: linear-gradient(135deg, rgba(47, 93, 52, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #2f5d34;
+    border-color: rgba(47, 93, 52, 0.22);
+  }
+
+  // Distribución de roles — hoja
+  &--roles {
+    background: linear-gradient(135deg, rgba(124, 179, 66, 0.14) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #558b2f;
+    border-color: rgba(124, 179, 66, 0.28);
+  }
+
+  // Comunidades académicas — verde salvia
+  &--groups {
+    background: linear-gradient(135deg, rgba(95, 115, 104, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #5f7368;
+    border-color: rgba(95, 115, 104, 0.22);
+  }
+
+  // Cuentas archivadas — gris cálido
+  &--archive {
+    background: linear-gradient(135deg, rgba(95, 115, 104, 0.1) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #5f7368;
+    border-color: rgba(95, 115, 104, 0.2);
+  }
+
+  // Consejo — dorado
+  &--tip {
+    background: linear-gradient(135deg, rgba(243, 201, 107, 0.2) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: #7a5a00;
+    border-color: rgba(243, 201, 107, 0.45);
+  }
 }
 
 .aside-card__highlight {

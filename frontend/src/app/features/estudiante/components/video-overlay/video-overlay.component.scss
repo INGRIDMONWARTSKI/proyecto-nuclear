@@ -1,0 +1,230 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: auto;
+}
+
+.video-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 12000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  overflow-y: auto;
+
+  // Background image (same as module ambient) + dark overlay
+  background-image: url('../../../../../assets/mentora/backgrounds/estudiante-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  animation: overlay-in 0.3s ease both;
+
+  // Dark overlay for readability — placed via pseudo so content is above
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+      165deg,
+      rgba(10, 28, 18, 0.86) 0%,
+      rgba(31, 68, 38, 0.78) 55%,
+      rgba(16, 42, 29, 0.88) 100%
+    );
+    z-index: 0;
+  }
+
+  // All direct children above the overlay
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  &.video-overlay--exiting {
+    animation: overlay-out 0.38s ease forwards;
+    pointer-events: none;
+  }
+}
+
+// ── Header ─────────────────────────────────────────────
+.video-overlay__header {
+  text-align: center;
+  max-width: min(88vw, 1100px);
+  width: 100%;
+}
+
+.video-overlay__brand {
+  margin: 0 0 0.4rem;
+  font-family: var(--siep-font-title);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #7cb342;
+}
+
+.video-overlay__title {
+  margin: 0 0 0.3rem;
+  font-family: var(--siep-font-title);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #f1f8e9;
+  line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.video-overlay__desc {
+  margin: 0;
+  font-size: 0.84rem;
+  color: rgba(205, 232, 181, 0.85);
+  line-height: 1.45;
+}
+
+// ── Video stage ─────────────────────────────────────────
+.video-overlay__stage {
+  position: relative;
+  width: min(92vw, 1200px);
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+
+  // Subtle glass border
+  border: 1px solid rgba(124, 179, 66, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(205, 232, 181, 0.12),
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    0 4px 18px rgba(0, 0, 0, 0.3);
+}
+
+.video-overlay__video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+// ── Error state ─────────────────────────────────────────
+.video-overlay__error {
+  display: grid;
+  gap: 1rem;
+  place-items: center;
+  height: 100%;
+  min-height: 160px;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(16, 42, 29, 0.88);
+
+  p {
+    margin: 0;
+  }
+}
+
+.video-overlay__error-title {
+  font-family: var(--siep-font-title);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f8e9;
+}
+
+.video-overlay__error-copy {
+  font-size: 0.87rem;
+  line-height: 1.5;
+  color: rgba(205, 232, 181, 0.8);
+}
+
+// ── Footer / skip ─────────────────────────────────────────
+.video-overlay__footer {
+  display: flex;
+  justify-content: center;
+}
+
+.video-overlay__skip {
+  background: rgba(47, 93, 52, 0.55);
+  border: 1px solid rgba(124, 179, 66, 0.45);
+  padding: 0.45rem 1.1rem;
+  font-family: var(--siep-font-title);
+  font-size: 0.8rem;
+  color: #cde8b5;
+  cursor: pointer;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    background: rgba(47, 93, 52, 0.8);
+    border-color: #7cb342;
+    color: #f1f8e9;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7cb342;
+    outline-offset: 2px;
+  }
+}
+
+// ── Responsive ──────────────────────────────────────────
+@media (max-width: 768px) {
+  .video-overlay {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .video-overlay__title {
+    font-size: 1.1rem;
+  }
+
+  .video-overlay__stage {
+    width: 94vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-overlay {
+    padding: 0.5rem;
+    justify-content: flex-start;
+    padding-top: 1rem;
+    gap: 0.6rem;
+  }
+
+  .video-overlay__title {
+    font-size: 0.98rem;
+  }
+
+  .video-overlay__stage {
+    width: 96vw;
+  }
+}
+
+// ── Animations ──────────────────────────────────────────
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

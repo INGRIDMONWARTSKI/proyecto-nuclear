@@ -41,6 +41,31 @@
     <app-alert-message [message]="successMessage()!" type="success" />
   }
 
+  @if (deleteScenarioTarget(); as targetScenario) {
+    <div class="scenario-delete-modal" role="dialog" aria-modal="true" aria-label="Eliminar escena">
+      <div class="scenario-delete-modal__backdrop" (click)="closeDeleteScenarioDialog()"></div>
+      <article class="scenario-delete-modal__card">
+        <p class="panel__eyebrow">Eliminar escena</p>
+        <h3>E{{ targetScenario.orden }} · {{ targetScenario.titulo }}</h3>
+        <p>
+          Esta escena se eliminará del caso junto con sus preguntas y opciones.
+          Esta acción no se puede deshacer.
+        </p>
+        <div class="scenario-delete-modal__actions">
+          <button class="siep-btn-secondary" type="button" (click)="closeDeleteScenarioDialog()">Cancelar</button>
+          <button
+            class="scenario-delete-modal__confirm"
+            type="button"
+            [disabled]="deletingScenario()"
+            (click)="confirmDeleteScenario()"
+          >
+            {{ deletingScenario() ? 'Eliminando...' : 'Eliminar escena' }}
+          </button>
+        </div>
+      </article>
+    </div>
+  }
+
   @if (loading()) {
     <app-loading-state message="Cargando editor visual..." />
   } @else if (editor()) {
@@ -94,99 +119,211 @@
           <aside
             class="scene-drawer scene-drawer--library"
             [class.scene-drawer--open]="resourcesPanelOpen()"
-            aria-label="Biblioteca de recursos"
+            aria-label="Biblioteca de escena"
           >
             <div class="scene-drawer__header">
               <div>
-                <p class="panel__eyebrow">Biblioteca</p>
-                <h3>Agregar recursos</h3>
+                <p class="panel__eyebrow">Editor visual</p>
+                <h3>Biblioteca de escena</h3>
               </div>
               <button class="scene-drawer__close" type="button" aria-label="Cerrar biblioteca" (click)="closeResourcesPanel()">
                 ×
               </button>
             </div>
 
+            <nav class="library-panel-tabs" aria-label="Secciones de la biblioteca">
+              <button
+                class="library-panel-tab"
+                [class.library-panel-tab--active]="libraryPanelTab() === 'sistema'"
+                type="button"
+                (click)="setLibraryPanelTab('sistema')"
+              >Sistema</button>
+              <button
+                class="library-panel-tab"
+                [class.library-panel-tab--active]="libraryPanelTab() === 'docente'"
+                type="button"
+                (click)="setLibraryPanelTab('docente')"
+              >Docente</button>
+              <button
+                class="library-panel-tab"
+                [class.library-panel-tab--active]="libraryPanelTab() === 'ia'"
+                type="button"
+                (click)="setLibraryPanelTab('ia')"
+              >Con IA</button>
+              <button
+                class="library-panel-tab"
+                [class.library-panel-tab--active]="libraryPanelTab() === 'capas'"
+                type="button"
+                (click)="setLibraryPanelTab('capas')"
+              >Capas</button>
+            </nav>
+
             <div class="scene-drawer__body panel__body">
-              <span class="panel__helper">Elementos listos para llevar al escenario.</span>
 
-              <label class="field">
-                <span>Buscar</span>
-                <input
-                  type="search"
-                  [value]="searchTerm()"
-                  placeholder="fondo, paciente, audio..."
-                  (input)="updateSearchTerm($any($event.target).value)"
-                />
-              </label>
+              @if (libraryPanelTab() === 'sistema') {
+                <span class="panel__helper">Elementos predeterminados del sistema listos para la escena.</span>
 
-              <div class="library-categories">
-                @for (category of libraryCategories; track category.id) {
-                  <button
-                    class="library-categories__tab"
-                    [class.library-categories__tab--active]="selectedLibraryCategory() === category.id"
-                    type="button"
-                    (click)="setLibraryCategory(category.id)"
-                  >
-                    {{ category.label }}
-                  </button>
-                }
-              </div>
+                <label class="field">
+                  <span>Buscar</span>
+                  <input
+                    type="search"
+                    [value]="searchTerm()"
+                    placeholder="fondo, paciente, audio..."
+                    (input)="updateSearchTerm($any($event.target).value)"
+                  />
+                </label>
 
-              <div class="library-list">
-                @for (item of library(); track item.id) {
-                  <button
-                    class="library-card"
-                    type="button"
-                    [class.library-card--active]="selectedLibraryItem().id === item.id"
-                    [ngStyle]="libraryCardStyle(item)"
-                    (click)="selectLibraryItem(item.id)"
-                  >
-                    <div class="library-card__preview" [ngStyle]="libraryPreviewStyle(item)">
-                      <span class="library-card__preview-badge">{{ libraryPreviewBadge(item) }}</span>
-                      <span class="library-card__preview-mark">{{ item.icono }}</span>
+                <div class="library-categories">
+                  @for (category of libraryCategories; track category.id) {
+                    <button
+                      class="library-categories__tab"
+                      [class.library-categories__tab--active]="selectedLibraryCategory() === category.id"
+                      type="button"
+                      (click)="setLibraryCategory(category.id)"
+                    >
+                      {{ category.label }}
+                    </button>
+                  }
+                </div>
+
+                <div class="library-list">
+                  @for (item of library(); track item.id) {
+                    <button
+                      class="library-card"
+                      type="button"
+                      [class.library-card--active]="selectedLibraryItem().id === item.id"
+                      [ngStyle]="libraryCardStyle(item)"
+                      (click)="selectLibraryItem(item.id)"
+                    >
+                      <div class="library-card__preview" [ngStyle]="libraryPreviewStyle(item)">
+                        <span class="library-card__preview-badge">{{ libraryPreviewBadge(item) }}</span>
+                        <span class="library-card__preview-mark">{{ item.icono }}</span>
+                      </div>
+                      <span class="library-card__icon" [ngStyle]="libraryIconStyle(item)">{{ item.icono }}</span>
+                      <div class="library-card__content">
+                        <strong>{{ item.nombre }}</strong>
+                        <span>{{ item.categoria }} · {{ item.tag }}</span>
+                        <p>{{ item.descripcion }}</p>
+                      </div>
+                      <span class="library-card__add">+</span>
+                    </button>
+                  } @empty {
+                    <div class="panel-empty">
+                      <strong>Sin resultados</strong>
+                      <p>Prueba otra búsqueda o cambia de categoría.</p>
                     </div>
-                    <span class="library-card__icon" [ngStyle]="libraryIconStyle(item)">{{ item.icono }}</span>
-                    <div class="library-card__content">
-                      <strong>{{ item.nombre }}</strong>
-                      <span>{{ item.categoria }} · {{ item.tag }}</span>
-                      <p>{{ item.descripcion }}</p>
+                  }
+                </div>
+
+                @if (selectedLibraryItem()) {
+                  <div class="library-footer" [ngStyle]="libraryCardStyle(selectedLibraryItem()!)">
+                    <div class="library-footer__preview" [ngStyle]="libraryPreviewStyle(selectedLibraryItem()!)">
+                      <span class="library-footer__badge">{{ libraryPreviewBadge(selectedLibraryItem()!) }}</span>
+                      <strong>{{ selectedLibraryItem()!.icono }}</strong>
                     </div>
-                    <span class="library-card__add">+</span>
-                  </button>
-                } @empty {
-                  <div class="panel-empty">
-                    <strong>Sin resultados</strong>
-                    <p>Prueba otra busqueda o cambia de categoria.</p>
+                    <div class="library-footer__content">
+                      <strong>{{ selectedLibraryItem()!.nombre }}</strong>
+                      <span>{{ selectedLibraryItem()!.tag }} · {{ selectedLibraryItem()!.categoria }}</span>
+                      <p>{{ libraryPreviewTitle(selectedLibraryItem()!) }}</p>
+                      <small>{{ libraryPreviewBody(selectedLibraryItem()!) }}</small>
+                    </div>
+                    <button class="siep-btn-primary" type="button" (click)="addSelectedLibraryItem()">
+                      Agregar
+                    </button>
                   </div>
                 }
-              </div>
+              }
 
-              @if (selectedLibraryItem()) {
-                <div class="library-footer" [ngStyle]="libraryCardStyle(selectedLibraryItem()!)">
-                  <div class="library-footer__preview" [ngStyle]="libraryPreviewStyle(selectedLibraryItem()!)">
-                    <span class="library-footer__badge">{{ libraryPreviewBadge(selectedLibraryItem()!) }}</span>
-                    <strong>{{ selectedLibraryItem()!.icono }}</strong>
+              @if (libraryPanelTab() === 'docente') {
+                <div class="library-docente-section">
+
+                  <!-- Bloque A: Subir nuevo recurso -->
+                  <div class="docente-upload-block">
+                    <p class="docente-block-title">Subir nuevo recurso</p>
+
+                    @if (docenteErrorMessage()) {
+                      <div class="ai-generator__warning">{{ docenteErrorMessage() }}</div>
+                    }
+                    @if (docenteMessage()) {
+                      <div class="ai-generator__status">{{ docenteMessage() }}</div>
+                    }
+
+                    <label class="field">
+                      <span>Nombre visible en la biblioteca</span>
+                      <input
+                        type="text"
+                        [value]="docenteAssetName()"
+                        placeholder="Ej: Aula de orientación"
+                        (input)="updateDocenteAssetName($any($event.target).value)"
+                      />
+                      <small class="field__hint">Te ayuda a reconocer este recurso cuando lo agregues a la escena o lo veas en capas.</small>
+                    </label>
+
+                    <label class="field">
+                      <span>¿Cómo quieres usar esta imagen?</span>
+                      <select [value]="docenteAssetType()" (change)="updateDocenteAssetType($any($event.target).value)">
+                        @for (type of docenteAssetTypeOptions; track type.id) {
+                          <option [value]="type.id">{{ type.label }}</option>
+                        }
+                      </select>
+                      @if (currentDocenteTypeDescription()) {
+                        <small class="field__hint">{{ currentDocenteTypeDescription() }}</small>
+                      }
+                    </label>
+
+                    <label class="field">
+                      <span>Seleccionar imagen</span>
+                      <input
+                        type="file"
+                        accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                        (change)="updateDocenteAssetFile($event)"
+                      />
+                      <small class="field__hint">PNG, JPG o WEBP · máximo 5 MB.</small>
+                    </label>
+
+                    <button
+                      class="siep-btn-primary ai-generator__action"
+                      type="button"
+                      [disabled]="docenteUploading()"
+                      (click)="uploadDocenteAsset()"
+                    >
+                      {{ docenteUploading() ? 'Subiendo...' : 'Subir recurso' }}
+                    </button>
                   </div>
-                  <div class="library-footer__content">
-                    <strong>{{ selectedLibraryItem()!.nombre }}</strong>
-                    <span>{{ selectedLibraryItem()!.tag }} · {{ selectedLibraryItem()!.categoria }}</span>
-                    <p>{{ libraryPreviewTitle(selectedLibraryItem()!) }}</p>
-                    <small>{{ libraryPreviewBody(selectedLibraryItem()!) }}</small>
+
+                  <!-- Bloque B: Biblioteca del docente -->
+                  <div class="docente-library-block">
+                    <p class="docente-block-title">Recursos del docente</p>
+                    <div class="docente-assets-list">
+                      @for (asset of docenteAssets(); track asset.id) {
+                        <article class="docente-asset-card">
+                          <div class="docente-asset-card__thumb" [style.background-image]="'url(' + asset.url + ')'"></div>
+                          <div class="docente-asset-card__meta">
+                            <strong>{{ asset.nombre }}</strong>
+                            <span>{{ asset.tipo }}</span>
+                          </div>
+                          <button class="siep-btn-secondary" type="button" (click)="addDocenteAssetToScene(asset)">
+                            Agregar a escena
+                          </button>
+                        </article>
+                      } @empty {
+                        <div class="panel-empty">
+                          <strong>Sin recursos subidos</strong>
+                          <p>Sube una imagen en el bloque superior para verla aquí.</p>
+                        </div>
+                      }
+                    </div>
                   </div>
-                  <button class="siep-btn-primary" type="button" (click)="addSelectedLibraryItem()">
-                    Agregar
-                  </button>
+
                 </div>
               }
 
-              <section class="ai-generator">
-                <div class="ai-generator__header">
-                  <div>
-                    <p class="panel__eyebrow">Generar con IA</p>
-                    <h4>Recursos visuales</h4>
-                  </div>
-                  <span class="ai-generator__pill">MVP</span>
-                </div>
+              @if (libraryPanelTab() === 'ia') {
+                <span class="panel__helper">Genera fondos, personajes y objetos a partir de una descripción.</span>
+
+                @if (aiErrorMessage()) {
+                  <div class="ai-generator__warning">{{ aiErrorMessage() }}</div>
+                }
 
                 <div class="property-note ai-generator__type">
                   <div>
@@ -197,7 +334,7 @@
                 </div>
 
                 <label class="field">
-                  <span>Que deseas generar</span>
+                  <span>Qué deseas generar</span>
                   <select [value]="aiVisibleType()" (change)="updateAiVisibleType($any($event.target).value)">
                     @for (type of aiVisibleTypeOptions; track type.id) {
                       <option [value]="type.id">{{ type.label }}</option>
@@ -213,9 +350,9 @@
                     [placeholder]="aiVisibleType() === 'background'
                       ? 'Ej: consultorio sereno con luz natural, plantas suaves y atmósfera de escucha profesional.'
                       : aiVisibleType() === 'character'
-                        ? 'Ej: nino triste sentado en un salon de clase.'
+                        ? 'Ej: niño triste sentado en un salón de clase.'
                         : aiVisibleType() === 'symbol'
-                          ? 'Ej: burbuja de dialogo vacia.'
+                          ? 'Ej: burbuja de diálogo vacía.'
                           : 'Ej: mochila azul en el piso.'"
                     (input)="updateAiDescription($any($event.target).value)"
                   ></textarea>
@@ -257,7 +394,7 @@
                   <div class="ai-preview">
                     <div class="ai-preview__image" [style.background-image]="'url(' + asset.publicUrl + ')'"></div>
                     <div class="ai-preview__meta">
-                      <strong>Preview lista</strong>
+                      <strong>Vista previa lista</strong>
                       <span>{{ asset.estilo }} · {{ asset.proveedor }}</span>
                     </div>
                     <button class="siep-btn-secondary ai-generator__action" type="button" [disabled]="aiApplying()" (click)="applyLatestAiAsset()">
@@ -265,7 +402,54 @@
                     </button>
                   </div>
                 }
-              </section>
+              }
+
+              @if (libraryPanelTab() === 'capas') {
+                <span class="panel__helper">Capas de la escena actual, de arriba hacia abajo.</span>
+
+                <div class="layers-list">
+                  @for (element of layersDescending(); track element.id) {
+                    <div
+                      class="layer-item"
+                      [class.layer-item--selected]="selectedElement()?.id === element.id"
+                      [class.layer-item--background]="element.type === 'background'"
+                      (click)="element.type !== 'background' ? selectElement(element.id) : selectScenarioBackground()"
+                    >
+                      <div class="layer-item__info">
+                        <span class="layer-item__label">{{ layerLabel(element) }}</span>
+                        <span class="layer-item__meta">
+                          Nivel {{ element.zIndex }}{{ element.hidden ? ' · Oculto' : '' }}{{ element.locked ? ' · Bloqueado' : '' }}
+                        </span>
+                      </div>
+                      @if (element.type === 'background') {
+                        <span class="layer-item__lock">Base</span>
+                      } @else {
+                        <div class="layer-item__actions" (click)="$event.stopPropagation()">
+                          <button
+                            class="layer-item__btn"
+                            type="button"
+                            title="Traer adelante"
+                            (click)="bringForwardById(element.id)"
+                          >+</button>
+                          <button
+                            class="layer-item__btn"
+                            type="button"
+                            title="Enviar atrás"
+                            [disabled]="element.zIndex <= 1"
+                            (click)="sendBackwardById(element.id)"
+                          >−</button>
+                        </div>
+                      }
+                    </div>
+                  } @empty {
+                    <div class="panel-empty">
+                      <strong>Escena vacía</strong>
+                      <p>Agrega elementos desde Sistema o Con IA.</p>
+                    </div>
+                  }
+                </div>
+              }
+
             </div>
           </aside>
 
@@ -285,8 +469,20 @@
                   <button class="stage-head__secondary" type="button" [disabled]="duplicating()" (click)="duplicateCurrentScenario()">
                     {{ duplicating() ? 'Duplicando...' : 'Duplicar escena' }}
                   </button>
+                  <button
+                    class="stage-head__danger"
+                    type="button"
+                    [disabled]="!canDeleteScenario() || deletingScenario()"
+                    [title]="deleteScenarioBlockedReason() || 'Eliminar escena actual'"
+                    (click)="openDeleteScenarioDialog(escenarioSeleccionado()!.id)"
+                  >
+                    Eliminar escena
+                  </button>
                 </div>
               </div>
+              @if (deleteScenarioBlockedReason(); as reason) {
+                <p class="stage-head__helper">{{ reason }}</p>
+              }
             </div>
 
             <div class="canvas-stage">
@@ -607,6 +803,15 @@
                   [status]="currentScenarioStatusVariant(esc)"
                   [label]="currentScenarioStatusLabel(esc)"
                 />
+                <button
+                  class="scenario-chip__delete"
+                  type="button"
+                  [disabled]="!canDeleteScenario(esc) || deletingScenario()"
+                  [title]="deleteScenarioBlockedReason(esc) || 'Eliminar escena'"
+                  (click)="openDeleteScenarioDialog(esc.id, $event)"
+                >
+                  Eliminar
+                </button>
               </article>
             }
           </div>

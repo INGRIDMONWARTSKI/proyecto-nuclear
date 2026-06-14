@@ -77,7 +77,7 @@
             [status]="g.isActive ? 'active' : 'inactive'"
             [label]="g.isActive ? 'Activo' : 'Inactivo'"
           />
-          <span class="grupo-detail__meta-item">{{ estudiantes().length }} estudiantes</span>
+          <span class="grupo-detail__meta-item">{{ estudiantes().length }} integrantes</span>
           <span class="grupo-detail__meta-item">{{ g.createdAt | date: 'mediumDate' }}</span>
         </div>
 
@@ -96,16 +96,19 @@
         @if (puedeAdministrar() && g.isActive) {
           <section class="siep-card assign-toolbar">
             <div class="assign-toolbar__head">
-              <h2>Asignar estudiantes</h2>
+              <div>
+                <h2>Integrar estudiantes al grupo</h2>
+                <p class="assign-toolbar__desc">Selecciona y asigna estudiantes de forma individual o múltiple.</p>
+              </div>
               <button class="siep-btn-primary" type="button" (click)="toggleAssignPanel()">
-                {{ showAssignPanel() ? 'Ocultar' : 'Asignacion multiple' }}
+                {{ showAssignPanel() ? 'Ocultar' : 'Asignación múltiple' }}
               </button>
             </div>
 
             @if (sinEstudiantesEnSistema()) {
               <p class="assign-toolbar__notice">
                 No hay estudiantes registrados en el sistema. Solicita al administrador que cree
-                cuentas con rol Estudiante desde <strong>Admin -> Usuarios</strong>.
+                cuentas con rol Estudiante desde <strong>Admin &rarr; Usuarios</strong>.
               </p>
             } @else if (todosEstudiantesAsignados()) {
               <p class="assign-toolbar__notice">
@@ -119,7 +122,7 @@
                   <label for="estudianteIds">Estudiantes</label>
                   @if (sinEstudiantesEnSistema()) {
                     <p class="hint">
-                      Crea estudiantes en el modulo de usuarios antes de asignarlos a este grupo.
+                      Crea estudiantes en el módulo de usuarios antes de asignarlos a este grupo.
                     </p>
                   } @else if (estudiantesPendientes().length === 0) {
                     <p class="hint">No quedan estudiantes pendientes por asignar a este grupo.</p>
@@ -170,7 +173,7 @@
                         }
                       }
                     </ul>
-                    <small class="hint">Marca varios estudiantes o asigna desde un pupitre vacio.</small>
+                    <small class="hint">Marca varios estudiantes o haz clic en un cupo disponible para asignar de forma individual.</small>
                   }
                 </div>
 

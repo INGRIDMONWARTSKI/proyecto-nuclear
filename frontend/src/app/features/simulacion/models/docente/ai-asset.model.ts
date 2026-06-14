@@ -2,6 +2,12 @@ export type AiAssetType = 'FONDO' | 'PERSONAJE' | 'OBJETO' | 'ESCENA_COMPLETA';
 export type AiAssetVisibleType = 'background' | 'character' | 'object' | 'symbol';
 
 export type AiAssetStyle = 'editorial_sereno' | 'acuarela_suave' | 'minimal_calido';
+export type DocenteAssetType =
+  | 'FONDO'
+  | 'PERSONAJE'
+  | 'OBJETO'
+  | 'PISTA'
+  | 'DECORACION';
 
 export interface AiAssetMetadata {
   provider?: string;
@@ -36,4 +42,13 @@ export interface AiAsset {
   provider?: string;
   metadata?: AiAssetMetadata;
   insertedElementId?: string | null;
+}
+
+export interface DocenteAsset {
+  id: string;
+  nombre: string;
+  tipo: DocenteAssetType;
+  url: string;
+  origen: 'DOCENTE';
+  createdAt: string;
 }

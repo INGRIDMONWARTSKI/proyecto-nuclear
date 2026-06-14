@@ -1,241 +1,668 @@
-﻿:host {
+﻿// Paths relativos desde:
+// frontend/src/app/shared/simulacion/opciones-respuesta/
+// → 4 niveles arriba llega a frontend/src/assets/
+$assets: '../../../../assets/mentora/senderos';
+
+:host {
   display: block;
 }
 
-.intervenciones {
+// ── Contenedor principal — sin caja rígida ────────────────
+.senderos {
   display: grid;
-  gap: 1.15rem;
-  margin: 0;
-  padding: 1rem 1.05rem;
-  border-radius: 1.1rem;
-  border: 1px solid rgba(205, 232, 181, 0.32);
-  background:
-    radial-gradient(circle at 100% 0%, rgba(205, 232, 181, 0.14), transparent 42%),
-    linear-gradient(160deg, rgba(45, 27, 78, 0.06) 0%, rgba(250, 247, 242, 0.96) 58%);
-  box-shadow: 0 10px 26px rgba(26, 31, 61, 0.08);
+  gap: 0.85rem;
 }
 
-.intervenciones__head {
+// ── Header ───────────────────────────────────────────────
+.senderos__head {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.38rem;
+  padding: 0 0.1rem;
 }
 
-.intervenciones__kicker {
+.senderos__kicker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.senderos__kicker {
   margin: 0;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #5F7368;
+  color: #7cb342;
 }
 
-.intervenciones__title {
+.senderos__title {
   margin: 0;
   font-family: var(--siep-font-title);
-  font-size: 1.12rem;
+  font-size: 1.08rem;
   font-weight: 800;
   line-height: 1.3;
-  color: #102A1D;
+  color: #102a1d;
 }
 
-.intervenciones__subtitle {
+.senderos__subtitle {
   margin: 0;
-  font-size: 0.84rem;
-  line-height: 1.45;
-  color: rgba(26, 31, 61, 0.76);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #5f7368;
 }
 
-.intervenciones__contexto {
-  margin-top: 0.35rem;
-  padding: 0.7rem 0.8rem;
-  border-radius: 0.85rem;
+.senderos__contexto {
+  padding: 0.65rem 0.85rem;
+  border-radius: 1rem;
   border: 1px solid rgba(124, 179, 66, 0.2);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.68);
 }
 
-.intervenciones__contexto-label {
-  margin: 0 0 0.25rem;
-  font-size: 0.66rem;
+.senderos__contexto-label {
+  margin: 0 0 0.18rem;
+  font-size: 0.63rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #5F7368;
+  color: #5f7368;
 }
 
-.intervenciones__contexto-texto {
+.senderos__contexto-texto {
   margin: 0;
   font-size: 0.9rem;
-  line-height: 1.5;
-  color: #102A1D;
+  line-height: 1.52;
+  color: #102a1d;
 }
 
-.intervenciones__list {
-  margin: 0;
+// ── Mapa wrapper ─────────────────────────────────────────
+.senderos-map-wrap {
+  position: relative;
+}
+
+// ── Mapa: fondo bifurcación real ─────────────────────────
+.senderos-map {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 1.5rem;
+  background-image: url('#{$assets}/bifurcacion-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow:
+    0 6px 24px rgba(16, 42, 29, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset;
+}
+
+// Overlay de gradiente para legibilidad
+.senderos-map__veil {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(16, 42, 29, 0.08) 0%,
+    rgba(16, 42, 29, 0.18) 45%,
+    rgba(16, 42, 29, 0.52) 82%,
+    rgba(16, 42, 29, 0.65) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+// ── Señal de madera: botón con imagen ────────────────────
+.sendero-sign {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  left: 50%;
+  top: 55%;
+  width: 172px;
+  height: 90px;
+  border: none;
   padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.75rem;
-}
-
-.intervencion-card {
-  width: 100%;
-  min-height: 44px;
-  text-align: left;
-  border: 1.5px solid rgba(205, 232, 181, 0.38);
-  background: rgba(255, 255, 255, 0.94);
-  border-radius: 1rem;
-  padding: 0.9rem 1rem;
   cursor: pointer;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.8rem;
+  background: transparent;
+  display: flex;
   align-items: center;
-  font-family: var(--siep-font-body);
-  color: #102A1D;
-  box-shadow: 0 8px 20px rgba(26, 31, 61, 0.06);
+  justify-content: center;
+  filter: drop-shadow(0 4px 10px rgba(16, 42, 29, 0.38));
   transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+    filter 0.22s ease,
+    transform 0.22s ease,
+    opacity 0.22s ease;
+  z-index: 10;
 
-  &:hover:not(:disabled) {
-    border-color: rgba(124, 179, 66, 0.55);
-    background: rgba(250, 247, 242, 0.98);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(45, 27, 78, 0.12);
+  &:hover:not(:disabled),
+  &:focus-visible {
+    filter:
+      drop-shadow(0 6px 18px rgba(16, 42, 29, 0.42))
+      drop-shadow(0 0 10px rgba(124, 179, 66, 0.38))
+      brightness(1.09);
+    transform: translate(-50%, -58%);
+
+    .sendero-sign__tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: none;
+    }
   }
 
   &:focus-visible {
-    outline: 2px solid #7CB342;
+    outline: 2.5px solid #f3c96b;
+    outline-offset: 6px;
+    border-radius: 0.5rem;
+  }
+}
+
+// Imagen de señal de madera
+// La imagen incluye la tabla (parte superior) y el poste (parte inferior).
+// Se usa display: block para que la letra se posicione absolutamente en la tabla.
+.sendero-sign__img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-image: url('#{$assets}/senal-madera.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: block; // la letra usa position:absolute — no necesita flex
+}
+
+// ── Letra tallada A/B/C/D — centrada en la TABLA del letrero ──
+// position: absolute permite apuntar exactamente a la zona del tablón
+// sin incluir el poste de la señal.
+.sendero-sign__letter {
+  position: absolute;
+  left: 50%;
+  // ~30% desde el tope apunta al centro de la tabla, por encima del poste
+  top: 30%;
+  transform: translate(-50%, -50%);
+
+  // Serif del sistema — rústico sin instalar fuentes
+  font-family: Georgia, 'Palatino Linotype', Palatino, 'Book Antiqua', serif;
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+
+  // Crema cálida de alto contraste sobre madera oscura
+  color: #ffe8a3;
+
+  // Efecto pintado/tallado: oscuridad debajo, reflejo cálido encima
+  text-shadow:
+    0 2px 2px rgba(59, 28, 8, 0.9),
+    0 0 8px rgba(243, 201, 107, 0.45),
+    1px 1px 0 rgba(47, 31, 16, 0.8);
+
+  z-index: 2;
+  user-select: none;
+  pointer-events: none;
+}
+
+// Tooltip de señal
+.sendero-sign__tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  width: 216px;
+  padding: 0.7rem 0.85rem 0.65rem;
+  border-radius: 0.95rem;
+  background: rgba(12, 34, 22, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(124, 179, 66, 0.26);
+  box-shadow: 0 8px 24px rgba(16, 42, 29, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+  z-index: 30;
+  text-align: left;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 7px solid transparent;
+    border-top-color: rgba(12, 34, 22, 0.92);
+  }
+}
+
+.sendero-sign__tooltip-label {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #7cb342;
+  margin-bottom: 0.22rem;
+}
+
+.sendero-sign__tooltip-text {
+  display: block;
+  font-size: 0.81rem;
+  line-height: 1.48;
+  color: #f1f8e9;
+  margin-bottom: 0.3rem;
+}
+
+.sendero-sign__tooltip-cta {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f3c96b;
+}
+
+// ── Estado seleccionado ───────────────────────────────────
+.sendero-sign--selected {
+  filter:
+    drop-shadow(0 8px 20px rgba(16, 42, 29, 0.45))
+    drop-shadow(0 0 14px rgba(124, 179, 66, 0.55))
+    brightness(1.14);
+  transform: translate(-50%, -58%);
+  z-index: 15;
+
+  .sendero-sign__letter {
+    // Dorado brillante al estar seleccionada
+    color: #f3c96b;
+    text-shadow:
+      0 2px 2px rgba(59, 28, 8, 0.95),
+      0 0 14px rgba(243, 201, 107, 0.7),
+      1px 1px 0 rgba(47, 31, 16, 0.9);
+  }
+}
+
+// ── Estado atenuado ───────────────────────────────────────
+.sendero-sign--dimmed {
+  opacity: 0.38;
+  filter:
+    drop-shadow(0 2px 6px rgba(16, 42, 29, 0.2))
+    grayscale(0.25);
+}
+
+// ── Estado bloqueado ──────────────────────────────────────
+.sendero-sign--locked:disabled {
+  cursor: not-allowed;
+
+  &:hover,
+  &:focus-visible {
+    filter: drop-shadow(0 4px 10px rgba(16, 42, 29, 0.38));
+    transform: translate(-50%, -50%);
+    outline: none;
+
+    .sendero-sign__tooltip {
+      opacity: 0;
+    }
+  }
+}
+
+.sendero-sign--locked.sendero-sign--selected {
+  opacity: 1;
+  cursor: default;
+}
+
+// ── Posiciones por cantidad de opciones ──────────────────
+.senderos-map--count-2 .sendero-sign--1 { left: 22%; top: 58%; }
+.senderos-map--count-2 .sendero-sign--2 { left: 72%; top: 58%; }
+
+.senderos-map--count-3 .sendero-sign--1 { left: 18%; top: 60%; }
+.senderos-map--count-3 .sendero-sign--2 { left: 50%; top: 52%; }
+.senderos-map--count-3 .sendero-sign--3 { left: 78%; top: 60%; }
+
+.senderos-map--count-4 .sendero-sign--1 { left: 14%; top: 62%; }
+.senderos-map--count-4 .sendero-sign--2 { left: 38%; top: 54%; }
+.senderos-map--count-4 .sendero-sign--3 { left: 62%; top: 54%; }
+.senderos-map--count-4 .sendero-sign--4 { left: 84%; top: 62%; }
+
+// ── Piedra guía ───────────────────────────────────────────
+// Posición: inferior-izquierda del mapa, debajo de las señales.
+// No selecciona respuesta, no llama submit.
+.pista-stone {
+  position: absolute;
+  left: 9%;
+  bottom: 14%;
+  transform: translateY(0);
+
+  width: 100px;
+  height: 80px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 12;
+  filter: drop-shadow(0 3px 8px rgba(16, 42, 29, 0.38));
+  transition:
+    filter 0.22s ease,
+    transform 0.22s ease;
+
+  &:hover,
+  &:focus-visible {
+    filter:
+      drop-shadow(0 5px 14px rgba(16, 42, 29, 0.45))
+      drop-shadow(0 0 8px rgba(124, 179, 66, 0.35))
+      brightness(1.12);
+    transform: translateY(-3px);
+
+    .pista-stone__tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2.5px solid #f3c96b;
+    outline-offset: 4px;
+    border-radius: 0.5rem;
+  }
+
+  // Cuando la pista está abierta, mantiene el estado iluminado
+  &.pista-stone--active {
+    filter:
+      drop-shadow(0 5px 14px rgba(16, 42, 29, 0.45))
+      drop-shadow(0 0 10px rgba(124, 179, 66, 0.4))
+      brightness(1.1);
+    transform: translateY(-3px);
+  }
+}
+
+// Imagen de la piedra — la letra se posiciona absolutamente sobre ella
+.pista-stone__img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-image: url('#{$assets}/piedra-ayuda.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: block;
+}
+
+// Texto "GUÍA" sobre la piedra
+.pista-stone__label {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  // Crema cálida para contraste sobre piedra oscura
+  color: #ffe8a3;
+  text-shadow:
+    0 1px 2px rgba(20, 20, 20, 0.9),
+    0 0 6px rgba(243, 201, 107, 0.4),
+    1px 1px 0 rgba(0, 0, 0, 0.7);
+  z-index: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+// Tooltip de la piedra
+.pista-stone__tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  white-space: nowrap;
+  padding: 0.32rem 0.65rem;
+  border-radius: 0.6rem;
+  background: rgba(12, 34, 22, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #f1f8e9;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  z-index: 35;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(12, 34, 22, 0.9);
+  }
+}
+
+// ── Panel inferior: opción elegida ────────────────────────
+.senderos-map__panel {
+  position: relative;
+  z-index: 5;
+  margin-top: -3.2rem;
+  padding: 1rem 1.15rem 0.95rem;
+  border-radius: 0 0 1.5rem 1.5rem;
+  background: rgba(10, 30, 20, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(124, 179, 66, 0.22);
+  border-top: none;
+  animation: panel-in 0.28s ease both;
+}
+
+.senderos-map__panel-badge {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #7cb342;
+  margin-bottom: 0.3rem;
+}
+
+.senderos-map__panel-text {
+  margin: 0 0 0.28rem;
+  font-size: 0.88rem;
+  line-height: 1.52;
+  color: #f1f8e9;
+}
+
+.senderos-map__panel-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(205, 232, 181, 0.68);
+  font-style: italic;
+}
+
+// ── Panel de pista MENTORA ────────────────────────────────
+// Aparece debajo del mapa al hacer clic en la piedra.
+// Glass suave — no revela respuesta correcta.
+.pista-panel {
+  margin-top: 0.6rem;
+  padding: 0.9rem 1.05rem 0.85rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(124, 179, 66, 0.3);
+  background: rgba(241, 248, 233, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 4px 16px rgba(16, 42, 29, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  animation: panel-in 0.25s ease both;
+}
+
+.pista-panel__title {
+  margin: 0 0 0.38rem;
+  font-family: var(--siep-font-title);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2f5d34;
+}
+
+.pista-panel__body {
+  margin: 0 0 0.6rem;
+  font-size: 0.87rem;
+  line-height: 1.54;
+  color: #102a1d;
+}
+
+.pista-panel__close {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  padding: 0.3rem 0.72rem;
+  border-radius: 999px;
+  background: rgba(205, 232, 181, 0.45);
+  border: 1px solid rgba(124, 179, 66, 0.38);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2f5d34;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+
+  &:hover {
+    background: rgba(205, 232, 181, 0.7);
+    border-color: rgba(124, 179, 66, 0.6);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7cb342;
     outline-offset: 2px;
   }
 }
 
-.intervencion-card--selected {
-  border-color: rgba(124, 179, 66, 0.72);
-  background: linear-gradient(135deg, rgba(205, 232, 181, 0.22), rgba(250, 247, 242, 0.98));
-  box-shadow: 0 12px 30px rgba(45, 27, 78, 0.14);
+// ── Animación compartida ──────────────────────────────────
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  .intervencion-card__marker {
-    border-color: rgba(240, 178, 122, 0.55);
-    background: rgba(240, 178, 122, 0.2);
+// ── Tablet (481–900 px) ───────────────────────────────────
+@media (max-width: 900px) and (min-width: 481px) {
+  .sendero-sign {
+    width: 140px;
+    height: 73px;
   }
 
-  .intervencion-card__marker-index {
-    color: #102A1D;
+  .sendero-sign__letter {
+    font-size: 1.65rem;
+    top: 28%;
   }
 
-  .intervencion-card__tag {
-    color: #102A1D;
+  .sendero-sign__tooltip {
+    width: 190px;
   }
 
-  .intervencion-card__status {
-    color: #102A1D;
-    background: rgba(240, 178, 122, 0.28);
-    border-color: rgba(240, 178, 122, 0.45);
-  }
-}
-
-.intervencion-card--locked:disabled,
-.intervencion-card:disabled {
-  opacity: 0.68;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-  background: rgba(250, 247, 242, 0.72);
-}
-
-.intervencion-card__marker {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 0.75rem;
-  background: rgba(205, 232, 181, 0.24);
-  border: 1px solid rgba(124, 179, 66, 0.28);
-}
-
-.intervencion-card__marker-index {
-  font-family: var(--siep-font-title);
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #102A1D;
-}
-
-.intervencion-card__body {
-  display: grid;
-  gap: 0.28rem;
-  min-width: 0;
-}
-
-.intervencion-card__tag {
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #5F7368;
-}
-
-.intervencion-card__texto {
-  font-size: 0.92rem;
-  line-height: 1.5;
-  color: #102A1D;
-}
-
-.intervencion-card__status {
-  flex-shrink: 0;
-  align-self: center;
-  padding: 0.22rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid rgba(205, 232, 181, 0.35);
-  background: rgba(250, 247, 242, 0.9);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #5F7368;
-}
-
-@media (min-width: 768px) {
-  .intervenciones__list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem;
-  }
-
-  .intervencion-card {
-    align-items: flex-start;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto;
-  }
-
-  .intervencion-card__status {
-    grid-column: 2;
-    justify-self: start;
-    margin-top: 0.15rem;
+  .pista-stone {
+    width: 82px;
+    height: 66px;
   }
 }
 
+// ── Móvil (≤ 480 px) ─────────────────────────────────────
 @media (max-width: 480px) {
-  .intervenciones {
-    padding: 0.9rem;
+  .senderos-map {
+    aspect-ratio: 4 / 3;
   }
 
-  .intervenciones__title {
-    font-size: 1.02rem;
+  .sendero-sign {
+    width: 98px;
+    height: 52px;
   }
 
-  .intervencion-card {
-    padding: 0.85rem 0.9rem;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto;
-    gap: 0.55rem 0.7rem;
+  .sendero-sign__letter {
+    font-size: 1.22rem;
+    top: 28%;
   }
 
-  .intervencion-card__status {
-    grid-column: 2;
-    justify-self: start;
+  .sendero-sign__tooltip {
+    width: 160px;
+    font-size: 0.76rem;
+    bottom: calc(100% + 7px);
+  }
+
+  .pista-stone {
+    width: 74px;
+    height: 60px;
+    left: 6%;
+    bottom: 12%;
+  }
+
+  .pista-stone__label {
+    font-size: 0.65rem;
+    top: 40%;
+  }
+
+  // Ajuste posiciones en mapa 4:3 móvil
+  .senderos-map--count-2 .sendero-sign--1 { left: 22%; top: 56%; }
+  .senderos-map--count-2 .sendero-sign--2 { left: 72%; top: 56%; }
+
+  .senderos-map--count-3 .sendero-sign--1 { left: 14%; top: 58%; }
+  .senderos-map--count-3 .sendero-sign--2 { left: 50%; top: 45%; }
+  .senderos-map--count-3 .sendero-sign--3 { left: 82%; top: 58%; }
+
+  .senderos-map--count-4 .sendero-sign--1 { left: 8%;  top: 60%; }
+  .senderos-map--count-4 .sendero-sign--2 { left: 33%; top: 46%; }
+  .senderos-map--count-4 .sendero-sign--3 { left: 63%; top: 46%; }
+  .senderos-map--count-4 .sendero-sign--4 { left: 88%; top: 60%; }
+
+  .senderos-map__panel {
+    margin-top: 0.5rem;
+    border-radius: 1rem;
+    border-top: 1px solid rgba(124, 179, 66, 0.22);
+  }
+
+  .senderos__title {
+    font-size: 0.98rem;
+  }
+}
+
+// ── Reducir movimiento ────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  .sendero-sign,
+  .pista-stone {
+    transition: opacity 0.01s;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  .pista-stone {
+    &:hover,
+    &:focus-visible {
+      transform: translateY(0);
+    }
+    &.pista-stone--active {
+      transform: translateY(0);
+    }
+  }
+
+  .sendero-sign--selected {
+    transform: translate(-50%, -50%);
+  }
+
+  .sendero-sign__tooltip,
+  .pista-stone__tooltip {
+    transition: opacity 0.01s;
+  }
+
+  .senderos-map__panel,
+  .pista-panel {
+    animation: none;
   }
 }

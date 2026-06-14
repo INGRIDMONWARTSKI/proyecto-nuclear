@@ -1,4 +1,11 @@
 ﻿<section class="siep-page estudiante-casos">
+  @if (showGuidePicker()) {
+    <app-video-guide-picker
+      (guideSelected)="onGuideSelected($event)"
+      (pickerClosed)="onGuidePickerClosed()"
+    />
+  }
+
   <p class="siep-brand" aria-hidden="true">MENTORA · Estudiante</p>
 
   <app-page-header
@@ -6,6 +13,17 @@
     subtitle="Explora tus experiencias de simulación y comienza el recorrido asignado por tu profesor."
     icon="🌿"
   />
+
+  <div class="casos-guide-bar">
+    <button
+      class="casos-guide-bar__btn"
+      type="button"
+      (click)="solicitarCambioDeGuia()"
+      aria-label="Cambiar guía de acompañamiento"
+    >
+      Cambiar guía de acompañamiento
+    </button>
+  </div>
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />
@@ -57,7 +75,7 @@
                   <button
                     class="siep-btn-primary caso-card__action"
                     type="button"
-                    (click)="continuarSimulacion(resumen.sesionActivaId)"
+                    (click)="requestGuideOrProceed('continuar', resumen.sesionActivaId)"
                   >
                     Continuar simulación
                   </button>
@@ -74,7 +92,7 @@
                     class="siep-btn-primary caso-card__action"
                     type="button"
                     [disabled]="startingCasoId() === caso.id"
-                    (click)="reintentarCaso(caso.id)"
+                    (click)="requestGuideOrProceed('reintentar', caso.id)"
                   >
                     {{ startingCasoId() === caso.id ? 'Iniciando...' : 'Reintentar caso' }}
                   </button>
@@ -83,7 +101,7 @@
                     class="siep-btn-primary caso-card__action"
                     type="button"
                     [disabled]="startingCasoId() === caso.id"
-                    (click)="iniciarSimulacion(caso.id)"
+                    (click)="requestGuideOrProceed('iniciar', caso.id)"
                   >
                     {{ startingCasoId() === caso.id ? 'Iniciando...' : 'Iniciar simulación' }}
                   </button>

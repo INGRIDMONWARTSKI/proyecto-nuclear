@@ -1,174 +1,163 @@
-<section class="classroom" [@fadeSlideIn] aria-label="Salón de clases interactivo">
-  <div class="classroom__sky">
-    <span class="cloud cloud--1" aria-hidden="true"></span>
-    <span class="cloud cloud--2" aria-hidden="true"></span>
-    <span class="star star--1" aria-hidden="true">✦</span>
-    <span class="star star--2" aria-hidden="true">✧</span>
-  </div>
+<section class="comunidad" aria-label="Comunidad académica del grupo">
 
-  <div class="classroom__room">
-    <!-- Pared trasera -->
-    <div class="classroom__wall">
-      <div class="window window--left" aria-hidden="true">
-        <div class="window__pane"></div>
-        <div class="window__pane"></div>
-      </div>
-
-      <div class="chalkboard" aria-hidden="true">
-        <div class="chalkboard__frame">
-          <span class="chalkboard__title">{{ tituloPizarra() }}</span>
-          <span class="chalkboard__sub">{{ subtituloPizarra() }} · {{ estudiantes().length }} estudiantes</span>
-        </div>
-      </div>
-
-      <div class="window window--right" aria-hidden="true">
-        <div class="window__pane"></div>
-        <div class="window__pane"></div>
-      </div>
-
-      <div class="clock" aria-hidden="true">
-        <span class="clock__face"></span>
-        <span class="clock__hand clock__hand--h"></span>
-        <span class="clock__hand clock__hand--m"></span>
-      </div>
-
-      <div class="poster poster--math" aria-hidden="true">1+1=2</div>
-      <div class="poster poster--art" aria-hidden="true">🎨</div>
+  <!-- Cabecera -->
+  <header class="comunidad__head">
+    <div class="comunidad__head-text">
+      <h3 class="comunidad__title">Comunidad académica del grupo</h3>
+      <p class="comunidad__sub">Visualiza y organiza los estudiantes vinculados a este grupo.</p>
     </div>
-
-    <!-- Zona profesor -->
-    <div class="teacher-zone">
-      <div class="teacher-desk" aria-hidden="true">
-        <div class="teacher-desk__top"></div>
-        <div class="teacher-desk__drawer"></div>
+    <div class="comunidad__counters" aria-label="Resumen del grupo">
+      <div class="comunidad__counter">
+        <span class="comunidad__counter-num">{{ estudiantes().length }}</span>
+        <span class="comunidad__counter-lbl">Asignados</span>
       </div>
-      <div class="teacher-avatar" [style.background]="avatarProfesor().bg">
-        <span class="teacher-avatar__emoji">{{ avatarProfesor().emoji }}</span>
-        <span class="teacher-avatar__badge">Prof.</span>
+      <span class="comunidad__counter-div" aria-hidden="true"></span>
+      <div class="comunidad__counter">
+        <span class="comunidad__counter-num">{{ slots().length - estudiantes().length }}</span>
+        <span class="comunidad__counter-lbl">Cupos disponibles</span>
       </div>
-      <div class="plant plant--left" aria-hidden="true">🪴</div>
-      <div class="plant plant--right" aria-hidden="true">🌿</div>
-      <div class="backpack backpack--1" aria-hidden="true">🎒</div>
-      <div class="backpack backpack--2" aria-hidden="true">🎒</div>
     </div>
+  </header>
 
-    <!-- Puerta lateral -->
-    <div class="door" aria-hidden="true">
-      <div class="door__panel"></div>
-      <div class="door__knob"></div>
+  <!-- Grilla de cupos -->
+  @if (loadingSalon()) {
+    <div class="comunidad__loading" role="status" aria-live="polite">
+      <span class="comunidad__spinner" aria-hidden="true"></span>
+      <p>Cargando integrantes del grupo...</p>
     </div>
-
-    <!-- Piso y pupitres -->
-    <div class="classroom__floor">
-      @if (loadingSalon()) {
-        <div class="classroom__loading">
-          <span class="classroom__loading-spinner"></span>
-          <p>Preparando el salón...</p>
-        </div>
-      } @else {
-        <div
-          class="desks-grid"
-          [style.--desk-cols]="columnas()"
-        >
-          @for (slot of slots(); track slot.index) {
-            <app-classroom-desk
-              [index]="slot.index"
-              [estudiante]="slot.estudiante"
-              [selected]="pupitreSeleccionado() === slot.index"
-              [interactive]="grupoActivo() && (puedeAdministrar() || !!slot.estudiante)"
-              (clicked)="onDeskClick(slot)"
-            ></app-classroom-desk>
-          }
-        </div>
+  } @else {
+    <div class="cupos-grid">
+      @for (slot of slots(); track slot.index) {
+        <app-classroom-desk
+          [index]="slot.index"
+          [estudiante]="slot.estudiante"
+          [selected]="pupitreSeleccionado() === slot.index"
+          [interactive]="grupoActivo() && (puedeAdministrar() || !!slot.estudiante)"
+          (clicked)="onDeskClick(slot)"
+        />
       }
     </div>
-  </div>
+  }
 
-  <!-- Panel estudiante seleccionado -->
+  <!-- Panel overlay: detalle de estudiante -->
   @if (estudianteSeleccionado(); as est) {
-    <aside class="info-panel" [@panelSlide] role="dialog" aria-label="Información del estudiante">
-      <button type="button" class="info-panel__close" (click)="cerrarPanel()" aria-label="Cerrar">×</button>
-      <div
-        class="info-panel__avatar"
-        [style.background]="buildAvatarStyle(est.fullName, est.id).bg"
-        [style.borderColor]="buildAvatarStyle(est.fullName, est.id).accent"
+    <div class="panel-overlay" role="presentation" (click)="cerrarPanel()">
+      <aside
+        class="ficha-panel"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Detalle de ' + est.fullName"
+        (click)="$event.stopPropagation()"
       >
-        <span>{{ buildAvatarStyle(est.fullName, est.id).emoji }}</span>
-      </div>
-      <h3>{{ est.fullName }}</h3>
-      <p class="info-panel__email">{{ est.email }}</p>
-      <span class="info-panel__chip info-panel__chip--ok">● Presente en clase</span>
-      <span class="info-panel__chip">{{ est.role }}</span>
-      @if (puedeAdministrar() && grupoActivo()) {
         <button
           type="button"
-          class="info-panel__btn info-panel__btn--danger"
-          (click)="solicitarRemover(est)"
+          class="ficha-panel__close"
+          (click)="cerrarPanel()"
+          aria-label="Cerrar panel"
         >
-          Remover del pupitre
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
         </button>
-      }
-    </aside>
+        <div class="ficha-panel__avatar" [style.background]="buildAvatarStyle(est.fullName, est.id).bg">
+          {{ est.fullName.charAt(0).toUpperCase() }}
+        </div>
+        <p class="ficha-panel__name">{{ est.fullName }}</p>
+        <p class="ficha-panel__email">{{ est.email }}</p>
+        <div class="ficha-panel__badges">
+          <span class="ficha-panel__badge ficha-panel__badge--rol">Estudiante</span>
+          <span class="ficha-panel__badge ficha-panel__badge--activo">Activo</span>
+        </div>
+        @if (puedeAdministrar() && grupoActivo()) {
+          <button
+            type="button"
+            class="ficha-panel__btn-remove"
+            (click)="solicitarRemover(est)"
+          >
+            Quitar del grupo
+          </button>
+        }
+      </aside>
+    </div>
   }
 
-  <!-- Panel asignar en pupitre vacío -->
+  <!-- Panel overlay: asignar estudiante a cupo vacío -->
   @if (mostrarAsignar() && puedeAdministrar()) {
-    <aside class="info-panel info-panel--assign" [@panelSlide] role="dialog" aria-label="Asignar estudiante">
-      <button type="button" class="info-panel__close" (click)="cerrarPanel()" aria-label="Cerrar">×</button>
-      <h3>Asignar a pupitre</h3>
-      <p class="info-panel__hint">Selecciona un estudiante.</p>
-      @if (disponiblesParaAsignar().length === 0) {
-        <p class="info-panel__empty">{{ mensajeSinPendientes() }}</p>
-      } @else {
-        <div class="assign-search">
-          <input
-            type="search"
-            class="assign-search__input"
-            placeholder="Buscar..."
-            [value]="busquedaAsignar()"
-            (input)="actualizarBusquedaAsignar($event)"
-            aria-label="Buscar estudiante"
-          />
-          @if (busquedaAsignar()) {
-            <button
-              type="button"
-              class="assign-search__clear"
-              aria-label="Limpiar búsqueda"
-              (click)="limpiarBusquedaAsignar()"
-            >
-              Limpiar
-            </button>
-          }
-        </div>
-        <p class="assign-search__count">
-          {{ disponiblesFiltrados().length }} de {{ disponiblesParaAsignar().length }}
-        </p>
-        <ul class="assign-list">
-          @if (disponiblesFiltrados().length === 0) {
-            <li class="assign-list__empty">Sin coincidencias.</li>
-          }
-          @for (candidato of disponiblesFiltrados(); track candidato.id) {
-            <li>
+    <div class="panel-overlay" role="presentation" (click)="cerrarPanel()">
+      <aside
+        class="ficha-panel ficha-panel--assign"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Asignar estudiante al cupo"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          class="ficha-panel__close"
+          (click)="cerrarPanel()"
+          aria-label="Cerrar panel"
+        >
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <p class="ficha-panel__name">Integrar al grupo</p>
+        <p class="ficha-panel__hint">Selecciona el estudiante que ocupará este cupo.</p>
+        @if (disponiblesParaAsignar().length === 0) {
+          <p class="ficha-panel__empty">{{ mensajeSinPendientes() }}</p>
+        } @else {
+          <div class="assign-search">
+            <input
+              type="search"
+              class="assign-search__input"
+              placeholder="Buscar por nombre o correo..."
+              [value]="busquedaAsignar()"
+              (input)="actualizarBusquedaAsignar($event)"
+              aria-label="Buscar estudiante para asignar"
+            />
+            @if (busquedaAsignar()) {
               <button
                 type="button"
-                class="assign-list__item"
-                (click)="seleccionarParaAsignar(candidato.id)"
+                class="assign-search__clear"
+                aria-label="Limpiar búsqueda"
+                (click)="limpiarBusquedaAsignar()"
               >
-                <span
-                  class="assign-list__avatar"
-                  [style.background]="buildAvatarStyle(candidato.fullName, candidato.id).bg"
-                >
-                  {{ buildAvatarStyle(candidato.fullName, candidato.id).emoji }}
-                </span>
-                <span>
-                  <strong>{{ candidato.fullName }}</strong>
-                  <small>{{ candidato.email }}</small>
-                </span>
+                Limpiar
               </button>
-            </li>
-          }
-        </ul>
-      }
-    </aside>
+            }
+          </div>
+          <p class="assign-search__count">
+            {{ disponiblesFiltrados().length }} de {{ disponiblesParaAsignar().length }} disponibles
+          </p>
+          <ul class="assign-list" aria-label="Estudiantes disponibles para asignar">
+            @if (disponiblesFiltrados().length === 0) {
+              <li class="assign-list__empty">Sin coincidencias para la búsqueda.</li>
+            }
+            @for (candidato of disponiblesFiltrados(); track candidato.id) {
+              <li>
+                <button
+                  type="button"
+                  class="assign-list__item"
+                  (click)="seleccionarParaAsignar(candidato.id)"
+                >
+                  <span
+                    class="assign-list__avatar"
+                    [style.background]="buildAvatarStyle(candidato.fullName, candidato.id).bg"
+                    aria-hidden="true"
+                  >
+                    {{ candidato.fullName.charAt(0).toUpperCase() }}
+                  </span>
+                  <span class="assign-list__info">
+                    <strong>{{ candidato.fullName }}</strong>
+                    <small>{{ candidato.email }}</small>
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </aside>
+    </div>
   }
+
 </section>

@@ -4,95 +4,206 @@
   }
 
   <div [class.admin-page__content]="authService.hasRole(Role.ADMIN)">
-  @if (authService.hasRole(Role.ADMIN)) {
-    <p class="siep-brand" aria-hidden="true">MENTORA · Admin</p>
-    <app-page-header
-      title="Grupos académicos"
-      [subtitle]="listSubtitle()"
-      icon="🌿"
-    >
-      @if (authService.canManageGrupos()) {
-        <a actions class="siep-btn-primary" routerLink="nuevo">Nuevo grupo</a>
-      }
-    </app-page-header>
-  } @else {
-    <div class="profesor-page-hero">
-      <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · GRUPOS</p>
+    @if (authService.hasRole(Role.ADMIN)) {
+      <p class="siep-brand" aria-hidden="true">MENTORA · Admin</p>
       <app-page-header
         title="Grupos académicos"
-        [subtitle]="listSubtitle()"
+        subtitle="Organiza comunidades de práctica, estudiantes y docentes vinculados a MENTORA."
         icon="🌿"
       >
         @if (authService.canManageGrupos()) {
           <a actions class="siep-btn-primary" routerLink="nuevo">Nuevo grupo</a>
         }
       </app-page-header>
-    </div>
-  }
+    } @else {
+      <div class="profesor-page-hero">
+        <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · GRUPOS</p>
+        <app-page-header
+          title="Grupos académicos"
+          [subtitle]="listSubtitle()"
+          icon="🌿"
+        >
+          @if (authService.canManageGrupos()) {
+            <a actions class="siep-btn-primary" routerLink="nuevo">Nuevo grupo</a>
+          }
+        </app-page-header>
+      </div>
+    }
 
-  @if (errorMessage()) {
-    <app-alert-message [message]="errorMessage()!" type="error" />
-  }
-  @if (successMessage()) {
-    <app-alert-message [message]="successMessage()!" type="success" />
-  }
+    @if (errorMessage()) {
+      <app-alert-message [message]="errorMessage()!" type="error" />
+    }
+    @if (successMessage()) {
+      <app-alert-message [message]="successMessage()!" type="success" />
+    }
 
-  @if (loading()) {
-    <app-loading-state message="Cargando grupos..." />
-  } @else if (grupos().length === 0) {
-    <app-empty-state
-      title="Sin grupos"
-      message="Aún no hay grupos registrados. Crea uno para organizar a tus estudiantes."
-      icon="🌱"
-      [actionLabel]="authService.canManageGrupos() ? 'Crear grupo' : undefined"
-      (actionClick)="irANuevoGrupo()"
-    />
-  } @else {
-    <ul class="grupos-grid">
-      @for (grupo of grupos(); track grupo.id) {
-        <li class="siep-card grupo-card">
-          <h3 class="grupo-card__title">{{ grupo.nombre }}</h3>
-          <p class="grupo-card__desc">{{ grupo.descripcion || 'Sin descripción' }}</p>
-          <div class="grupo-card__meta">
-            <app-status-badge
-              variant="status"
-              [status]="grupo.isActive ? 'active' : 'inactive'"
-              [label]="grupo.isActive ? 'Activo' : 'Inactivo'"
-            />
-            <span class="grupo-card__date">{{ grupo.createdAt | date: 'shortDate' }}</span>
-          </div>
-          <div class="grupo-card__actions">
-            <a class="siep-btn-primary" [routerLink]="[grupo.id]">Abrir</a>
-            @if (puedeAdministrar(grupo)) {
-              <a class="siep-btn-secondary" [routerLink]="[grupo.id, 'editar']">Editar</a>
-              <button
-                class="{{ grupo.isActive ? 'siep-btn-danger' : 'siep-btn-secondary' }}"
-                type="button"
-                [disabled]="estaActualizando(grupo.id)"
-                (click)="confirmarCambioEstado(grupo)"
-              >
-                @if (estaActualizando(grupo.id)) {
-                  Actualizando...
-                } @else {
-                  {{ grupo.isActive ? 'Desactivar' : 'Activar' }}
-                }
-              </button>
-            }
-          </div>
-        </li>
+    @if (loading()) {
+      <app-loading-state message="Cargando grupos académicos..." />
+    } @else if (grupos().length === 0) {
+      <app-empty-state
+        title="Sin comunidades académicas"
+        message="Aún no hay grupos registrados. Crea uno para organizar a los integrantes del programa."
+        icon="🌱"
+        [actionLabel]="authService.canManageGrupos() ? 'Crear grupo' : undefined"
+        (actionClick)="irANuevoGrupo()"
+      />
+    } @else {
+
+      <!-- Buscador -->
+      <div class="grupos-search-wrap" role="search">
+        <label for="buscador-grupos" class="visually-hidden">Buscar grupo</label>
+        <div class="grupos-search-inner">
+          <svg class="grupos-search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" width="17" height="17">
+            <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+          <input
+            id="buscador-grupos"
+            type="search"
+            class="grupos-search-input"
+            placeholder="Buscar grupo por nombre, docente o descripción..."
+            [value]="busqueda()"
+            (input)="busqueda.set($any($event.target).value)"
+            autocomplete="off"
+            aria-label="Buscar grupo por nombre, docente o descripción"
+          />
+          @if (busqueda()) {
+            <button
+              type="button"
+              class="grupos-search-clear"
+              (click)="busqueda.set('')"
+              aria-label="Limpiar búsqueda"
+            >
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13" aria-hidden="true">
+                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Sin resultados -->
+      @if (!hayResultados()) {
+        <div class="grupos-no-results" role="status" aria-live="polite">
+          <svg viewBox="0 0 24 24" fill="none" width="30" height="30" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M17 17L21 21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M8 11h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <p>No se encontraron grupos con ese criterio.</p>
+        </div>
       }
-    </ul>
-  }
 
-  <app-confirm-dialog
-    [open]="confirmOpen()"
-    [title]="confirmTitle()"
-    [message]="confirmMessage()"
-    [confirmLabel]="confirmLabel()"
-    [destructive]="confirmLabel().startsWith('Desactivar')"
-    [confirming]="updatingGroupId() !== null"
-    (confirmed)="confirmarAccionDialogo()"
-    (cancelled)="cerrarConfirmacion()"
-  />
+      <!-- Grilla de comunidades -->
+      <ul class="grupos-grid">
+        @for (grupo of gruposFiltrados(); track grupo.id) {
+          <li class="comunidad-card" [class.comunidad-card--inactiva]="!grupo.isActive">
+
+            <!-- Barra de acento superior -->
+            <span class="comunidad-card__accent" aria-hidden="true"></span>
+
+            <!-- Decoración hoja -->
+            <span class="comunidad-card__leaf" aria-hidden="true">
+              <svg viewBox="0 0 32 40" fill="none" width="28" height="35">
+                <path d="M16 2C16 2 2 10 2 24C2 32 8 38 16 38C24 38 30 32 30 24C30 10 16 2 16 2Z"
+                      fill="rgba(124,179,66,0.12)" stroke="rgba(124,179,66,0.25)" stroke-width="1.2"/>
+                <path d="M16 38C16 38 16 18 16 2" stroke="rgba(124,179,66,0.3)" stroke-width="1" stroke-dasharray="2 2"/>
+              </svg>
+            </span>
+
+            <!-- Cabecera de la tarjeta -->
+            <header class="comunidad-card__head">
+              <div class="comunidad-card__badge-wrap">
+                <app-status-badge
+                  variant="status"
+                  [status]="grupo.isActive ? 'active' : 'inactive'"
+                  [label]="grupo.isActive ? 'Activa' : 'Inactiva'"
+                />
+              </div>
+              <h3 class="comunidad-card__title">{{ grupo.nombre }}</h3>
+              <p class="comunidad-card__desc">
+                {{ grupo.descripcion || 'Sin descripción asignada.' }}
+              </p>
+            </header>
+
+            <!-- Metadatos -->
+            <div class="comunidad-card__meta">
+              @if (grupo.profesorId) {
+                <span class="comunidad-card__chip comunidad-card__chip--docente">
+                  <svg viewBox="0 0 16 16" fill="none" width="12" height="12" aria-hidden="true">
+                    <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  @if (nombreProfesor(grupo.profesorId); as nombre) {
+                    Docente: {{ nombre }}
+                  } @else {
+                    Docente asignado
+                  }
+                </span>
+              } @else {
+                <span class="comunidad-card__chip">
+                  <svg viewBox="0 0 16 16" fill="none" width="12" height="12" aria-hidden="true">
+                    <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 1.5"/>
+                    <path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="2 1.5"/>
+                  </svg>
+                  Sin docente asignado
+                </span>
+              }
+              <span class="comunidad-card__chip">
+                <svg viewBox="0 0 16 16" fill="none" width="12" height="12" aria-hidden="true">
+                  <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                  <path d="M5 1v3M11 1v3M2 7h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                {{ grupo.createdAt | date: 'MMM y' }}
+              </span>
+            </div>
+
+            <!-- Acciones -->
+            <footer class="comunidad-card__actions">
+              <a
+                class="siep-btn-primary comunidad-card__btn"
+                [routerLink]="[grupo.id]"
+                [attr.aria-label]="'Ver comunidad académica: ' + grupo.nombre"
+              >
+                Ver comunidad
+              </a>
+              @if (puedeAdministrar(grupo)) {
+                <a
+                  class="siep-btn-secondary comunidad-card__btn"
+                  [routerLink]="[grupo.id, 'editar']"
+                  [attr.aria-label]="'Editar grupo: ' + grupo.nombre"
+                >
+                  Editar
+                </a>
+                <button
+                  type="button"
+                  class="comunidad-card__btn {{ grupo.isActive ? 'siep-btn-danger' : 'siep-btn-secondary' }}"
+                  [disabled]="estaActualizando(grupo.id)"
+                  (click)="confirmarCambioEstado(grupo)"
+                  [attr.aria-label]="(grupo.isActive ? 'Desactivar' : 'Activar') + ' grupo: ' + grupo.nombre"
+                >
+                  @if (estaActualizando(grupo.id)) {
+                    Actualizando...
+                  } @else {
+                    {{ grupo.isActive ? 'Desactivar' : 'Activar' }}
+                  }
+                </button>
+              }
+            </footer>
+          </li>
+        }
+      </ul>
+    }
+
+    <app-confirm-dialog
+      [open]="confirmOpen()"
+      [title]="confirmTitle()"
+      [message]="confirmMessage()"
+      [confirmLabel]="confirmLabel()"
+      [destructive]="confirmLabel().startsWith('Desactivar')"
+      [confirming]="updatingGroupId() !== null"
+      (confirmed)="confirmarAccionDialogo()"
+      (cancelled)="cerrarConfirmacion()"
+    />
   </div>
 </section>

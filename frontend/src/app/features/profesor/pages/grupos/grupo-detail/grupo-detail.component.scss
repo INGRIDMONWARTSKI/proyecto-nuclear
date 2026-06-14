@@ -39,11 +39,18 @@
 
 .assign-toolbar__head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--siep-space-4);
   flex-wrap: wrap;
   margin-bottom: var(--siep-space-3);
+}
+
+.assign-toolbar__desc {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--siep-text-soft);
+  line-height: 1.45;
 }
 
 .assign-toolbar h2 {

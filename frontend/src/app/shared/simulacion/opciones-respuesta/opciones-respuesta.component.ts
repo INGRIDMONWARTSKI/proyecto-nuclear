@@ -13,6 +13,9 @@ export class OpcionesRespuestaComponent {
   @Input() locked = false;
   @Output() select = new EventEmitter<OpcionEscenario>();
 
+  protected showHint = false;
+  protected toggleHint(): void { this.showHint = !this.showHint; }
+
   onSelect(opcion: OpcionEscenario) {
     if (this.locked) {
       return;

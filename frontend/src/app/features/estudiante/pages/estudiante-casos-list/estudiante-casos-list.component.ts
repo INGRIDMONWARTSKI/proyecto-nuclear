@@ -18,6 +18,14 @@ import {
   buildResumenSesionesPorCaso,
   getResumenCaso,
 } from '../../utils/estudiante-sesion-estado.util';
+import {
+  GuideChoice,
+  hasGuideChoice,
+  setGuideChoice,
+} from '../../utils/video-guide.util';
+import { VideoGuidePickerComponent } from '../../components/video-guide-picker/video-guide-picker.component';
+
+type PendingAction = { type: 'iniciar' | 'continuar' | 'reintentar'; id: string };
 
 @Component({
   selector: 'app-estudiante-casos-list',
@@ -29,6 +37,7 @@ import {
     EmptyStateComponent,
     PageHeaderComponent,
     StatusBadgeComponent,
+    VideoGuidePickerComponent,
   ],
   templateUrl: './estudiante-casos-list.component.html',
   styleUrl: './estudiante-casos-list.component.scss',
@@ -42,6 +51,9 @@ export class EstudianteCasosListComponent implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly casos = signal<CasoPublicado[]>([]);
   protected readonly resumenPorCaso = signal<Map<string, ResumenSesionCaso>>(new Map());
+
+  protected readonly showGuidePicker = signal(false);
+  private pendingAction: PendingAction | null = null;
 
   ngOnInit(): void {
     this.loadCasos();
@@ -95,6 +107,52 @@ export class EstudianteCasosListComponent implements OnInit {
         return 'success';
       default:
         return 'active';
+    }
+  }
+
+  /**
+   * Intercepta todos los botones de acción antes de ejecutarlos.
+   * — 'reintentar' siempre fuerza el selector de guía (nuevo intento = nueva elección).
+   * — 'iniciar'    muestra el selector solo si no hay guía guardada.
+   * — 'continuar'  usa la guía guardada si existe; si no, pide al usuario elegir.
+   */
+  requestGuideOrProceed(type: 'iniciar' | 'continuar' | 'reintentar', id: string): void {
+    const forceShow = type === 'reintentar';
+    if (forceShow || !hasGuideChoice()) {
+      this.pendingAction = { type, id };
+      this.showGuidePicker.set(true);
+      return;
+    }
+    this.executeAction(type, id);
+  }
+
+  onGuideSelected(choice: GuideChoice): void {
+    setGuideChoice(choice);
+    this.showGuidePicker.set(false);
+    const action = this.pendingAction;
+    this.pendingAction = null;
+    if (action) {
+      this.executeAction(action.type, action.id);
+    }
+  }
+
+  onGuidePickerClosed(): void {
+    this.showGuidePicker.set(false);
+    this.pendingAction = null;
+  }
+
+  /** Permite al estudiante cambiar la guía sin iniciar ningún caso. */
+  solicitarCambioDeGuia(): void {
+    this.pendingAction = null;
+    this.showGuidePicker.set(true);
+  }
+
+  private executeAction(type: 'iniciar' | 'continuar' | 'reintentar', id: string): void {
+    if (type === 'continuar') {
+      this.continuarSimulacion(id);
+    } else {
+      // Both 'iniciar' and 'reintentar' start a new session
+      this.iniciarSimulacion(id);
     }
   }
 

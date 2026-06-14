@@ -1,0 +1,42 @@
+<div class="guide-picker-overlay" role="dialog" aria-modal="true" aria-label="Selección de guía de acompañamiento">
+  <div class="guide-picker">
+    <button
+      class="guide-picker__close"
+      type="button"
+      aria-label="Cerrar selector de guia"
+      (click)="close()"
+    >
+      x
+    </button>
+    <p class="guide-picker__brand">MENTORA</p>
+    <h2 class="guide-picker__title">Elige tu guía de acompañamiento</h2>
+    <p class="guide-picker__desc">Selecciona la versión visual que acompañará tu recorrido por el caso.</p>
+
+    <div class="guide-picker__options" role="radiogroup" aria-label="Tipo de guía">
+      <button
+        class="guide-picker__option"
+        [class.guide-picker__option--selected]="selected() === 'femenina'"
+        type="button"
+        role="radio"
+        [attr.aria-checked]="selected() === 'femenina'"
+        (click)="selectGuide('femenina')"
+      >
+        <span class="guide-picker__option-label">Guía femenina</span>
+      </button>
+      <button
+        class="guide-picker__option"
+        [class.guide-picker__option--selected]="selected() === 'masculina'"
+        type="button"
+        role="radio"
+        [attr.aria-checked]="selected() === 'masculina'"
+        (click)="selectGuide('masculina')"
+      >
+        <span class="guide-picker__option-label">Guía masculina</span>
+      </button>
+    </div>
+
+    <button class="siep-btn-primary guide-picker__confirm" type="button" (click)="confirm()">
+      Continuar experiencia
+    </button>
+  </div>
+</div>

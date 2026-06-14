@@ -1,0 +1,156 @@
+:host {
+  display: contents;
+}
+
+.estudiante-ambient__bleed {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.estudiante-ambient__bleed-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('../../../../../assets/mentora/backgrounds/estudiante-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  // Light overlay for readability — slightly softer/cooler than profesor
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(241, 248, 233, 0.36) 0%,
+        rgba(250, 252, 247, 0.12) 18%,
+        rgba(250, 252, 247, 0.26) 50%,
+        rgba(250, 252, 247, 0.12) 82%,
+        rgba(241, 248, 233, 0.34) 100%
+      ),
+      linear-gradient(
+        172deg,
+        rgba(250, 252, 247, 0.46) 0%,
+        rgba(250, 252, 247, 0.22) 45%,
+        rgba(232, 245, 233, 0.34) 100%
+      ),
+      radial-gradient(ellipse 58% 44% at 22% 8%, rgba(124, 179, 66, 0.09), transparent 70%);
+  }
+}
+
+.estudiante-ambient__leaves {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ambient-leaf {
+  position: absolute;
+  opacity: var(--leaf-opacity, 0.55);
+  filter: drop-shadow(0 5px 10px rgba(47, 93, 52, 0.09));
+  pointer-events: none;
+  will-change: transform;
+
+  &--a {
+    animation: estudiante-leaf-float-a 12s ease-in-out infinite;
+  }
+
+  &--b {
+    animation: estudiante-leaf-float-b 15s ease-in-out infinite;
+  }
+}
+
+@keyframes estudiante-leaf-float-a {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(-5deg);
+  }
+
+  25% {
+    transform: translate(4px, -13px) rotate(2deg);
+  }
+
+  50% {
+    transform: translate(-5px, -20px) rotate(-3deg);
+  }
+
+  75% {
+    transform: translate(5px, -9px) rotate(1deg);
+  }
+}
+
+@keyframes estudiante-leaf-float-b {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(4deg);
+  }
+
+  30% {
+    transform: translate(-5px, -11px) rotate(-4deg);
+  }
+
+  58% {
+    transform: translate(3px, -18px) rotate(3deg);
+  }
+
+  82% {
+    transform: translate(-3px, -7px) rotate(-2deg);
+  }
+}
+
+// Tablet: hide desktop-only leaves, reduce opacity slightly
+@media (max-width: 900px) {
+  .ambient-leaf--desktop {
+    display: none;
+  }
+
+  .ambient-leaf {
+    filter: drop-shadow(0 4px 7px rgba(47, 93, 52, 0.07));
+  }
+
+  .ambient-leaf--all,
+  .ambient-leaf--tablet-up {
+    opacity: calc(var(--leaf-opacity, 0.55) * 0.8);
+  }
+}
+
+// Mobile: only show 'all' leaves (3 per side)
+@media (max-width: 640px) {
+  .ambient-leaf--tablet-up,
+  .ambient-leaf--desktop {
+    display: none;
+  }
+
+  .ambient-leaf--all {
+    opacity: calc(var(--leaf-opacity, 0.55) * 0.72);
+    max-width: 24px;
+    max-height: 24px;
+  }
+
+  .estudiante-ambient__bleed-bg {
+    background-position: center top;
+
+    &::after {
+      background: linear-gradient(
+        180deg,
+        rgba(250, 252, 247, 0.92) 0%,
+        rgba(250, 252, 247, 0.88) 100%
+      );
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-leaf {
+    animation: none !important;
+    transform: none !important;
+    opacity: calc(var(--leaf-opacity, 0.55) * 0.5) !important;
+  }
+}

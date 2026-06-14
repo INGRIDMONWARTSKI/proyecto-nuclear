@@ -138,12 +138,18 @@
                     class="library-card"
                     type="button"
                     [class.library-card--active]="selectedLibraryItem().id === item.id"
+                    [ngStyle]="libraryCardStyle(item)"
                     (click)="selectLibraryItem(item.id)"
                   >
-                    <span class="library-card__icon">{{ item.icono }}</span>
+                    <div class="library-card__preview" [ngStyle]="libraryPreviewStyle(item)">
+                      <span class="library-card__preview-badge">{{ libraryPreviewBadge(item) }}</span>
+                      <span class="library-card__preview-mark">{{ item.icono }}</span>
+                    </div>
+                    <span class="library-card__icon" [ngStyle]="libraryIconStyle(item)">{{ item.icono }}</span>
                     <div class="library-card__content">
                       <strong>{{ item.nombre }}</strong>
-                      <span>{{ item.categoria }}</span>
+                      <span>{{ item.categoria }} · {{ item.tag }}</span>
+                      <p>{{ item.descripcion }}</p>
                     </div>
                     <span class="library-card__add">+</span>
                   </button>
@@ -156,10 +162,16 @@
               </div>
 
               @if (selectedLibraryItem()) {
-                <div class="library-footer">
-                  <div>
+                <div class="library-footer" [ngStyle]="libraryCardStyle(selectedLibraryItem()!)">
+                  <div class="library-footer__preview" [ngStyle]="libraryPreviewStyle(selectedLibraryItem()!)">
+                    <span class="library-footer__badge">{{ libraryPreviewBadge(selectedLibraryItem()!) }}</span>
+                    <strong>{{ selectedLibraryItem()!.icono }}</strong>
+                  </div>
+                  <div class="library-footer__content">
                     <strong>{{ selectedLibraryItem()!.nombre }}</strong>
-                    <span>{{ selectedLibraryItem()!.tag }}</span>
+                    <span>{{ selectedLibraryItem()!.tag }} · {{ selectedLibraryItem()!.categoria }}</span>
+                    <p>{{ libraryPreviewTitle(selectedLibraryItem()!) }}</p>
+                    <small>{{ libraryPreviewBody(selectedLibraryItem()!) }}</small>
                   </div>
                   <button class="siep-btn-primary" type="button" (click)="addSelectedLibraryItem()">
                     Agregar
@@ -366,19 +378,24 @@
                             (click)="$event.stopPropagation(); selectElement(element.id)"
                           >
                             @if (contentText(element, 'dialogo')) {
-                              <div class="scene-persona__bubble">{{ contentText(element, 'dialogo') }}</div>
+                              <div class="scene-persona__bubble" [ngStyle]="characterBubbleStyle(element)">
+                                {{ contentText(element, 'dialogo') }}
+                              </div>
                             }
-                            <div class="scene-persona__avatar" [style.background]="characterGradient(element)"></div>
+                            <div class="scene-persona__avatar" [ngStyle]="characterAvatarStyle(element)">
+                              <span>{{ characterInitials(element) }}</span>
+                            </div>
                             <div class="scene-persona__label">
                               <strong>{{ contentLabel(element, 'nombre') || 'Personaje' }}</strong>
                               <span>{{ contentLabel(element, 'rol') || 'Rol' }}</span>
+                              <small>{{ contentLabel(element, 'estadoEmocional') || contentLabel(element, 'expresion') }}</small>
                             </div>
                           </div>
                         } @else if (element.type === 'question') {
                           <div
                             class="scene-question"
                             [class.scene-question--selected]="selectedElement()?.id === element.id"
-                            [ngStyle]="stageElementStyle(element)"
+                            [ngStyle]="combinedElementStyle(element)"
                             (pointerdown)="startDrag($event, element.id)"
                             (click)="$event.stopPropagation(); selectElement(element.id)"
                           >
@@ -387,6 +404,9 @@
                           <small>{{ getQuestionElementSummary() }}</small>
                         </header>
                         <h4>{{ contentLabel(element, 'enunciado') || escenarioSeleccionado()!.pregunta?.enunciado }}</h4>
+                        @if (questionSupportText(element)) {
+                          <p class="scene-question__support">{{ questionSupportText(element) }}</p>
+                        }
                       </div>
                     } @else if (element.type === 'image') {
                       <div
@@ -406,16 +426,13 @@
                       <div
                         class="scene-note"
                             [class.scene-note--selected]="selectedElement()?.id === element.id"
-                            [ngStyle]="stageElementStyle(element)"
+                            [ngStyle]="combinedElementStyle(element)"
                             (pointerdown)="startDrag($event, element.id)"
                             (click)="$event.stopPropagation(); selectElement(element.id)"
                           >
-                            {{
-                              contentText(element) ||
-                              contentText(element, 'mensaje') ||
-                              contentLabel(element, 'nombre') ||
-                              element.type
-                            }}
+                            <span class="scene-note__tag">{{ noteTypeLabel(element) }}</span>
+                            <strong>{{ noteTitle(element) }}</strong>
+                            <p>{{ noteBody(element) }}</p>
                           </div>
                         }
                       }
@@ -795,20 +812,28 @@
                 @if (element.type === 'character') {
                   <div class="scene-persona" [ngStyle]="stageElementStyle(element)">
                     @if (contentText(element, 'dialogo')) {
-                      <div class="scene-persona__bubble">{{ contentText(element, 'dialogo') }}</div>
+                      <div class="scene-persona__bubble" [ngStyle]="characterBubbleStyle(element)">
+                        {{ contentText(element, 'dialogo') }}
+                      </div>
                     }
-                    <div class="scene-persona__avatar" [style.background]="characterGradient(element)"></div>
+                    <div class="scene-persona__avatar" [ngStyle]="characterAvatarStyle(element)">
+                      <span>{{ characterInitials(element) }}</span>
+                    </div>
                     <div class="scene-persona__label">
                       <strong>{{ contentLabel(element, 'nombre') || 'Personaje' }}</strong>
                       <span>{{ contentLabel(element, 'rol') || 'Rol' }}</span>
+                      <small>{{ contentLabel(element, 'estadoEmocional') || contentLabel(element, 'expresion') }}</small>
                     </div>
                   </div>
                 } @else if (element.type === 'question') {
-                  <div class="scene-question" [ngStyle]="stageElementStyle(element)">
+                  <div class="scene-question" [ngStyle]="combinedElementStyle(element)">
                     <header>
                       <span class="scene-question__tag">Pregunta</span>
                     </header>
                     <h4>{{ contentLabel(element, 'enunciado') || escenarioSeleccionado()!.pregunta?.enunciado }}</h4>
+                    @if (questionSupportText(element)) {
+                      <p class="scene-question__support">{{ questionSupportText(element) }}</p>
+                    }
                   </div>
                 } @else if (element.type === 'image') {
                   <div class="scene-image" [ngStyle]="stageElementStyle(element)">
@@ -819,13 +844,10 @@
                     />
                   </div>
                 } @else {
-                  <div class="scene-note" [ngStyle]="stageElementStyle(element)">
-                    {{
-                      contentText(element) ||
-                      contentText(element, 'mensaje') ||
-                      contentLabel(element, 'nombre') ||
-                      element.type
-                    }}
+                  <div class="scene-note" [ngStyle]="combinedElementStyle(element)">
+                    <span class="scene-note__tag">{{ noteTypeLabel(element) }}</span>
+                    <strong>{{ noteTitle(element) }}</strong>
+                    <p>{{ noteBody(element) }}</p>
                   </div>
                 }
               }

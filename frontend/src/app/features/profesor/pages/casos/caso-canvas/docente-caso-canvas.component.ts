@@ -159,7 +159,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly propertySections = [
     { id: 'general', label: 'General' },
     { id: 'appearance', label: 'Apariencia' },
-    { id: 'layout', label: 'Posicion y tamano' },
+    { id: 'layout', label: 'Posición y tamaño' },
     { id: 'content', label: 'Contenido' },
     { id: 'advanced', label: 'Avanzado' },
   ] as const;
@@ -168,17 +168,17 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     {
       id: 'editorial_sereno',
       label: 'Editorial sereno',
-      description: 'Ilustracion limpia, academica y equilibrada.',
+      description: 'Ilustración limpia, académica y equilibrada.',
     },
     {
       id: 'acuarela_suave',
       label: 'Acuarela suave',
-      description: 'Textura ligera y atmosfera calmada.',
+      description: 'Textura ligera y atmósfera calmada.',
     },
     {
       id: 'minimal_calido',
-      label: 'Minimal calido',
-      description: 'Composicion simple, profesional y acogedora.',
+      label: 'Minimal cálido',
+      description: 'Composición simple, profesional y acogedora.',
     },
   ] as const;
 
@@ -186,7 +186,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     { id: 'background', label: 'Fondo' },
     { id: 'character', label: 'Personaje' },
     { id: 'object', label: 'Objeto' },
-    { id: 'symbol', label: 'Simbolo/emocion' },
+    { id: 'symbol', label: 'Símbolo/emoción' },
   ] as const;
 
   protected readonly escenarios = computed(() => this.editor()?.escenarios ?? []);
@@ -254,7 +254,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       categoria: 'Fondo',
       categoriaClave: 'backgrounds',
       icono: '▥',
-      descripcion: 'Contexto escolar para convivencia y observacion.',
+      descripcion: 'Contexto escolar para convivencia y observación.',
       tag: 'Escena',
       content: { backgroundCode: 'aula' },
     },
@@ -265,7 +265,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       categoria: 'Personaje',
       categoriaClave: 'characters',
       icono: '◔',
-      descripcion: 'Personaje editable para el caso clinico.',
+      descripcion: 'Personaje editable para el caso clínico.',
       tag: 'Editable',
       content: {
         nombre: 'Paciente',
@@ -279,50 +279,50 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     },
     {
       id: 'personaje-psicologo',
-      nombre: 'Psicologo',
+      nombre: 'Psicólogo',
       tipo: 'character',
       categoria: 'Personaje',
       categoriaClave: 'characters',
       icono: '◕',
-      descripcion: 'Profesional que conduce la intervencion.',
-      tag: 'Guia',
+      descripcion: 'Profesional que conduce la intervención.',
+      tag: 'Guía',
       content: {
         nombre: 'Profesional',
-        rol: 'Psicologo',
+        rol: 'Psicólogo',
         avatar: 'therapist-default',
-        expresion: 'Empatica',
-        estadoEmocional: 'Regulacion',
-        dialogo: 'Explora con cuidado la situacion antes de decidir.',
+        expresion: 'Empática',
+        estadoEmocional: 'Regulación',
+        dialogo: 'Explora con cuidado la situación antes de decidir.',
       },
       size: { width: 180, height: 250 },
     },
     {
       id: 'texto-dialogo',
-      nombre: 'Dialogo',
+      nombre: 'Diálogo',
       tipo: 'text',
       categoria: 'Texto',
       categoriaClave: 'texts',
       icono: 'T',
       descripcion: 'Texto libre para notas, pensamientos o pistas.',
-      tag: 'Rapido',
-      content: { texto: 'Escribe aqui un dialogo o una nota de escena.' },
+      tag: 'Rápido',
+      content: { texto: 'Escribe aquí un diálogo o una nota de escena.' },
       size: { width: 240, height: 90 },
     },
     {
       id: 'texto-instruccion',
-      nombre: 'Instruccion',
+      nombre: 'Instrucción',
       tipo: 'instruction',
       categoria: 'Texto',
       categoriaClave: 'texts',
       icono: 'i',
-      descripcion: 'Guia breve para el estudiante dentro del escenario.',
-      tag: 'Pedagogico',
-      content: { texto: 'Analiza la situacion antes de responder.' },
+      descripcion: 'Guía breve para el estudiante dentro del escenario.',
+      tag: 'Pedagógico',
+      content: { texto: 'Analiza la situación antes de responder.' },
       size: { width: 260, height: 90 },
     },
     {
       id: 'objeto-nota',
-      nombre: 'Nota clinica',
+      nombre: 'Nota clínica',
       tipo: 'object',
       categoria: 'Objeto',
       categoriaClave: 'objects',
@@ -353,7 +353,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       icono: '?',
       descripcion: 'Bloque visible que representa la pregunta del escenario.',
       tag: 'Clave',
-      content: { enunciado: 'Formula aqui la decision principal del escenario.' },
+      content: { enunciado: 'Formula aquí la decisión principal del escenario.' },
       size: { width: 320, height: 120 },
     },
     {
@@ -365,7 +365,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       icono: '!',
       descripcion: 'Tarjeta para reforzar el aprendizaje.',
       tag: 'Refuerzo',
-      content: { mensaje: 'El feedback aparece segun la opcion elegida.' },
+      content: { mensaje: 'El feedback aparece según la opción elegida.' },
       size: { width: 280, height: 110 },
     },
   ]);
@@ -832,7 +832,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       .crearEscenario(editor.id, {
         orden: nextOrder,
         titulo: `Escenario ${nextOrder}`,
-        situacionTexto: 'Describe aqui el momento narrativo, el contexto y la tension pedagogica.',
+        situacionTexto: 'Describe aquí el momento narrativo, el contexto y la tensión pedagógica.',
         fondoCodigo: editor.catalogos.backgrounds[0] ?? 'oficina_psicologica',
         isFinal: false,
       })
@@ -1232,7 +1232,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     const escenarioDestinoId = opcion?.escenarioDestinoId ?? (this.newOptionDestino() || null);
 
     if (!texto) {
-      this.errorMessage.set('La opcion no puede quedar vacia.');
+      this.errorMessage.set('La opción no puede quedar vacía.');
       return;
     }
 
@@ -1260,12 +1260,12 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         this.newOptionScore.set(0);
         this.newOptionCorrect.set(false);
         this.newOptionDestino.set('');
-        this.successMessage.set(opcion ? 'Opcion actualizada.' : 'Opcion creada.');
+        this.successMessage.set(opcion ? 'Opción actualizada.' : 'Opción creada.');
         this.loadEditor();
       },
       error: (error) => {
         this.saving.set(false);
-        this.errorMessage.set(getErrorMessage(error, 'No fue posible guardar la opcion.'));
+        this.errorMessage.set(getErrorMessage(error, 'No fue posible guardar la opción.'));
       },
     });
   }
@@ -1278,7 +1278,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
     const mensaje = this.feedbackDraft().trim();
     if (!mensaje) {
-      this.errorMessage.set('La retroalimentacion no puede quedar vacia.');
+      this.errorMessage.set('La retroalimentación no puede quedar vacía.');
       return;
     }
 
@@ -1295,12 +1295,12 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     request$.subscribe({
       next: () => {
         this.saving.set(false);
-        this.successMessage.set('Retroalimentacion guardada.');
+        this.successMessage.set('Retroalimentación guardada.');
         this.loadEditor();
       },
       error: (error) => {
         this.saving.set(false);
-        this.errorMessage.set(getErrorMessage(error, 'No fue posible guardar la retroalimentacion.'));
+        this.errorMessage.set(getErrorMessage(error, 'No fue posible guardar la retroalimentación.'));
       },
     });
   }
@@ -1492,7 +1492,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   destinoBadgeLabel(tipo: 'explicito' | 'orden' | 'fin'): string {
     switch (tipo) {
       case 'explicito':
-        return 'Destino explicito';
+        return 'Destino explícito';
       case 'orden':
         return 'Siguiente por orden';
       default:
@@ -1525,7 +1525,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   currentScenarioStatusLabel(escenario: CasoEditorEscenario): string {
     if (this.isScenarioDisconnected(escenario)) {
-      return 'Sin conexion';
+      return 'Sin conexión';
     }
 
     if (!escenario.pregunta || escenario.pregunta.opciones.length === 0) {
@@ -1540,7 +1540,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     if (status === 'Completo') {
       return 'success';
     }
-    if (status === 'Sin conexion') {
+    if (status === 'Sin conexión') {
       return 'error';
     }
     return 'warning';

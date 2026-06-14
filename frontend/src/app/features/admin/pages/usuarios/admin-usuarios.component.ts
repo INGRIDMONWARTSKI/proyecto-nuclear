@@ -1,10 +1,14 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin, map } from 'rxjs';
 import { Role } from '../../../../core/models/role.enum';
+import { Grupo } from '../../../../core/models/grupo.model';
 import { Usuario } from '../../../../core/models/usuario.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { getErrorMessage } from '../../../../core/utils/http-error.util';
+import { GruposService } from '../../../profesor/services/grupos.service';
 import { UsuariosApiService } from '../../../profesor/services/usuarios-api.service';
 import { AlertMessageComponent } from '../../../../shared/ui/alert-message/alert-message.component';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
@@ -19,10 +23,16 @@ import { AdminAmbientComponent } from '../../shared/admin-ambient/admin-ambient.
 
 type PanelMode = 'none' | 'create' | 'edit';
 
+export interface GrupoEstudiantesView {
+  grupo: Grupo;
+  estudiantes: Usuario[];
+}
+
 @Component({
   selector: 'app-admin-usuarios',
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     AlertMessageComponent,
     EmptyStateComponent,
@@ -38,6 +48,7 @@ type PanelMode = 'none' | 'create' | 'edit';
 export class AdminUsuariosComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly usuariosApi = inject(UsuariosApiService);
+  private readonly gruposService = inject(GruposService);
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -50,6 +61,8 @@ export class AdminUsuariosComponent implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly usuarios = signal<Usuario[]>([]);
+  protected readonly gruposConEstudiantes = signal<GrupoEstudiantesView[]>([]);
+  protected readonly estudiantesSinGrupo = signal<Usuario[]>([]);
 
   protected readonly panelMode = signal<PanelMode>('none');
   protected readonly editingUsuario = signal<Usuario | null>(null);
@@ -57,7 +70,7 @@ export class AdminUsuariosComponent implements OnInit {
   protected readonly confirmTitle = signal('');
   protected readonly confirmMessage = signal('');
   protected readonly confirmLabel = signal('Confirmar');
-  protected readonly confirmDestructive = signal(true);
+  protected readonly confirmDestructive = signal(false);
 
   private usuarioPendienteEstado: Usuario | null = null;
 
@@ -65,10 +78,27 @@ export class AdminUsuariosComponent implements OnInit {
     () => this.authService.user()?.id ?? null,
   );
 
+  protected readonly adminsActivos = computed(() =>
+    this.usuarios()
+      .filter((usuario) => usuario.role === Role.ADMIN && usuario.isActive)
+      .sort((a, b) => a.fullName.localeCompare(b.fullName)),
+  );
+
+  protected readonly profesoresActivos = computed(() =>
+    this.usuarios()
+      .filter((usuario) => usuario.role === Role.PROFESOR && usuario.isActive)
+      .sort((a, b) => a.fullName.localeCompare(b.fullName)),
+  );
+
+  protected readonly usuariosArchivados = computed(() =>
+    this.usuarios()
+      .filter((usuario) => !usuario.isActive)
+      .sort((a, b) => a.fullName.localeCompare(b.fullName)),
+  );
+
   protected readonly createForm = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
     role: [Role.ESTUDIANTE, [Validators.required]],
   });
 
@@ -95,14 +125,79 @@ export class AdminUsuariosComponent implements OnInit {
   cargarUsuarios() {
     this.loading.set(true);
     this.errorMessage.set(null);
-    this.usuariosApi.listarUsuarios().subscribe({
-      next: (usuarios) => {
+
+    forkJoin({
+      usuarios: this.usuariosApi.listarUsuarios(),
+      grupos: this.gruposService.listar(),
+    }).subscribe({
+      next: ({ usuarios, grupos }) => {
         this.usuarios.set(usuarios);
-        this.loading.set(false);
+        this.cargarAgrupacionEstudiantes(usuarios, grupos);
       },
       error: (error) => {
         this.errorMessage.set(
           getErrorMessage(error, 'No fue posible cargar los usuarios.'),
+        );
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private cargarAgrupacionEstudiantes(usuarios: Usuario[], grupos: Grupo[]) {
+    const gruposActivos = grupos
+      .filter((grupo) => grupo.isActive)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    const estudiantesActivos = usuarios.filter(
+      (usuario) => usuario.role === Role.ESTUDIANTE && usuario.isActive,
+    );
+
+    if (gruposActivos.length === 0) {
+      this.gruposConEstudiantes.set([]);
+      this.estudiantesSinGrupo.set(estudiantesActivos);
+      this.loading.set(false);
+      return;
+    }
+
+    forkJoin(
+      gruposActivos.map((grupo) =>
+        this.gruposService.listarEstudiantes(grupo.id).pipe(
+          map((estudiantes) => ({
+            grupo,
+            estudiantes: estudiantes
+              .filter((estudiante) => estudiante.isActive)
+              .sort((a, b) => a.fullName.localeCompare(b.fullName)),
+          })),
+        ),
+      ),
+    ).subscribe({
+      next: (resultados) => {
+        const idsEnGrupo = new Set<string>();
+
+        for (const resultado of resultados) {
+          for (const estudiante of resultado.estudiantes) {
+            idsEnGrupo.add(estudiante.id);
+          }
+        }
+
+        this.gruposConEstudiantes.set(
+          resultados.filter((resultado) => resultado.estudiantes.length > 0),
+        );
+        this.estudiantesSinGrupo.set(
+          estudiantesActivos
+            .filter((estudiante) => !idsEnGrupo.has(estudiante.id))
+            .sort((a, b) => a.fullName.localeCompare(b.fullName)),
+        );
+        this.loading.set(false);
+      },
+      error: (error) => {
+        this.gruposConEstudiantes.set([]);
+        this.estudiantesSinGrupo.set(estudiantesActivos);
+        this.errorMessage.set(
+          getErrorMessage(
+            error,
+            'Usuarios cargados, pero no fue posible agrupar estudiantes por grupo.',
+          ),
         );
         this.loading.set(false);
       },
@@ -116,7 +211,6 @@ export class AdminUsuariosComponent implements OnInit {
     this.createForm.reset({
       fullName: '',
       email: '',
-      password: '',
       role: Role.ESTUDIANTE,
     });
     this.panelMode.set('create');
@@ -147,6 +241,22 @@ export class AdminUsuariosComponent implements OnInit {
     return usuario.id === this.currentUserId();
   }
 
+  esUltimoAdminActivo(usuario: Usuario): boolean {
+    return (
+      usuario.role === Role.ADMIN &&
+      usuario.isActive &&
+      this.adminsActivos().length <= 1
+    );
+  }
+
+  puedeArchivar(usuario: Usuario): boolean {
+    return (
+      usuario.isActive &&
+      !this.esAdminActual(usuario) &&
+      !this.esUltimoAdminActivo(usuario)
+    );
+  }
+
   crearUsuario() {
     if (this.createForm.invalid || this.saving()) {
       this.createForm.markAllAsTouched();
@@ -158,9 +268,17 @@ export class AdminUsuariosComponent implements OnInit {
     this.successMessage.set(null);
 
     this.usuariosApi.crearUsuario(this.createForm.getRawValue()).subscribe({
-      next: () => {
+      next: (response) => {
         this.saving.set(false);
-        this.successMessage.set('Usuario creado correctamente.');
+        if (response.warning) {
+          this.successMessage.set(response.warning);
+        } else if (response.emailSent) {
+          this.successMessage.set(
+            'Usuario creado. Se envió un correo con la contraseña temporal.',
+          );
+        } else {
+          this.successMessage.set('Usuario creado correctamente.');
+        }
         this.cerrarPanel();
         this.cargarUsuarios();
       },
@@ -185,7 +303,6 @@ export class AdminUsuariosComponent implements OnInit {
       fullName: raw.fullName.trim(),
     };
 
-    // Solo enviar rol si no es el admin actual y cambió.
     if (!this.esAdminActual(usuario) && raw.role !== usuario.role) {
       payload.role = raw.role;
     }
@@ -211,22 +328,30 @@ export class AdminUsuariosComponent implements OnInit {
   }
 
   cambiarEstado(usuario: Usuario) {
-    if (this.esAdminActual(usuario) && usuario.isActive) {
-      return;
-    }
-
     if (this.saving()) {
       return;
     }
 
     if (usuario.isActive) {
+      if (this.esAdminActual(usuario)) {
+        this.errorMessage.set('No puedes archivar tu propia cuenta.');
+        return;
+      }
+
+      if (this.esUltimoAdminActivo(usuario)) {
+        this.errorMessage.set(
+          'Debe existir al menos un administrador activo.',
+        );
+        return;
+      }
+
       this.usuarioPendienteEstado = usuario;
-      this.confirmTitle.set('Desactivar usuario');
+      this.confirmTitle.set('Archivar usuario');
       this.confirmMessage.set(
-        `¿Desactivar a ${usuario.fullName}? No podrá iniciar sesión, pero su historial académico se conservará.`,
+        'Este usuario dejará de aparecer en los listados principales y no podrá acceder a MENTORA. Su historial académico, evidencias y registros se conservarán.',
       );
-      this.confirmLabel.set('Desactivar');
-      this.confirmDestructive.set(true);
+      this.confirmLabel.set('Archivar usuario');
+      this.confirmDestructive.set(false);
       this.confirmOpen.set(true);
       return;
     }
@@ -266,7 +391,7 @@ export class AdminUsuariosComponent implements OnInit {
           this.cerrarConfirmacion();
           this.successMessage.set(
             usuario.isActive
-              ? 'Usuario desactivado correctamente.'
+              ? 'Usuario archivado correctamente.'
               : 'Usuario reactivado correctamente.',
           );
           this.cargarUsuarios();

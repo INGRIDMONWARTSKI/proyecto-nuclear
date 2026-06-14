@@ -17,11 +17,15 @@ import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 import { CambiarEstadoUsuarioDto } from './dto/cambiar-estado-usuario.dto';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { UsuariosService } from './usuarios.service';
+import { MailService } from '../mail/mail.service';
 
 @Controller('usuarios')
 @UseGuards(JwtAuthGuard)
 export class UsuariosController {
-  constructor(private readonly usuariosService: UsuariosService) {}
+  constructor(
+    private readonly usuariosService: UsuariosService,
+    private readonly mailService: MailService,
+  ) {}
 
   @Get()
   @UseGuards(RolesGuard)
@@ -42,8 +46,29 @@ export class UsuariosController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   async create(@Body() crearUsuarioDto: CrearUsuarioDto) {
-    const usuario = await this.usuariosService.create(crearUsuarioDto);
-    return this.usuariosService.sanitizeUser(usuario);
+    const { usuario, temporaryPassword } =
+      await this.usuariosService.createWithTemporaryPassword({
+        fullName: crearUsuarioDto.fullName,
+        email: crearUsuarioDto.email,
+        role: crearUsuarioDto.role,
+      });
+
+    const emailSent = await this.mailService.sendWelcomeEmail(
+      usuario.fullName,
+      usuario.email,
+      temporaryPassword,
+    );
+
+    return {
+      user: this.usuariosService.sanitizeUser(usuario),
+      emailSent,
+      ...(emailSent
+        ? {}
+        : {
+            warning:
+              'Usuario creado, pero no se pudo enviar el correo.',
+          }),
+    };
   }
 
   @Patch(':id')

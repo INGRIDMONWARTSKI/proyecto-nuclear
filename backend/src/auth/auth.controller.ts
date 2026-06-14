@@ -5,6 +5,7 @@ import { Role } from '../common/enums/role.enum';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
+import { ChangeTemporaryPasswordDto } from './dto/change-temporary-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -35,6 +36,15 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Post('change-temporary-password')
+  @UseGuards(JwtAuthGuard)
+  changeTemporaryPassword(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Body() dto: ChangeTemporaryPasswordDto,
+  ) {
+    return this.authService.changeTemporaryPassword(currentUser, dto);
   }
 
   @Post('logout')

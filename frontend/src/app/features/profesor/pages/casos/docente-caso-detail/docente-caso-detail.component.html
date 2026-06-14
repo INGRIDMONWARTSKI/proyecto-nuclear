@@ -7,7 +7,7 @@
         <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
         <app-page-header
           [title]="c.titulo"
-          subtitle="Gestiona escenarios, contenido pedagogico, editor visual y publicacion."
+          subtitle="Gestiona escenarios, contenido pedagógico, editor visual y publicación."
           icon="🧠"
         >
           <div actions class="case-header-actions">
@@ -45,7 +45,7 @@
             </a>
           }
         </div>
-        <p class="caso-meta__text">{{ c.descripcion || 'Sin descripcion' }}</p>
+        <p class="caso-meta__text">{{ c.descripcion || 'Sin descripción' }}</p>
         <p class="caso-meta__text">
           <strong>Objetivo:</strong>
           {{ c.objetivoAprendizaje || 'Sin objetivo definido' }}
@@ -53,7 +53,7 @@
         <div class="case-hero__chips">
           <span>Escenas interactivas</span>
           <span>Preguntas situadas</span>
-          <span>Rutas de decision</span>
+          <span>Rutas de decisión</span>
         </div>
       </section>
 
@@ -103,7 +103,7 @@
                       [routerLink]="['/profesor/escenarios', esc.id, 'decision']"
                       [queryParams]="{ casoId: c.id }"
                     >
-                      Configurar decision
+                      Configurar decisión
                     </a>
                   }
                 </div>
@@ -116,14 +116,14 @@
       <section class="siep-card actions-panel">
         <h2>Acciones del caso</h2>
         <div class="actions-panel__buttons">
-          <a class="siep-btn-primary" [routerLink]="['canvas']">Disenar en editor visual</a>
+          <a class="siep-btn-primary" [routerLink]="['canvas']">Diseñar en editor visual</a>
           <button
             class="siep-btn-secondary"
             type="button"
             [disabled]="loadingPreview()"
             (click)="cargarPreview()"
           >
-            {{ loadingPreview() ? 'Cargando...' : 'Vista previa pedagogica' }}
+            {{ loadingPreview() ? 'Cargando...' : 'Vista previa pedagógica' }}
           </button>
           @if (c.estado === 'published') {
             <button class="siep-btn-secondary" type="button" (click)="cargarEvidencias()">
@@ -145,7 +145,7 @@
 
       @if (showPreview() && preview(); as p) {
         <section class="siep-card preview-panel">
-          <h2>Vista previa pedagogica</h2>
+          <h2>Vista previa pedagógica</h2>
           @for (esc of p.escenarios; track esc.id) {
             <article class="preview-item">
               <h3>{{ esc.orden }}. {{ esc.titulo }}</h3>
@@ -159,7 +159,7 @@
                       @if (op.retroalimentacion) {
                         · <em>{{ op.retroalimentacion.tipo }}</em>
                       } @else {
-                        · <span class="warn">Sin retroalimentacion</span>
+                        · <span class="warn">Sin retroalimentación</span>
                       }
                     </li>
                   }
@@ -204,7 +204,7 @@
         <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
         <app-page-header
           title="Caso no disponible"
-          subtitle="No se pudo cargar la informacion del caso."
+          subtitle="No se pudo cargar la información del caso."
           icon="🧠"
         >
           <a actions class="siep-btn-secondary" routerLink="..">Volver</a>

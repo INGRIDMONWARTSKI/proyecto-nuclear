@@ -4,6 +4,7 @@ export interface ImportEstudianteItem {
   estado: string;
   observacion: string;
   temporaryPassword?: string;
+  correoEnviado?: boolean;
 }
 
 export interface ImportCredencialItem {
@@ -11,6 +12,7 @@ export interface ImportCredencialItem {
   email: string;
   temporaryPassword: string;
   estado: string;
+  correoEnviado?: boolean;
 }
 
 export interface ImportarEstudiantesResponse {

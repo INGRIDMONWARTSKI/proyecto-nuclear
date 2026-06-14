@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { changeTemporaryPasswordPageGuard } from './core/guards/change-temporary-password-page.guard';
+import { mustChangePasswordGuard } from './core/guards/must-change-password.guard';
 import { legacyGruposRedirectGuard } from './core/guards/legacy-grupos-redirect.guard';
 import { legacySimulacionRedirectGuard } from './core/guards/legacy-simulacion-redirect.guard';
 import { roleGuard } from './core/guards/role.guard';
@@ -26,8 +28,16 @@ export const routes: Routes = [
   },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
+    path: 'auth/cambiar-contrasena-temporal',
+    canActivate: [changeTemporaryPasswordPageGuard],
+    loadComponent: () =>
+      import(
+        './features/auth/pages/cambiar-contrasena-temporal/cambiar-contrasena-temporal.component'
+      ).then((m) => m.CambiarContrasenaTemporalComponent),
+  },
+  {
     path: 'admin',
-    canActivate: [authGuard, roleGuard(Role.ADMIN)],
+    canActivate: [authGuard, mustChangePasswordGuard, roleGuard(Role.ADMIN)],
     loadComponent: () =>
       import('./layouts/admin-layout/admin-layout.component').then(
         (m) => m.AdminLayoutComponent,
@@ -37,7 +47,7 @@ export const routes: Routes = [
   },
   {
     path: 'profesor',
-    canActivate: [authGuard, roleGuard(Role.PROFESOR)],
+    canActivate: [authGuard, mustChangePasswordGuard, roleGuard(Role.PROFESOR)],
     loadComponent: () =>
       import('./layouts/profesor-layout/profesor-layout.component').then(
         (m) => m.ProfesorLayoutComponent,
@@ -49,7 +59,7 @@ export const routes: Routes = [
   },
   {
     path: 'estudiante',
-    canActivate: [authGuard, roleGuard(Role.ESTUDIANTE)],
+    canActivate: [authGuard, mustChangePasswordGuard, roleGuard(Role.ESTUDIANTE)],
     loadComponent: () =>
       import('./layouts/estudiante-layout/estudiante-layout.component').then(
         (m) => m.EstudianteLayoutComponent,

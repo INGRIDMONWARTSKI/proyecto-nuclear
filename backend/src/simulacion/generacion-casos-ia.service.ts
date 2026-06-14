@@ -63,6 +63,8 @@ export class GeneracionCasosIaService {
       );
     }
 
+    this.assertSufficientPromptContext(referenciasTexto, referenciasCasos);
+
     const prompt = this.buildPrompt(
       {
         instruccion: dto.instruccion?.trim() || null,
@@ -86,6 +88,28 @@ export class GeneracionCasosIaService {
 
   private normalizeReferenceTexts(texts: string[] | undefined): string[] {
     return (texts ?? []).map((item) => item.trim()).filter((item) => item.length > 0);
+  }
+
+  private assertSufficientPromptContext(
+    referenciasTexto: string[],
+    referenciasCasos: CasoPreviewTree[],
+  ): void {
+    if (referenciasCasos.length > 0) {
+      return;
+    }
+
+    const totalCharacters = referenciasTexto.join('\n\n').length;
+    const longestReference = referenciasTexto.reduce(
+      (max, item) => Math.max(max, item.length),
+      0,
+    );
+
+    if (totalCharacters < 120 || longestReference < 80) {
+      throw new BadRequestException({
+        message: 'Agrega mas contexto para generar un caso completo.',
+        code: 'IA_PROMPT_INSUFFICIENT',
+      });
+    }
   }
 
   private async resolveReferenceCases(

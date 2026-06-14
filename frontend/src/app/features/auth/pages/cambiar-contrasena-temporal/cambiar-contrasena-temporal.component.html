@@ -1,0 +1,104 @@
+<section class="change-temp-page">
+  <div class="change-temp-page__card siep-card">
+    <header class="change-temp-page__head">
+      <p class="change-temp-page__brand" aria-hidden="true">MENTORA</p>
+      <h1>Cambia tu contraseña inicial</h1>
+      <p class="change-temp-page__intro">
+        Por seguridad, debes crear una nueva contraseña antes de continuar en MENTORA.
+      </p>
+    </header>
+
+    @if (errorMessage()) {
+      <p class="change-temp-page__alert change-temp-page__alert--error" role="alert">
+        {{ errorMessage() }}
+      </p>
+    }
+
+    @if (successMessage()) {
+      <p class="change-temp-page__alert change-temp-page__alert--success" role="status">
+        {{ successMessage() }}
+      </p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="change-temp-page__form">
+      <div class="siep-field">
+        <label for="current-password">Contraseña temporal actual</label>
+        <div class="change-temp-page__password-wrap">
+          <input
+            id="current-password"
+            [type]="showCurrentPassword() ? 'text' : 'password'"
+            formControlName="currentPassword"
+            autocomplete="current-password"
+            [class.is-invalid]="form.controls.currentPassword.touched && form.controls.currentPassword.invalid"
+          />
+          <button
+            type="button"
+            class="change-temp-page__toggle"
+            (click)="toggleCurrentPassword()"
+            [attr.aria-label]="showCurrentPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            {{ showCurrentPassword() ? 'Ocultar' : 'Mostrar' }}
+          </button>
+        </div>
+        @if (form.controls.currentPassword.touched && form.controls.currentPassword.hasError('required')) {
+          <span class="field-error">Ingresa tu contraseña temporal.</span>
+        }
+      </div>
+
+      <div class="siep-field">
+        <label for="new-password">Nueva contraseña</label>
+        <div class="change-temp-page__password-wrap">
+          <input
+            id="new-password"
+            [type]="showNewPassword() ? 'text' : 'password'"
+            formControlName="newPassword"
+            autocomplete="new-password"
+            [class.is-invalid]="form.controls.newPassword.touched && form.controls.newPassword.invalid"
+          />
+          <button
+            type="button"
+            class="change-temp-page__toggle"
+            (click)="toggleNewPassword()"
+            [attr.aria-label]="showNewPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            {{ showNewPassword() ? 'Ocultar' : 'Mostrar' }}
+          </button>
+        </div>
+        @if (form.controls.newPassword.touched && form.controls.newPassword.hasError('required')) {
+          <span class="field-error">La nueva contraseña es obligatoria.</span>
+        }
+        @if (form.controls.newPassword.touched && form.controls.newPassword.hasError('minlength')) {
+          <span class="field-error">La nueva contraseña debe tener al menos 8 caracteres.</span>
+        }
+      </div>
+
+      <div class="siep-field">
+        <label for="confirm-password">Confirmar nueva contraseña</label>
+        <div class="change-temp-page__password-wrap">
+          <input
+            id="confirm-password"
+            [type]="showConfirmPassword() ? 'text' : 'password'"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            [class.is-invalid]="form.controls.confirmPassword.touched && form.controls.confirmPassword.invalid"
+          />
+          <button
+            type="button"
+            class="change-temp-page__toggle"
+            (click)="toggleConfirmPassword()"
+            [attr.aria-label]="showConfirmPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            {{ showConfirmPassword() ? 'Ocultar' : 'Mostrar' }}
+          </button>
+        </div>
+        @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.hasError('required')) {
+          <span class="field-error">Confirma tu nueva contraseña.</span>
+        }
+      </div>
+
+      <button type="submit" class="siep-btn-primary change-temp-page__submit" [disabled]="loading()">
+        {{ loading() ? 'Guardando...' : 'Guardar nueva contraseña' }}
+      </button>
+    </form>
+  </div>
+</section>

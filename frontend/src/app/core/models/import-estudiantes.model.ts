@@ -4,6 +4,7 @@ export interface ImportEstudianteItem {
   estado: string;
   observacion: string;
   temporaryPassword?: string;
+  correoEnviado?: boolean;
 }
 
 export interface ImportCredencialItem {
@@ -11,6 +12,7 @@ export interface ImportCredencialItem {
   email: string;
   temporaryPassword: string;
   estado: string;
+  correoEnviado?: boolean;
 }
 
 export interface ImportarEstudiantesResponse {
@@ -61,10 +63,10 @@ export function downloadTextFile(content: string, filename: string, mimeType: st
 export function buildReporteCredencialesCsv(
   response: ImportarEstudiantesResponse,
 ): string {
-  const lines = ['fullName,email,temporaryPassword,estado'];
+  const lines = ['fullName,email,temporaryPassword,estado,correoEnviado'];
   for (const item of response.reporteCredenciales) {
     lines.push(
-      `"${item.fullName.replace(/"/g, '""')}","${item.email}","${item.temporaryPassword}","${item.estado}"`,
+      `"${item.fullName.replace(/"/g, '""')}","${item.email}","${item.temporaryPassword}","${item.estado}","${item.correoEnviado ? 'si' : 'no'}"`,
     );
   }
   return lines.join('\n');

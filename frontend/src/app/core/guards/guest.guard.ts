@@ -19,5 +19,9 @@ export const guestGuard: CanActivateFn = () => {
     return true;
   }
 
+  if (authService.mustChangePassword()) {
+    return router.parseUrl('/auth/cambiar-contrasena-temporal');
+  }
+
   return router.parseUrl(authService.getDefaultRouteForRole(role));
 };

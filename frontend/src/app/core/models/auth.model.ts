@@ -23,10 +23,17 @@ export interface ResetPasswordResponse {
   message: string;
 }
 
+export interface ChangeTemporaryPasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface AuthResponse {
   accessToken: string;
   expiresIn: string;
   user: Usuario;
+  mustChangePassword?: boolean;
 }
 
 export interface AuthSession {

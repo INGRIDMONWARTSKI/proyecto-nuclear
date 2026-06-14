@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   AuthResponse,
   AuthSession,
+  ChangeTemporaryPasswordPayload,
   ForgotPasswordPayload,
   ForgotPasswordResponse,
   LoginPayload,
@@ -29,9 +30,22 @@ export class AuthService {
   readonly isAuthenticated = computed(() => Boolean(this.sessionSignal()?.accessToken));
   readonly role = computed(() => this.sessionSignal()?.user.role ?? null);
 
+  readonly mustChangePassword = computed(
+    () => this.sessionSignal()?.user.mustChangePassword ?? false,
+  );
+
   login(payload: LoginPayload) {
     return this.http
       .post<AuthResponse>(`${environment.apiUrl}/auth/login`, payload)
+      .pipe(tap((response) => this.persistSession(response)));
+  }
+
+  changeTemporaryPassword(payload: ChangeTemporaryPasswordPayload) {
+    return this.http
+      .post<AuthResponse>(
+        `${environment.apiUrl}/auth/change-temporary-password`,
+        payload,
+      )
       .pipe(tap((response) => this.persistSession(response)));
   }
 
@@ -152,9 +166,14 @@ export class AuthService {
   }
 
   private persistSession(response: AuthResponse) {
+    const user: Usuario = {
+      ...response.user,
+      mustChangePassword:
+        response.mustChangePassword ?? response.user.mustChangePassword ?? false,
+    };
     const session: AuthSession = {
       accessToken: response.accessToken,
-      user: response.user,
+      user,
     };
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     this.sessionSignal.set(session);
@@ -174,7 +193,13 @@ export class AuthService {
         return null;
       }
 
-      return session;
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          mustChangePassword: session.user.mustChangePassword ?? false,
+        },
+      };
     } catch {
       localStorage.removeItem(SESSION_KEY);
       return null;

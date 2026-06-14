@@ -113,7 +113,7 @@ export class EstudianteCasosListComponent implements OnInit {
       error: (error) => {
         this.startingCasoId.set(null);
         this.errorMessage.set(
-          getErrorMessage(error, 'No fue posible iniciar la simulacion.'),
+          getErrorMessage(error, 'No fue posible iniciar la simulación.'),
         );
       },
     });

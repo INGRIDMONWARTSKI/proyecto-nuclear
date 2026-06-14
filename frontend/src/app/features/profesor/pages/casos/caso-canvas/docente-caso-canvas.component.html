@@ -76,7 +76,7 @@
     @if (escenarios().length === 0) {
       <app-empty-state
         title="Sin escenarios"
-        message="Este caso aun no tiene escenas para editar."
+        message="Este caso aún no tiene escenas para editar."
         icon="□"
       />
     } @else if (escenarioSeleccionado()) {
@@ -194,12 +194,12 @@
                 </label>
 
                 <label class="field">
-                  <span>Descripcion</span>
+                  <span>Descripción</span>
                   <textarea
                     rows="4"
                     [value]="aiDescription()"
                     [placeholder]="aiVisibleType() === 'background'
-                      ? 'Ej: consultorio sereno con luz natural, plantas suaves y atmosfera de escucha profesional.'
+                      ? 'Ej: consultorio sereno con luz natural, plantas suaves y atmósfera de escucha profesional.'
                       : aiVisibleType() === 'character'
                         ? 'Ej: nino triste sentado en un salon de clase.'
                         : aiVisibleType() === 'symbol'
@@ -442,7 +442,7 @@
             </div>
 
             <div class="scene-drawer__body panel__body">
-              <span class="panel__helper">Edita solo lo que esta seleccionado.</span>
+              <span class="panel__helper">Edita solo lo que está seleccionado.</span>
 
               @if (selectedElement(); as element) {
                 <div class="accordion">
@@ -465,7 +465,7 @@
 
                           @if (section.id === 'appearance') {
                             <label class="field">
-                              <span>Rotacion</span>
+                              <span>Rotación</span>
                               <input type="range" min="-180" max="180" [value]="element.rotation" (input)="updateSelectedRotation($any($event.target).value)" />
                             </label>
                             <button class="siep-btn-secondary property-action" type="button" (click)="toggleSelectedHidden()">
@@ -475,11 +475,11 @@
 
                           @if (section.id === 'layout') {
                             <label class="field">
-                              <span>Posicion horizontal</span>
+                              <span>Posición horizontal</span>
                               <input type="range" min="-20" max="120" [value]="element.position.x" (input)="updateSelectedPosition('x', $any($event.target).value)" />
                             </label>
                             <label class="field">
-                              <span>Posicion vertical</span>
+                              <span>Posición vertical</span>
                               <input type="range" min="-20" max="120" [value]="element.position.y" (input)="updateSelectedPosition('y', $any($event.target).value)" />
                             </label>
                             <label class="field">
@@ -503,7 +503,7 @@
                                 <input type="text" [value]="contentLabel(element, 'rol')" (input)="updateSelectedContent('rol', $any($event.target).value)" />
                               </label>
                               <label class="field">
-                                <span>Expresion</span>
+                                <span>Expresión</span>
                                 <input type="text" [value]="contentLabel(element, 'expresion')" (input)="updateSelectedContent('expresion', $any($event.target).value)" />
                               </label>
                               <label class="field">
@@ -511,7 +511,7 @@
                                 <input type="text" [value]="contentLabel(element, 'estadoEmocional')" (input)="updateSelectedContent('estadoEmocional', $any($event.target).value)" />
                               </label>
                               <label class="field">
-                                <span>Dialogo</span>
+                                <span>Diálogo</span>
                                 <textarea rows="4" [value]="contentText(element, 'dialogo')" (input)="updateSelectedContent('dialogo', $any($event.target).value)"></textarea>
                               </label>
                             } @else if (element.type === 'question') {
@@ -566,7 +566,7 @@
           <div class="scenario-strip__header">
             <div>
               <p class="panel__eyebrow">Escenarios</p>
-              <h3>Navegacion rapida del caso</h3>
+              <h3>Navegación rápida del caso</h3>
             </div>
             <button class="siep-btn-primary" type="button" [disabled]="saving()" (click)="createScenario()">
               + Nueva escena
@@ -602,7 +602,7 @@
                 <p class="panel__eyebrow">Preguntas</p>
                 <h3>Escenas del caso</h3>
               </div>
-              <span class="panel__helper">Selecciona una escena para trabajar su decision.</span>
+              <span class="panel__helper">Selecciona una escena para trabajar su decisión.</span>
             </div>
 
             <div class="decision-scenario-list">
@@ -625,7 +625,7 @@
                 <textarea rows="5" [value]="questionDraft()" (input)="updateQuestionDraft($any($event.target).value)"></textarea>
               </label>
               <label class="field">
-                <span>Puntaje maximo</span>
+                <span>Puntaje máximo</span>
                 <input type="number" [value]="questionScoreDraft()" (input)="updateQuestionScoreDraft($any($event.target).value)" />
               </label>
               <button class="siep-btn-primary" type="button" (click)="saveQuestion()">Guardar pregunta</button>
@@ -638,7 +638,7 @@
                 <p class="panel__eyebrow">Opciones</p>
                 <h3>Editor de respuestas</h3>
               </div>
-              <span class="panel__helper">Define texto, puntaje y ruta de cada opcion.</span>
+              <span class="panel__helper">Define texto, puntaje y ruta de cada opción.</span>
             </div>
 
             @if (escenarioSeleccionado()!.pregunta; as pregunta) {
@@ -650,7 +650,7 @@
                     (click)="selectDecisionOption(op.id)"
                   >
                     <div class="decision-option-card__head">
-                      <strong>Opcion {{ op.orden }}</strong>
+                      <strong>Opción {{ op.orden }}</strong>
                       <app-status-badge
                         variant="status"
                         [status]="op.isCorrecta ? 'success' : 'warning'"
@@ -680,16 +680,16 @@
                     </div>
                     <label class="decision-check">
                       <input type="checkbox" [checked]="op.isCorrecta" (change)="updateOptionField(op.id, 'isCorrecta', $any($event.target).checked)" />
-                      Opcion recomendada
+                      Opción recomendada
                     </label>
-                    <button class="siep-btn-secondary" type="button" (click)="saveOption(op)">Guardar opcion</button>
+                    <button class="siep-btn-secondary" type="button" (click)="saveOption(op)">Guardar opción</button>
                   </article>
                 }
               </div>
 
               <section class="decision-create">
                 <div class="decision-create__header">
-                  <strong>Agregar opcion</strong>
+                  <strong>Agregar opción</strong>
                   <span>Nueva respuesta para la escena actual</span>
                 </div>
                 <label class="field">
@@ -717,12 +717,12 @@
                   <input type="checkbox" [checked]="newOptionCorrect()" (change)="updateNewOptionCorrect($any($event.target).checked)" />
                   Marcar como recomendada
                 </label>
-                <button class="siep-btn-primary" type="button" (click)="saveOption()">Agregar opcion</button>
+                <button class="siep-btn-primary" type="button" (click)="saveOption()">Agregar opción</button>
               </section>
             } @else {
               <div class="panel-empty panel-empty--large">
                 <strong>Crea la pregunta principal</strong>
-                <p>Despues podras agregar opciones, destinos y retroalimentacion.</p>
+                <p>Después podrás agregar opciones, destinos y retroalimentación.</p>
               </div>
             }
           </section>
@@ -730,10 +730,10 @@
           <aside class="panel decision-panel">
             <div class="panel__header">
               <div>
-                <p class="panel__eyebrow">Retroalimentacion</p>
+                <p class="panel__eyebrow">Retroalimentación</p>
                 <h3>Destino y apoyo pedagógico</h3>
               </div>
-              <span class="panel__helper">Selecciona una opcion para editar su feedback.</span>
+              <span class="panel__helper">Selecciona una opción para editar su feedback.</span>
             </div>
 
             @if (selectedDecisionOption(); as option) {
@@ -749,14 +749,14 @@
                 <label class="field">
                   <span>Tipo</span>
                   <select [value]="feedbackTypeDraft()" (change)="updateFeedbackTypeDraft($any($event.target).value)">
-                    <option value="pedagogica">Pedagogica</option>
+                    <option value="pedagogica">Pedagógica</option>
                     <option value="correctiva">Correctiva</option>
                     <option value="refuerzo">Refuerzo</option>
                   </select>
                 </label>
 
                 <label class="field">
-                  <span>Retroalimentacion</span>
+                  <span>Retroalimentación</span>
                   <textarea rows="6" [value]="feedbackDraft()" (input)="updateFeedbackDraft($any($event.target).value)"></textarea>
                 </label>
 
@@ -765,11 +765,11 @@
                   <input type="text" [value]="feedbackReferenceDraft()" (input)="updateFeedbackReferenceDraft($any($event.target).value)" />
                 </label>
 
-                <button class="siep-btn-primary" type="button" (click)="saveFeedback()">Guardar retroalimentacion</button>
+                <button class="siep-btn-primary" type="button" (click)="saveFeedback()">Guardar retroalimentación</button>
               </div>
             } @else {
               <div class="panel-empty panel-empty--large">
-                <strong>Selecciona una opcion</strong>
+                <strong>Selecciona una opción</strong>
                 <p>Elige una respuesta de la columna central para editar su feedback y su ruta.</p>
               </div>
             }
@@ -847,7 +847,7 @@
                     type="button"
                     (click)="choosePreviewOption(op.id)"
                   >
-                    <span>Opcion {{ op.orden }}</span>
+                    <span>Opción {{ op.orden }}</span>
                     <strong>{{ op.texto }}</strong>
                   </button>
                 }
@@ -855,7 +855,7 @@
 
               @if (previewSelectedOption()?.retroalimentacion) {
                 <div class="student-feedback">
-                  <strong>Retroalimentacion</strong>
+                  <strong>Retroalimentación</strong>
                   <p>{{ previewSelectedOption()!.retroalimentacion!.mensaje }}</p>
                 </div>
               }
@@ -866,7 +866,7 @@
         <section class="flow-layout">
           <div class="flow-summary">
             <article class="flow-summary__card">
-              <span>Escenas sin conexion</span>
+              <span>Escenas sin conexión</span>
               <strong>{{ flowSummaryValue('disconnected') }}</strong>
             </article>
             <article class="flow-summary__card">

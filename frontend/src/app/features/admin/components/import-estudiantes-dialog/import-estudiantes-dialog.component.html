@@ -15,6 +15,7 @@
       <h2 id="import-dialog-title">Importar estudiantes desde Excel</h2>
       <p class="import-dialog__subtitle">
         Carga una lista de estudiantes para crear sus usuarios y asociarlos a este grupo académico.
+        Los usuarios nuevos recibirán un correo con su contraseña temporal.
       </p>
     </header>
 
@@ -62,9 +63,12 @@
 
         <ul class="import-dialog__options" aria-label="Opciones de importación">
           <li>Generar usuario automáticamente</li>
-          <li>Generar contraseña temporal</li>
+          <li>Generar contraseña temporal y enviarla por correo</li>
           <li>Asignar al grupo actual</li>
         </ul>
+        <p class="import-dialog__security-note">
+          Por seguridad, las contraseñas temporales solo deben compartirse con cada estudiante.
+        </p>
 
         <div class="import-dialog__template">
           <button type="button" class="siep-btn-secondary" (click)="downloadPlantilla()">
@@ -105,7 +109,7 @@
                 <th scope="col">Correo</th>
                 <th scope="col">Estado</th>
                 <th scope="col">Observación</th>
-                <th scope="col">Contraseña temporal</th>
+                <th scope="col">Acceso inicial</th>
               </tr>
             </thead>
             <tbody>
@@ -119,7 +123,13 @@
                     </span>
                   </td>
                   <td>{{ row.observacion }}</td>
-                  <td>{{ row.temporaryPassword ?? '—' }}</td>
+                  <td>
+                    @if (row.correoEnviado) {
+                      Enviado por correo
+                    } @else {
+                      {{ row.temporaryPassword ?? '—' }}
+                    }
+                  </td>
                 </tr>
               }
             </tbody>

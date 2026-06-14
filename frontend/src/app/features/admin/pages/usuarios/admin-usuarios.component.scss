@@ -3,8 +3,87 @@
 @include adminShell.admin-page-shell;
 
 .usuarios__panel,
-.usuarios__list {
+.usuarios__list,
+.usuarios__section {
   margin-bottom: var(--siep-space-5);
+}
+
+.usuarios__section-head {
+  margin-bottom: var(--siep-space-4);
+
+  h2 {
+    margin: 0 0 0.25rem;
+    font-family: var(--siep-font-title);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #2f5d34;
+  }
+}
+
+.usuarios__section-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #5f7368;
+  max-width: 58ch;
+}
+
+.usuarios__section-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #5f7368;
+  font-style: italic;
+}
+
+.usuarios__section--archived {
+  background: rgba(255, 252, 247, 0.78);
+  border-color: rgba(205, 232, 181, 0.55);
+}
+
+.usuarios__grupo-block {
+  margin-bottom: var(--siep-space-4);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.usuarios__grupo-title {
+  margin: 0 0 var(--siep-space-3);
+  font-family: var(--siep-font-title);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #2f5d34;
+}
+
+.user-rows--nested {
+  padding-left: 0.35rem;
+  border-left: 2px solid rgba(205, 232, 181, 0.65);
+}
+
+.siep-btn-archive {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+  font-family: var(--siep-font-title);
+  font-weight: 600;
+  border-radius: var(--siep-radius-pill);
+  border: 1px solid rgba(163, 58, 58, 0.35);
+  background: #fce8e8;
+  color: #a33a3a;
+  cursor: pointer;
+  transition:
+    background var(--siep-transition-base),
+    border-color var(--siep-transition-base);
+
+  &:hover:not(:disabled) {
+    background: #fae0e0;
+    border-color: rgba(163, 58, 58, 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
 .usuarios__panel h2 {
@@ -72,9 +151,24 @@
     display: grid;
   }
 
-  &--inactive {
-    opacity: 0.72;
+  &--inactive,
+  &--archived {
+    opacity: 0.82;
+    background: rgba(255, 252, 247, 0.72);
   }
+
+  &--nested {
+    padding-left: 0.65rem;
+  }
+}
+
+.user-row__avatar--archived {
+  background: linear-gradient(
+    135deg,
+    rgba(241, 248, 233, 0.9) 0%,
+    rgba(205, 232, 181, 0.35) 100%
+  );
+  opacity: 0.85;
 }
 
 .user-row__avatar {

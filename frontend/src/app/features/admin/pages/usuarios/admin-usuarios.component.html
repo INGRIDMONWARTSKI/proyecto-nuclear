@@ -6,7 +6,7 @@
 
   <app-page-header
     title="Usuarios"
-    subtitle="Administra cuentas, roles y accesos de la comunidad académica en SIEP."
+    subtitle="Administra cuentas, roles y accesos de la comunidad académica en MENTORA."
     icon="🌿"
   >
     <button actions type="button" class="siep-btn-primary" (click)="abrirCrear()">
@@ -57,22 +57,9 @@
             <span class="field-error">Ingresa un correo válido.</span>
           }
         </div>
-        <div class="siep-field">
-          <label for="create-password">Contraseña</label>
-          <input
-            id="create-password"
-            type="password"
-            formControlName="password"
-            placeholder="Mínimo 8 caracteres"
-            [class.is-invalid]="createForm.controls.password.touched && createForm.controls.password.invalid"
-          />
-          @if (createForm.controls.password.touched && createForm.controls.password.hasError('required')) {
-            <span class="field-error">La contraseña es obligatoria.</span>
-          }
-          @if (createForm.controls.password.touched && createForm.controls.password.hasError('minlength')) {
-            <span class="field-error">La contraseña debe tener al menos 8 caracteres.</span>
-          }
-        </div>
+        <p class="field__hint usuarios__temp-password-hint">
+          MENTORA generará una contraseña temporal y la enviará al correo registrado.
+        </p>
         <div class="siep-field">
           <label for="create-role">Rol</label>
           <select
@@ -150,10 +137,12 @@
     </section>
   }
 
-  <section class="siep-card usuarios__list">
-    @if (loading()) {
+  @if (loading()) {
+    <section class="siep-card usuarios__list">
       <app-loading-state message="Cargando usuarios..." />
-    } @else if (usuarios().length === 0) {
+    </section>
+  } @else if (usuarios().length === 0) {
+    <section class="siep-card usuarios__list">
       <app-empty-state
         title="Aún no hay usuarios"
         message="Crea la primera cuenta para comenzar a poblar la plataforma."
@@ -161,80 +150,197 @@
         actionLabel="Nuevo usuario"
         (actionClick)="abrirCrear()"
       />
-    } @else {
-      <ul class="user-rows">
-        @for (usuario of usuarios(); track usuario.id) {
-          <li
-            class="siep-card-row user-row"
-            [class.user-row--inactive]="!usuario.isActive"
-          >
-            <div class="user-row__avatar" aria-hidden="true">
-              {{ usuario.fullName.charAt(0).toUpperCase() }}
-            </div>
-            <div class="user-row__info">
-              <span class="user-row__name">
-                {{ usuario.fullName }}
-                @if (esAdminActual(usuario)) {
-                  <span class="tag-you">Tú</span>
-                }
-              </span>
-              <span class="user-row__email">{{ usuario.email }}</span>
-            </div>
-            <div class="user-row__badges">
-              <app-status-badge
-                variant="role"
-                [role]="roleBadgeKey(usuario.role)"
-                [label]="roleLabel(usuario.role)"
-              />
-              <app-status-badge
-                variant="status"
-                [status]="usuario.isActive ? 'active' : 'inactive'"
-                [label]="usuario.isActive ? 'Activo' : 'Inactivo'"
-              />
-            </div>
-            <div class="user-row__actions">
-              <button
-                type="button"
-                class="siep-btn-secondary siep-btn--compact"
-                [disabled]="saving()"
-                (click)="abrirEditar(usuario)"
-              >
-                Editar
-              </button>
-              @if (esAdminActual(usuario) && usuario.isActive) {
-                <button
-                  type="button"
-                  class="siep-btn-danger siep-btn--compact"
-                  disabled
-                  title="No puedes desactivarte a ti mismo"
-                >
-                  Desactivar
-                </button>
-              } @else if (usuario.isActive) {
-                <button
-                  type="button"
-                  class="siep-btn-danger siep-btn--compact"
-                  [disabled]="saving()"
-                  (click)="cambiarEstado(usuario)"
-                >
-                  Desactivar
-                </button>
-              } @else {
-                <button
-                  type="button"
-                  class="siep-btn-secondary siep-btn--compact"
-                  [disabled]="saving()"
-                  (click)="cambiarEstado(usuario)"
-                >
-                  Reactivar
-                </button>
+    </section>
+  } @else {
+    <section class="siep-card usuarios__section">
+      <header class="usuarios__section-head">
+        <h2>Administradores activos</h2>
+      </header>
+      @if (adminsActivos().length === 0) {
+        <p class="usuarios__section-empty">No hay administradores activos.</p>
+      } @else {
+        <ul class="user-rows">
+          @for (usuario of adminsActivos(); track usuario.id) {
+            <li class="siep-card-row user-row">
+              <ng-container *ngTemplateOutlet="filaUsuarioActivo; context: { $implicit: usuario }" />
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="siep-card usuarios__section">
+      <header class="usuarios__section-head">
+        <h2>Profesores activos</h2>
+      </header>
+      @if (profesoresActivos().length === 0) {
+        <p class="usuarios__section-empty">No hay profesores activos.</p>
+      } @else {
+        <ul class="user-rows">
+          @for (usuario of profesoresActivos(); track usuario.id) {
+            <li class="siep-card-row user-row">
+              <ng-container *ngTemplateOutlet="filaUsuarioActivo; context: { $implicit: usuario }" />
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="siep-card usuarios__section">
+      <header class="usuarios__section-head">
+        <h2>Estudiantes activos por grupo</h2>
+        <p class="usuarios__section-desc">
+          Estudiantes con acceso activo, organizados por grupo académico.
+        </p>
+      </header>
+      @if (gruposConEstudiantes().length === 0 && estudiantesSinGrupo().length === 0) {
+        <p class="usuarios__section-empty">No hay estudiantes activos.</p>
+      } @else {
+        @for (grupoView of gruposConEstudiantes(); track grupoView.grupo.id) {
+          <div class="usuarios__grupo-block">
+            <h3 class="usuarios__grupo-title">{{ grupoView.grupo.nombre }}</h3>
+            <ul class="user-rows user-rows--nested">
+              @for (usuario of grupoView.estudiantes; track usuario.id) {
+                <li class="siep-card-row user-row user-row--nested">
+                  <ng-container *ngTemplateOutlet="filaUsuarioActivo; context: { $implicit: usuario }" />
+                </li>
               }
-            </div>
-          </li>
+            </ul>
+          </div>
         }
-      </ul>
-    }
-  </section>
+
+        @if (estudiantesSinGrupo().length > 0) {
+          <div class="usuarios__grupo-block">
+            <h3 class="usuarios__grupo-title">Estudiantes sin grupo</h3>
+            <ul class="user-rows user-rows--nested">
+              @for (usuario of estudiantesSinGrupo(); track usuario.id) {
+                <li class="siep-card-row user-row user-row--nested">
+                  <ng-container *ngTemplateOutlet="filaUsuarioActivo; context: { $implicit: usuario }" />
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    </section>
+
+    <section class="siep-card usuarios__section usuarios__section--archived">
+      <header class="usuarios__section-head">
+        <h2>Usuarios archivados</h2>
+        <p class="usuarios__section-desc">
+          Usuarios retirados del acceso activo. Su historial se conserva para trazabilidad académica.
+        </p>
+      </header>
+      @if (usuariosArchivados().length === 0) {
+        <p class="usuarios__section-empty">No hay usuarios archivados.</p>
+      } @else {
+        <ul class="user-rows">
+          @for (usuario of usuariosArchivados(); track usuario.id) {
+            <li class="siep-card-row user-row user-row--archived">
+              <ng-container *ngTemplateOutlet="filaUsuarioArchivado; context: { $implicit: usuario }" />
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <ng-template #filaUsuarioActivo let-usuario>
+    <div class="user-row__avatar" aria-hidden="true">
+      {{ usuario.fullName.charAt(0).toUpperCase() }}
+    </div>
+    <div class="user-row__info">
+      <span class="user-row__name">
+        {{ usuario.fullName }}
+        @if (esAdminActual(usuario)) {
+          <span class="tag-you">Tú</span>
+        }
+      </span>
+      <span class="user-row__email">{{ usuario.email }}</span>
+    </div>
+    <div class="user-row__badges">
+      <app-status-badge
+        variant="role"
+        [role]="roleBadgeKey(usuario.role)"
+        [label]="roleLabel(usuario.role)"
+      />
+      <app-status-badge variant="status" status="active" label="Activo" />
+    </div>
+    <div class="user-row__actions">
+      <button
+        type="button"
+        class="siep-btn-secondary siep-btn--compact"
+        [disabled]="saving()"
+        (click)="abrirEditar(usuario)"
+      >
+        Editar
+      </button>
+      @if (esAdminActual(usuario)) {
+        <button
+          type="button"
+          class="siep-btn-archive siep-btn--compact"
+          disabled
+          title="No puedes archivar tu propia cuenta"
+        >
+          Archivar
+        </button>
+      } @else if (esUltimoAdminActivo(usuario)) {
+        <button
+          type="button"
+          class="siep-btn-archive siep-btn--compact"
+          disabled
+          title="Debe existir al menos un administrador activo"
+        >
+          Archivar
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="siep-btn-archive siep-btn--compact"
+          [disabled]="saving()"
+          (click)="cambiarEstado(usuario)"
+        >
+          Archivar
+        </button>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #filaUsuarioArchivado let-usuario>
+    <div class="user-row__avatar user-row__avatar--archived" aria-hidden="true">
+      {{ usuario.fullName.charAt(0).toUpperCase() }}
+    </div>
+    <div class="user-row__info">
+      <span class="user-row__name">{{ usuario.fullName }}</span>
+      <span class="user-row__email">{{ usuario.email }}</span>
+    </div>
+    <div class="user-row__badges">
+      <app-status-badge
+        variant="role"
+        [role]="roleBadgeKey(usuario.role)"
+        [label]="roleLabel(usuario.role)"
+      />
+      <app-status-badge variant="status" status="inactive" label="Archivado" />
+    </div>
+    <div class="user-row__actions">
+      <button
+        type="button"
+        class="siep-btn-secondary siep-btn--compact"
+        [disabled]="saving()"
+        (click)="abrirEditar(usuario)"
+      >
+        Editar
+      </button>
+      <button
+        type="button"
+        class="siep-btn-secondary siep-btn--compact"
+        [disabled]="saving()"
+        (click)="cambiarEstado(usuario)"
+      >
+        Reactivar
+      </button>
+    </div>
+  </ng-template>
 
   <app-confirm-dialog
     [open]="confirmOpen()"

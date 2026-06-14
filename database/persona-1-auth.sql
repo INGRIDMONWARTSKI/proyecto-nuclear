@@ -20,6 +20,7 @@ create table if not exists public.usuarios (
   role user_role not null,
   "tokenVersion" integer not null default 0,
   "isActive" boolean not null default true,
+  "mustChangePassword" boolean not null default false,
   "createdAt" timestamptz not null default now(),
   "updatedAt" timestamptz not null default now()
 );

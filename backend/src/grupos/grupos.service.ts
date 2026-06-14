@@ -20,7 +20,7 @@ import type {
   ImportarEstudiantesResponse,
 } from './interfaces/importar-estudiantes.interface';
 import type { UploadedImportFile } from './interfaces/uploaded-import-file.interface';
-import { generateTemporaryPassword } from './utils/generate-temporary-password.util';
+import { MailService } from '../mail/mail.service';
 import {
   isValidEmail,
   parseEstudiantesFile,
@@ -31,6 +31,7 @@ export class GruposService {
   constructor(
     private readonly postgrest: PostgrestService,
     private readonly usuariosService: UsuariosService,
+    private readonly mailService: MailService,
   ) {}
 
   async create(crearGrupoDto: CrearGrupoDto, currentUser: AuthenticatedUser) {
@@ -441,10 +442,15 @@ export class GruposService {
       return;
     }
 
-    const temporaryPassword = generateTemporaryPassword();
-    const created = await this.usuariosService.createEstudiante(
-      fullName,
-      email,
+    const { usuario: created, temporaryPassword } =
+      await this.usuariosService.createEstudianteWithTemporaryPassword(
+        fullName,
+        email,
+      );
+
+    const correoEnviado = await this.mailService.sendWelcomeEmail(
+      created.fullName,
+      created.email,
       temporaryPassword,
     );
 
@@ -461,16 +467,20 @@ export class GruposService {
       fullName: created.fullName,
       email,
       estado: 'creado',
-      observacion: `Fila ${rowNumber}: estudiante creado y asignado al grupo.`,
-      temporaryPassword,
+      observacion: correoEnviado
+        ? `Fila ${rowNumber}: estudiante creado, asignado al grupo y correo enviado.`
+        : `Fila ${rowNumber}: estudiante creado y asignado al grupo. No se pudo enviar el correo.`,
+      correoEnviado,
+      temporaryPassword: correoEnviado ? undefined : temporaryPassword,
     };
 
     response.creados.push(item);
     response.reporteCredenciales.push({
       fullName: created.fullName,
       email,
-      temporaryPassword,
+      temporaryPassword: correoEnviado ? 'Enviado por correo' : temporaryPassword,
       estado: 'creado',
+      correoEnviado,
     });
   }
 

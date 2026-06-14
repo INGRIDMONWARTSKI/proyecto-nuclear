@@ -30,6 +30,11 @@ describe('GeminiService', () => {
 
     const service = new GeminiService(configService);
 
+    await expect(service.generateJson('Genera un caso.')).rejects.toMatchObject({
+      response: {
+        code: 'IA_NOT_CONFIGURED',
+      },
+    });
     await expect(service.generateJson('Genera un caso.')).rejects.toThrow(
       ServiceUnavailableException,
     );
@@ -85,6 +90,46 @@ describe('GeminiService', () => {
     await expect(promise).rejects.toThrow(ServiceUnavailableException);
     await expectation;
     expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('falla con rate limit cuando Gemini responde 429', async () => {
+    const configService = {
+      get: jest.fn((key: string, defaultValue?: string) => {
+        if (key === 'GEMINI_API_KEY') {
+          return 'api-key';
+        }
+
+        if (key === 'GEMINI_MODEL') {
+          return defaultValue ?? 'gemini-2.5-flash';
+        }
+
+        if (key === 'GEMINI_API_URL') {
+          return defaultValue ?? 'https://generativelanguage.googleapis.com/v1beta/models';
+        }
+
+        return undefined;
+      }),
+    } as unknown as ConfigService;
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: 'Too Many Requests',
+      json: jest.fn().mockResolvedValue({
+        error: {
+          message: 'Quota exceeded for quota metric.',
+        },
+      }),
+    } as unknown as Response) as unknown as typeof fetch;
+
+    const service = new GeminiService(configService);
+
+    await expect(service.generateJson('Genera un caso.')).rejects.toMatchObject({
+      response: {
+        code: 'IA_RATE_LIMIT',
+      },
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
   it('falla con bad gateway controlado para errores no transitorios del proveedor', async () => {

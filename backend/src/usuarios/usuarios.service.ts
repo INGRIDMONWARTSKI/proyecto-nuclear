@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../common/enums/role.enum';
+import { generateTemporaryPassword } from '../common/utils/generate-temporary-password.util';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { PostgrestService } from '../postgrest/postgrest.service';
 import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
@@ -25,6 +26,10 @@ export class UsuariosService {
       throw new ConflictException('Ya existe un usuario con ese correo.');
     }
 
+    if (!crearUsuarioDto.password) {
+      throw new BadRequestException('La contraseña es obligatoria.');
+    }
+
     const passwordHash = await bcrypt.hash(crearUsuarioDto.password, 10);
 
     try {
@@ -35,11 +40,48 @@ export class UsuariosService {
           email: crearUsuarioDto.email.trim().toLowerCase(),
           passwordHash,
           role: crearUsuarioDto.role,
+          mustChangePassword: false,
         },
         {
           select: '*',
         },
       );
+    } catch (error) {
+      this.rethrowConflict(error);
+      throw error;
+    }
+  }
+
+  async createWithTemporaryPassword(params: {
+    fullName: string;
+    email: string;
+    role: Role;
+  }): Promise<{ usuario: Usuario; temporaryPassword: string }> {
+    const usuarioExistente = await this.findByEmail(params.email);
+
+    if (usuarioExistente) {
+      throw new ConflictException('Ya existe un usuario con ese correo.');
+    }
+
+    const temporaryPassword = generateTemporaryPassword();
+    const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+
+    try {
+      const usuario = await this.postgrest.insert<Usuario>(
+        'usuarios',
+        {
+          fullName: params.fullName.trim(),
+          email: params.email.trim().toLowerCase(),
+          passwordHash,
+          role: params.role,
+          mustChangePassword: true,
+        },
+        {
+          select: '*',
+        },
+      );
+
+      return { usuario, temporaryPassword };
     } catch (error) {
       this.rethrowConflict(error);
       throw error;
@@ -55,6 +97,17 @@ export class UsuariosService {
       fullName: fullName.trim(),
       email: email.trim().toLowerCase(),
       password,
+      role: Role.ESTUDIANTE,
+    });
+  }
+
+  async createEstudianteWithTemporaryPassword(
+    fullName: string,
+    email: string,
+  ): Promise<{ usuario: Usuario; temporaryPassword: string }> {
+    return this.createWithTemporaryPassword({
+      fullName,
+      email,
       role: Role.ESTUDIANTE,
     });
   }
@@ -124,9 +177,22 @@ export class UsuariosService {
     const usuario = await this.findById(id);
 
     if (currentUser.sub === id && cambiarEstadoDto.isActive === false) {
-      throw new ForbiddenException(
-        'Un administrador no puede desactivarse a sí mismo.',
-      );
+      throw new ForbiddenException('No puedes archivar tu propia cuenta.');
+    }
+
+    if (
+      cambiarEstadoDto.isActive === false &&
+      usuario.role === Role.ADMIN
+    ) {
+      const adminsActivos = await this.postgrest.select<Usuario>('usuarios', {
+        filters: { role: Role.ADMIN, isActive: true },
+      });
+
+      if (adminsActivos.length <= 1 && adminsActivos.some((admin) => admin.id === id)) {
+        throw new ForbiddenException(
+          'Debe existir al menos un administrador activo.',
+        );
+      }
     }
 
     const estadoCambia = usuario.isActive !== cambiarEstadoDto.isActive;
@@ -213,6 +279,7 @@ export class UsuariosService {
       'usuarios',
       {
         passwordHash,
+        mustChangePassword: false,
         tokenVersion: usuario.tokenVersion + 1,
       },
       {

@@ -1,5 +1,5 @@
 <section class="siep-page player">
-  <p class="player__brand" aria-hidden="true">SIEP · Simulacion</p>
+  <p class="player__brand" aria-hidden="true">SIEP · Simulación</p>
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />
@@ -8,8 +8,8 @@
   <header class="player-hero">
     @if (loading()) {
       <app-page-header
-        title="Simulacion en curso"
-        subtitle="Vive el caso, elige con criterio y aprende de cada decision."
+        title="Simulación en curso"
+        subtitle="Vive el caso, elige con criterio y aprende de cada decisión."
         icon="🌿"
       >
         <a actions class="siep-btn-secondary player__back" routerLink="/estudiante/casos">Volver</a>
@@ -17,8 +17,8 @@
     } @else {
       @if (data(); as state) {
         <app-page-header
-          [title]="state.escenario?.titulo ?? 'Simulacion en curso'"
-          subtitle="Vive el caso, elige con criterio y aprende de cada decision."
+          [title]="state.escenario?.titulo ?? 'Simulación en curso'"
+          subtitle="Vive el caso, elige con criterio y aprende de cada decisión."
           icon="🌿"
         >
           <a actions class="siep-btn-secondary player__back" routerLink="/estudiante/casos">Volver</a>
@@ -70,7 +70,7 @@
               [disabled]="!selectedOpcion() || sending()"
               (click)="responder()"
             >
-              {{ sending() ? 'Enviando...' : 'Confirmar decision' }}
+              {{ sending() ? 'Enviando...' : 'Confirmar decisión' }}
             </button>
           } @else if (completed()) {
             <button class="siep-btn-primary" type="button" (click)="verResultado()">
@@ -84,8 +84,8 @@
         </section>
       } @else {
         <section class="siep-card player-complete">
-          <h2>La sesion no tiene mas escenarios pendientes.</h2>
-          <p>Puedes consultar el resultado final para cerrar la simulacion.</p>
+          <h2>La sesión no tiene más escenarios pendientes.</h2>
+          <p>Puedes consultar el resultado final para cerrar la simulación.</p>
           <button class="siep-btn-primary" type="button" (click)="verResultado()">
             Ver resultado del recorrido
           </button>

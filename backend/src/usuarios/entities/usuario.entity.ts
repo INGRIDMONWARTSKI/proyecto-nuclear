@@ -8,6 +8,7 @@ export interface Usuario {
   role: Role;
   tokenVersion: number;
   isActive: boolean;
+  mustChangePassword: boolean;
   createdAt: string;
   updatedAt: string;
 }

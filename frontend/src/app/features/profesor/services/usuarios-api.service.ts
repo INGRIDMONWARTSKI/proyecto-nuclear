@@ -7,8 +7,13 @@ import { Usuario } from '../../../core/models/usuario.model';
 export interface CrearUsuarioPayload {
   fullName: string;
   email: string;
-  password: string;
   role: Role;
+}
+
+export interface CrearUsuarioResponse {
+  user: Usuario;
+  emailSent: boolean;
+  warning?: string;
 }
 
 export interface ActualizarUsuarioPayload {
@@ -26,7 +31,7 @@ export class UsuariosApiService {
   }
 
   crearUsuario(payload: CrearUsuarioPayload) {
-    return this.http.post<Usuario>(this.baseUrl, payload);
+    return this.http.post<CrearUsuarioResponse>(this.baseUrl, payload);
   }
 
   actualizarUsuario(id: string, payload: ActualizarUsuarioPayload) {

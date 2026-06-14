@@ -4,7 +4,6 @@
     <app-page-header
       title="Generar caso con IA"
       subtitle="Construye un borrador completo a partir de referencias docentes."
-      icon="ðŸ§ "
     >
       <a actions class="siep-btn-secondary" routerLink="/profesor/casos">Volver</a>
     </app-page-header>
@@ -24,7 +23,7 @@
           id="referenciasTexto"
           rows="10"
           formControlName="referenciasTexto"
-          placeholder="Pega uno o varios casos. Separa cada referencia con una lÃ­nea en blanco."
+          placeholder="Pega uno o varios casos. Separa cada referencia con una línea en blanco."
         ></textarea>
       </div>
 
@@ -32,7 +31,7 @@
         <label>Casos existentes como referencia</label>
         <div class="cases-picker">
           @if (casosDisponibles().length === 0) {
-            <p class="muted">AÃºn no tienes casos guardados para usar como referencia.</p>
+            <p class="muted">Aún no tienes casos guardados para usar como referencia.</p>
           } @else {
             @for (caso of casosDisponibles(); track caso.id) {
               <label class="case-option">
@@ -43,7 +42,7 @@
                 />
                 <span>
                   <strong>{{ caso.titulo }}</strong>
-                  <small>{{ caso.descripcion || 'Sin descripciÃ³n' }}</small>
+                  <small>{{ caso.descripcion || 'Sin descripción' }}</small>
                 </span>
               </label>
             }
@@ -52,12 +51,12 @@
       </div>
 
       <div class="siep-field">
-        <label for="instruccion">InstrucciÃ³n adicional</label>
+        <label for="instruccion">Instrucción adicional</label>
         <textarea
           id="instruccion"
           rows="4"
           formControlName="instruccion"
-          placeholder="Ejemplo: enfocar el caso en entrevista inicial, manejo de crisis o evaluaciÃ³n familiar."
+          placeholder="Ejemplo: enfocar el caso en entrevista inicial, manejo de crisis o evaluación familiar."
         ></textarea>
       </div>
 

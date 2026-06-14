@@ -10,6 +10,8 @@
     "up:infra": "docker compose up -d --wait",
     "up:apps": "node scripts/up-apps.mjs",
     "down": "docker compose down",
+    "reset": "docker compose down -v",
+    "db:seed": "npm run db:seed --prefix backend",
     "build": "npm run build --prefix backend && npm run build --prefix frontend"
   }
 }

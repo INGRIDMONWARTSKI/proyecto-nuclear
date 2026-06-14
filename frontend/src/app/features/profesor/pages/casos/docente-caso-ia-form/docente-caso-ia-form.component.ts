@@ -130,20 +130,37 @@ export class DocenteCasoIaFormComponent implements OnInit {
   private getIaGenerationErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       const body = getErrorBody(error);
+      const code = body?.code;
 
-      if (body?.code === 'IA_SERVICE_TEMPORARILY_UNAVAILABLE' || error.status === 503) {
-        return 'El servicio de IA esta temporalmente saturado. Intenta de nuevo en unos minutos.';
+      switch (code) {
+        case 'IA_NOT_CONFIGURED':
+          return 'La generación con IA no está configurada todavía.';
+        case 'IA_RATE_LIMIT':
+        case 'IA_QUOTA_EXCEEDED':
+          return 'El servicio de IA alcanzó su límite temporal. Intenta más tarde.';
+        case 'IA_PROMPT_INSUFFICIENT':
+          return 'Agrega más contexto para generar un caso completo.';
+        case 'IA_SERVICE_TEMPORARILY_UNAVAILABLE':
+          return 'El servicio de IA está temporalmente saturado. Intenta de nuevo en unos minutos.';
+        case 'IA_CONNECTION_ERROR':
+          return 'No se pudo conectar con el servicio de IA. Verifica la conexión e intenta de nuevo.';
+        case 'IA_DRAFT_INVALID':
+          return typeof body?.message === 'string'
+            ? body.message
+            : 'La IA generó un borrador inválido y no se guardó. Intenta nuevamente con referencias más específicas.';
       }
 
-      if (body?.code === 'IA_DRAFT_INVALID' || error.status === 422) {
-        return (
-          typeof body?.message === 'string'
-            ? body.message
-            : 'La IA genero un borrador invalido y no se guardo. Intenta nuevamente con referencias mas especificas.'
-        );
+      if (error.status === 422) {
+        return typeof body?.message === 'string'
+          ? body.message
+          : 'La IA generó un borrador inválido y no se guardó. Intenta nuevamente con referencias más específicas.';
+      }
+
+      if (error.status === 400 && typeof body?.message === 'string') {
+        return body.message;
       }
     }
 
-    return getErrorMessage(error, 'No fue posible generar el caso con IA.');
+    return getErrorMessage(error, 'No se pudo generar el caso en este momento.');
   }
 }

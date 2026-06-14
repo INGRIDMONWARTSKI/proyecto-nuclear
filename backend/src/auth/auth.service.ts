@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -8,11 +9,12 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomInt } from 'crypto';
-import nodemailer from 'nodemailer';
 import { Role } from '../common/enums/role.enum';
 import { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
+import { MailService } from '../mail/mail.service';
 import { PostgrestService } from '../postgrest/postgrest.service';
 import { UsuariosService } from '../usuarios/usuarios.service';
+import { ChangeTemporaryPasswordDto } from './dto/change-temporary-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -28,6 +30,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly postgrest: PostgrestService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -80,7 +83,7 @@ export class AuthService {
       { select: '*' },
     );
 
-    const emailSent = await this.sendPasswordResetEmail(
+    const emailSent = await this.mailService.sendPasswordResetEmail(
       user.email,
       verificationCode,
     );
@@ -149,8 +152,49 @@ export class AuthService {
     return this.usuariosService.sanitizeUser(user);
   }
 
+  async changeTemporaryPassword(
+    currentUser: AuthenticatedUser,
+    dto: ChangeTemporaryPasswordDto,
+  ) {
+    const user = await this.usuariosService.findById(currentUser.sub);
+
+    if (!user.isActive) {
+      throw new ForbiddenException('Tu cuenta no esta activa.');
+    }
+
+    if (!user.mustChangePassword) {
+      throw new BadRequestException(
+        'Tu cuenta no requiere cambio de contraseña inicial.',
+      );
+    }
+
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('Las contraseñas no coinciden.');
+    }
+
+    if (dto.newPassword === dto.currentPassword) {
+      throw new BadRequestException(
+        'La nueva contraseña debe ser distinta a la temporal.',
+      );
+    }
+
+    const isCurrentValid = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash,
+    );
+
+    if (!isCurrentValid) {
+      throw new UnauthorizedException('La contraseña temporal no es valida.');
+    }
+
+    await this.usuariosService.updatePassword(user.id, dto.newPassword);
+
+    return this.buildAuthResponse(user.id);
+  }
+
   private async buildAuthResponse(userId: string) {
     const user = await this.usuariosService.findById(userId);
+    const sanitized = this.usuariosService.sanitizeUser(user);
 
     const payload: AuthenticatedUser = {
       sub: user.id,
@@ -162,7 +206,8 @@ export class AuthService {
     return {
       accessToken: await this.jwtService.signAsync(payload),
       expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '1d'),
-      user: this.usuariosService.sanitizeUser(user),
+      user: sanitized,
+      mustChangePassword: sanitized.mustChangePassword,
     };
   }
 
@@ -222,71 +267,5 @@ export class AuthService {
         select: 'id',
       },
     );
-  }
-
-  private async sendPasswordResetEmail(
-    email: string,
-    verificationCode: string,
-  ): Promise<boolean> {
-    const host = this.configService.get<string>('SMTP_HOST');
-    const port = Number(this.configService.get<string>('SMTP_PORT') ?? '0');
-    const user = this.configService.get<string>('SMTP_USER');
-    const rawPass = this.configService.get<string>('SMTP_PASS');
-    const pass =
-      host?.includes('gmail.com') && rawPass
-        ? rawPass.replace(/\s+/g, '')
-        : rawPass;
-    const from =
-      this.configService.get<string>('SMTP_FROM') ??
-      'MENTORA <no-reply@mentora.local>';
-
-    if (!host || !port) {
-      return false;
-    }
-
-    try {
-      const transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure: this.configService.get<string>('SMTP_SECURE', 'false') === 'true',
-        auth: user && pass ? { user, pass } : undefined,
-      });
-
-      await transporter.sendMail({
-        from,
-        to: email,
-        subject: 'Recuperación de contraseña - MENTORA',
-        text: [
-          'Recibimos una solicitud para restablecer tu contraseña.',
-          '',
-          'Tu código de verificación es:',
-          verificationCode,
-          '',
-          'El código vence en 30 minutos.',
-          'Si no solicitaste este cambio, puedes ignorar este mensaje.',
-        ].join('\n'),
-        html: `
-          <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937">
-            <h2 style="color:#2f5d34">Recuperación de contraseña</h2>
-            <p>Recibimos una solicitud para restablecer tu contraseña en MENTORA.</p>
-            <p>Ingresa este código de verificación en la pantalla de acceso:</p>
-            <p style="margin:20px 0">
-              <span style="display:inline-block;padding:14px 20px;border-radius:16px;background:#ecf7e8;color:#1f4d35;font-size:28px;font-weight:800;letter-spacing:0.32em">
-                ${verificationCode}
-              </span>
-            </p>
-            <p>El código vence en 30 minutos.</p>
-            <p>Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
-          </div>
-        `,
-      });
-
-      return true;
-    } catch (error) {
-      this.logger.warn(
-        `No fue posible enviar correo de recuperacion a ${email}: ${error instanceof Error ? error.message : 'error desconocido'}`,
-      );
-      return false;
-    }
   }
 }

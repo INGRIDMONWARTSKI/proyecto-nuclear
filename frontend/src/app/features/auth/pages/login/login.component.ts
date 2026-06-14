@@ -82,7 +82,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   ];
 
   protected readonly orbitIcons: OrbitalIcon[] = [
-    { id: 'sprout', label: 'Decision consciente', icon: 'sprout', delay: 0 },
+    { id: 'sprout', label: 'Decisión consciente', icon: 'sprout', delay: 0 },
     { id: 'heart', label: 'Empatia clinica', icon: 'heart', delay: -8 },
     { id: 'brain', label: 'Reflexion', icon: 'brain', delay: -16 },
   ];
@@ -120,22 +120,22 @@ export class LoginComponent implements OnInit, OnDestroy {
     {
       title: 'Hoja MENTORA',
       message:
-        'Observa el contexto antes de responder: una buena intervencion empieza por escuchar.',
+        'Observa el contexto antes de responder: una buena intervención empieza por escuchar.',
     },
     {
       title: 'Hoja MENTORA',
       message:
-        'Antes de responder, observa el contexto, identifica senales de riesgo y elige una intervencion etica.',
+        'Antes de responder, observa el contexto, identifica señales de riesgo y elige una intervención ética.',
     },
     {
       title: 'Hoja MENTORA',
       message:
-        'Aprender con casos te ayuda a conectar teoria, emocion y accion profesional.',
+        'Aprender con casos te ayuda a conectar teoría, emoción y acción profesional.',
     },
     {
       title: 'Hoja MENTORA',
       message:
-        'Reflexionar despues de cada escenario mejora tu juicio para futuras decisiones.',
+        'Reflexionar después de cada escenario mejora tu juicio para futuras decisiones.',
     },
   ];
 
@@ -185,6 +185,11 @@ export class LoginComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         this.loginSuccess.set(true);
         window.setTimeout(() => {
+          if (this.authService.mustChangePassword()) {
+            void this.router.navigateByUrl('/auth/cambiar-contrasena-temporal');
+            return;
+          }
+
           const role = this.authService.role();
           if (role) {
             void this.router.navigateByUrl(
@@ -262,7 +267,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       error: () => {
         this.recoverLoading.set(false);
         this.recoverError.set(
-          'No fue posible enviar el codigo de verificacion en este momento.',
+          'No fue posible enviar el código de verificación en este momento.',
         );
       },
     });
@@ -277,7 +282,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     const payload = this.recoverVerifyForm.getRawValue();
 
     if (payload.newPassword !== payload.confirmPassword) {
-      this.recoverError.set('Las contrasenas no coinciden.');
+      this.recoverError.set('Las contraseñas no coinciden.');
       return;
     }
 
@@ -303,7 +308,7 @@ export class LoginComponent implements OnInit, OnDestroy {
             ? error.error.message.join(' ')
             : error.error?.message;
           this.recoverError.set(
-            message || 'No fue posible restablecer la contrasena.',
+            message || 'No fue posible restablecer la contraseña.',
           );
         },
       });
@@ -361,7 +366,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   private resolveLoginError(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 0) {
-        return 'No hay conexion con el servidor. Verifica que el backend este activo.';
+        return 'No hay conexión con el servidor. Verifica que el backend esté activo.';
       }
 
       const body = error.error as { message?: string | string[] };
@@ -377,14 +382,14 @@ export class LoginComponent implements OnInit, OnDestroy {
         lower.includes('conectar con el servidor') ||
         lower.includes('comunicarse con')
       ) {
-        return 'No hay conexion con el servidor. Verifica que el backend este activo.';
+        return 'No hay conexión con el servidor. Verifica que el backend esté activo.';
       }
 
       if (error.status === 401 || error.status === 403) {
-        return 'No pudimos iniciar sesion. Verifica tus credenciales.';
+        return 'No pudimos iniciar sesión. Verifica tus credenciales.';
       }
     }
 
-    return 'No pudimos iniciar sesion. Verifica tus credenciales.';
+    return 'No pudimos iniciar sesión. Verifica tus credenciales.';
   }
 }

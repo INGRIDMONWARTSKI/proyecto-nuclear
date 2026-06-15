@@ -1,14 +1,15 @@
 import {
-  BadGatewayException,
   BadRequestException,
   ForbiddenException,
   Injectable,
+  ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { PostgrestService } from '../postgrest/postgrest.service';
 import { CasosService } from './casos.service';
+import { CasoIaGenerationProviderService } from './caso-ia-generation-provider.service';
 import { CasoPreviewBuilderService } from './caso-preview-builder.service';
 import { DecisionesService } from './decisiones.service';
 import { CreateCasoDto } from './dto/create-caso.dto';
@@ -18,15 +19,19 @@ import { CreatePreguntaDecisionDto } from './dto/create-pregunta-decision.dto';
 import { CreateRetroalimentacionDto } from './dto/create-retroalimentacion.dto';
 import { GenerateCasoIaDto } from './dto/generate-caso-ia.dto';
 import { EscenariosService } from './escenarios.service';
-import { GeminiService } from './gemini.service';
+import { OllamaService } from './ollama.service';
 import { PublicacionService } from './publicacion.service';
 import { RetroalimentacionesService } from './retroalimentaciones.service';
+import { CasoIaGenerationResult } from './types/caso-ia-generation.types';
 import { CasoGeneradoIa } from './types/caso-generado-ia.types';
 import { CasoPreviewTree } from './types/caso-preview.types';
 
 @Injectable()
 export class GeneracionCasosIaService {
   private static readonly MAX_GENERATION_ATTEMPTS = 2;
+  private static readonly LOCAL_FALLBACK_MAX_SCENARIOS = 2;
+  private static readonly LOCAL_PARTIAL_DRAFT_WARNING =
+    'La IA local genero un borrador parcial. Revisa y completa el caso antes de publicarlo.';
 
   constructor(
     private readonly casosService: CasosService,
@@ -35,7 +40,8 @@ export class GeneracionCasosIaService {
     private readonly retroalimentacionesService: RetroalimentacionesService,
     private readonly previewBuilder: CasoPreviewBuilderService,
     private readonly publicacionService: PublicacionService,
-    private readonly geminiService: GeminiService,
+    private readonly iaGenerationProvider: CasoIaGenerationProviderService,
+    private readonly ollamaService: OllamaService,
     private readonly postgrest: PostgrestService,
   ) {}
 
@@ -47,6 +53,9 @@ export class GeneracionCasosIaService {
     titulo: string;
     totalEscenarios: number;
     modelo: string;
+    proveedor: string;
+    borradorParcial?: boolean;
+    advertencia?: string;
   }> {
     this.assertDocenteRole(currentUser);
 
@@ -65,24 +74,53 @@ export class GeneracionCasosIaService {
 
     this.assertSufficientPromptContext(referenciasTexto, referenciasCasos);
 
-    const prompt = this.buildPrompt(
-      {
-        instruccion: dto.instruccion?.trim() || null,
-        cantidadEscenarios,
-        referenciasTexto,
-        referenciasCasos,
-      },
-      this.geminiService.getModelName(),
+    const promptContext = {
+      instruccion: dto.instruccion?.trim() || null,
+      cantidadEscenarios,
+      referenciasTexto,
+      referenciasCasos,
+    };
+    const prompt = this.buildPrompt(promptContext);
+    const localPrompt = this.buildLocalPrompt(promptContext);
+
+    const generationResult = await this.generateAndValidate(
+      prompt,
+      localPrompt,
+      promptContext,
+      cantidadEscenarios,
     );
 
-    const casoGenerado = await this.generateAndValidate(prompt, cantidadEscenarios);
-    const creado = await this.persistGeneratedCase(casoGenerado, currentUser);
+    if ('borradorParcial' in generationResult && generationResult.borradorParcial) {
+      const creado = await this.persistPartialDraftCase(
+        generationResult.partialCase,
+        currentUser,
+      );
+
+      return {
+        casoId: creado.id,
+        titulo: creado.titulo,
+        totalEscenarios: 0,
+        modelo: generationResult.model,
+        proveedor: generationResult.provider,
+        borradorParcial: true,
+        advertencia: GeneracionCasosIaService.LOCAL_PARTIAL_DRAFT_WARNING,
+      };
+    }
+
+    const fullResult = generationResult as CasoIaGenerationResult & {
+      casoGenerado: CasoGeneradoIa;
+    };
+    const creado = await this.persistGeneratedCase(
+      fullResult.casoGenerado,
+      currentUser,
+    );
 
     return {
       casoId: creado.id,
       titulo: creado.titulo,
-      totalEscenarios: casoGenerado.escenarios.length,
-      modelo: this.geminiService.getModelName(),
+      totalEscenarios: fullResult.casoGenerado.escenarios.length,
+      modelo: fullResult.model,
+      proveedor: fullResult.provider,
     };
   }
 
@@ -134,7 +172,6 @@ export class GeneracionCasosIaService {
       referenciasTexto: string[];
       referenciasCasos: CasoPreviewTree[];
     },
-    modelName: string,
   ): string {
     const referenciasCasosJson = JSON.stringify(context.referenciasCasos, null, 2);
     const referenciasTexto = context.referenciasTexto
@@ -145,7 +182,6 @@ export class GeneracionCasosIaService {
       'Eres un asistente experto en simulaciones de casos psicologicos para uso docente.',
       `Genera exactamente ${context.cantidadEscenarios} escenarios para un caso nuevo.`,
       'Devuelve exclusivamente JSON valido, sin markdown, sin comentarios y sin texto adicional.',
-      `El modelo esperado es ${modelName}.`,
       'Reglas obligatorias:',
       '- Debes generar un objeto con: titulo, descripcion, objetivoAprendizaje, escenarios.',
       '- escenarios debe ser un arreglo ordenado por la propiedad orden comenzando en 1.',
@@ -206,13 +242,659 @@ export class GeneracionCasosIaService {
       .join('\n\n');
   }
 
+  private buildLocalPrompt(
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
+  ): string {
+    const localScenarioCount = this.resolveLocalScenarioCount(
+      context.cantidadEscenarios,
+    );
+    const referenciasTexto = context.referenciasTexto
+      .slice(0, 2)
+      .map((item, index) => `R${index + 1}: ${this.compactText(item, 350)}`)
+      .join('\n');
+    const referenciasCasos = context.referenciasCasos
+      .slice(0, 1)
+      .map(
+        (caso, index) =>
+          `C${index + 1}: titulo=${caso.titulo}; objetivo=${this.compactText(caso.objetivoAprendizaje ?? '', 120)}; descripcion=${this.compactText(caso.descripcion ?? '', 180)}`,
+      )
+      .join('\n');
+
+    return [
+      'Genera un caso psicologico docente breve y responde solo JSON valido.',
+      `Crea como maximo ${localScenarioCount} escenarios.`,
+      'Estructura:',
+      '{"titulo":"string","descripcion":"string","objetivoAprendizaje":"string","escenarios":[{"orden":1,"titulo":"string","situacionTexto":"string","fondoCodigo":"aula","isFinal":false,"pregunta":{"enunciado":"string","tipo":"single_choice","puntajeMaximo":5,"opciones":[{"orden":1,"texto":"string","puntaje":5,"isCorrecta":false,"escenarioDestinoOrden":2,"retroalimentacion":{"mensaje":"string","tipo":"pedagogica","referenciaTeorica":"string"}}]}}]}',
+      'Reglas:',
+      '- caso breve',
+      '- ultimo escenario con isFinal=true',
+      '- escenario final con pregunta=null',
+      '- escenarios no finales con pregunta y minimo 2 opciones',
+      '- usa preguntas y opciones breves',
+      '- retroalimentacion corta, directa y util',
+      '- fondoCodigo solo: aula, oficina_psicologica, casa, comisaria_familia, sala_espera',
+      '- escenarioDestinoOrden debe apuntar a un orden existente o omitirse',
+      context.instruccion
+        ? `Instruccion docente: ${this.compactText(context.instruccion, 220)}`
+        : '',
+      referenciasTexto ? `Referencias texto:\n${referenciasTexto}` : '',
+      referenciasCasos ? `Casos referencia:\n${referenciasCasos}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  private compactText(value: string, maxLength: number): string {
+    const normalized = value.replace(/\s+/g, ' ').trim();
+    if (normalized.length <= maxLength) {
+      return normalized;
+    }
+
+    return `${normalized.slice(0, maxLength - 3)}...`;
+  }
+
+  private shouldAttemptLocalStagedGeneration(error: unknown): boolean {
+    if (!(error instanceof ServiceUnavailableException) || !this.ollamaService.isConfigured()) {
+      return false;
+    }
+
+    const response = error.getResponse();
+    if (!response || typeof response !== 'object' || !('code' in response)) {
+      return false;
+    }
+
+    return response.code === 'IA_LOCAL_TIMEOUT';
+  }
+
+  private async generateWithLocalStages(
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
+    cantidadEscenarios: number,
+  ): Promise<
+    | (CasoIaGenerationResult & { casoGenerado: CasoGeneradoIa })
+    | (CasoIaGenerationResult & {
+        borradorParcial: true;
+        partialCase: {
+          titulo: string;
+          descripcion: string | null;
+          objetivoAprendizaje: string | null;
+        };
+      })
+  > {
+    const localScenarioCount = this.resolveLocalScenarioCount(cantidadEscenarios);
+    const metadataPrompt = this.buildLocalMetadataPrompt(context);
+    const metadataRaw = await this.ollamaService.generateJson(metadataPrompt);
+    const metadataParsed = JSON.parse(metadataRaw) as unknown;
+    const metadata = this.validateLocalMetadata(metadataParsed, context);
+
+    try {
+      const scenariosPrompt = this.buildLocalScenariosPrompt(
+        context,
+        metadata,
+        localScenarioCount,
+      );
+      const scenariosRaw = await this.ollamaService.generateJson(scenariosPrompt);
+      const scenariosParsed = JSON.parse(scenariosRaw) as unknown;
+      const escenariosBase = this.validateLocalScenarioSkeletons(
+        scenariosParsed,
+        localScenarioCount,
+        metadata,
+        context,
+      );
+
+      const escenarios: CasoGeneradoIa['escenarios'] = [];
+
+      for (const escenarioBase of escenariosBase) {
+        if (escenarioBase.isFinal) {
+          escenarios.push({
+            ...escenarioBase,
+            pregunta: null,
+          });
+          continue;
+        }
+
+        try {
+          const questionPrompt = this.buildLocalQuestionPrompt(
+            context,
+            metadata,
+            escenarioBase,
+            localScenarioCount,
+          );
+          const questionRaw = await this.ollamaService.generateJson(questionPrompt);
+          const questionParsed = JSON.parse(questionRaw) as unknown;
+          const pregunta = this.validateQuestion(questionParsed);
+
+          escenarios.push({
+            ...escenarioBase,
+            pregunta,
+          });
+        } catch (error) {
+          if (
+            error instanceof SyntaxError ||
+            error instanceof BadRequestException
+          ) {
+            return this.buildLocalPartialDraftResult(metadata);
+          }
+
+          throw error;
+        }
+      }
+
+      return {
+        rawJson: JSON.stringify({
+          titulo: metadata.titulo,
+          descripcion: metadata.descripcion,
+          objetivoAprendizaje: metadata.objetivoAprendizaje,
+          escenarios,
+        }),
+        provider: this.ollamaService.getProviderName(),
+        model: this.ollamaService.getModelName(),
+        casoGenerado: {
+          titulo: metadata.titulo,
+          descripcion: metadata.descripcion,
+          objetivoAprendizaje: metadata.objetivoAprendizaje,
+          escenarios,
+        },
+      };
+    } catch (error) {
+      if (error instanceof SyntaxError || error instanceof BadRequestException) {
+        return this.buildLocalPartialDraftResult(metadata);
+      }
+
+      throw error;
+    }
+  }
+
+  private buildLocalMetadataPrompt(context: {
+    instruccion: string | null;
+    referenciasTexto: string[];
+    referenciasCasos: CasoPreviewTree[];
+  }): string {
+    return [
+      'Responde solo JSON valido.',
+      'Genera metadatos de un caso psicologico docente.',
+      'Estructura: {"titulo":"string","descripcion":"string","objetivoAprendizaje":"string"}',
+      context.instruccion
+        ? `Instruccion docente: ${this.compactText(context.instruccion, 220)}`
+        : '',
+      context.referenciasTexto[0]
+        ? `Referencia principal: ${this.compactText(context.referenciasTexto[0], 350)}`
+        : '',
+      context.referenciasCasos[0]
+        ? `Caso base: titulo=${context.referenciasCasos[0].titulo}; objetivo=${this.compactText(context.referenciasCasos[0].objetivoAprendizaje ?? '', 150)}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  private buildLocalScenariosPrompt(
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+    },
+    metadata: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    },
+    cantidadEscenarios: number,
+  ): string {
+    return [
+      'Responde solo JSON valido.',
+      `Genera como maximo ${cantidadEscenarios} escenarios base para un caso psicologico breve.`,
+      'Estructura: {"escenarios":[{"orden":1,"titulo":"string","situacionTexto":"string","fondoCodigo":"aula","isFinal":false}]}',
+      'Reglas:',
+      '- orden consecutivo desde 1',
+      '- solo el ultimo escenario debe tener isFinal=true',
+      '- escenarios breves y concretos',
+      '- fondoCodigo solo: aula, oficina_psicologica, casa, comisaria_familia, sala_espera',
+      `Titulo del caso: ${metadata.titulo}`,
+      metadata.descripcion ? `Descripcion: ${this.compactText(metadata.descripcion, 220)}` : '',
+      metadata.objetivoAprendizaje
+        ? `Objetivo: ${this.compactText(metadata.objetivoAprendizaje, 180)}`
+        : '',
+      context.referenciasTexto[0]
+        ? `Referencia: ${this.compactText(context.referenciasTexto[0], 260)}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  private buildLocalQuestionPrompt(
+    context: {
+      instruccion: string | null;
+    },
+    metadata: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    },
+    escenario: Omit<CasoGeneradoIa['escenarios'][number], 'pregunta'>,
+    cantidadEscenarios: number,
+  ): string {
+    const nextOrder =
+      escenario.orden < cantidadEscenarios ? escenario.orden + 1 : null;
+
+    return [
+      'Responde solo JSON valido.',
+      'Genera una pregunta single_choice breve para este escenario.',
+      'Estructura: {"enunciado":"string","tipo":"single_choice","puntajeMaximo":5,"opciones":[{"orden":1,"texto":"string","puntaje":5,"isCorrecta":false,"escenarioDestinoOrden":2,"retroalimentacion":{"mensaje":"string","tipo":"pedagogica","referenciaTeorica":"string"}}]}',
+      'Reglas:',
+      '- minimo 2 opciones',
+      '- orden consecutivo desde 1',
+      '- puntajes entre 0 y 5',
+      '- enunciado breve',
+      '- retroalimentacion corta',
+      nextOrder
+        ? `- si usas escenarioDestinoOrden, prioriza ${nextOrder}`
+        : '- no uses escenarioDestinoOrden',
+      `Caso: ${metadata.titulo}`,
+      metadata.objetivoAprendizaje
+        ? `Objetivo: ${this.compactText(metadata.objetivoAprendizaje, 180)}`
+        : '',
+      `Escenario ${escenario.orden}: ${escenario.titulo}`,
+      `Situacion: ${this.compactText(escenario.situacionTexto, 260)}`,
+      context.instruccion
+        ? `Instruccion docente: ${this.compactText(context.instruccion, 180)}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  private validateLocalMetadata(
+    payload: unknown,
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
+  ): {
+    titulo: string;
+    descripcion: string | null;
+    objetivoAprendizaje: string | null;
+  } {
+    const raw =
+      payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? (payload as Record<string, unknown>)
+        : {};
+
+    return this.buildPartialDraft(context, raw);
+  }
+
+  private validateLocalScenarioSkeletons(
+    payload: unknown,
+    cantidadEscenarios: number,
+    metadata: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    },
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
+  ): Array<Omit<CasoGeneradoIa['escenarios'][number], 'pregunta'>> {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return this.buildFallbackScenarioSkeletons(
+        cantidadEscenarios,
+        metadata,
+        context,
+      );
+    }
+
+    const raw = payload as Record<string, unknown>;
+    const escenarios = raw.escenarios;
+    if (!Array.isArray(escenarios) || escenarios.length === 0) {
+      return this.buildFallbackScenarioSkeletons(
+        cantidadEscenarios,
+        metadata,
+        context,
+      );
+    }
+
+    const normalized: Array<Omit<CasoGeneradoIa['escenarios'][number], 'pregunta'>> = [];
+
+    for (let index = 0; index < cantidadEscenarios; index += 1) {
+      const expectedOrder = index + 1;
+      const item = escenarios[index];
+
+      if (item === undefined) {
+        normalized.push(
+          this.buildFallbackScenarioSkeleton(
+            expectedOrder,
+            cantidadEscenarios,
+            metadata,
+            context,
+          ),
+        );
+        continue;
+      }
+
+      try {
+        normalized.push(
+          this.validateScenarioSkeleton(item, expectedOrder, cantidadEscenarios),
+        );
+      } catch {
+        normalized.push(
+          this.buildFallbackScenarioSkeleton(
+            expectedOrder,
+            cantidadEscenarios,
+            metadata,
+            context,
+          ),
+        );
+      }
+    }
+
+    return normalized;
+  }
+
+  private validateScenarioSkeleton(
+    payload: unknown,
+    expectedOrder: number,
+    totalEscenarios: number,
+  ): Omit<CasoGeneradoIa['escenarios'][number], 'pregunta'> {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new BadRequestException('Cada escenario debe ser un objeto valido.');
+    }
+
+    const raw = payload as Record<string, unknown>;
+    const orden = this.requireInteger(raw.orden, 'escenarios[].orden', 1);
+    const titulo = this.requireTrimmedString(raw.titulo, 'escenarios[].titulo', 3, 120);
+    const situacionTexto = this.requireTrimmedString(
+      raw.situacionTexto,
+      'escenarios[].situacionTexto',
+      10,
+      4000,
+    );
+    const fondoCodigo = this.requireBackground(raw.fondoCodigo);
+    this.requireBoolean(raw.isFinal, 'escenarios[].isFinal');
+
+    return {
+      orden: expectedOrder,
+      titulo,
+      situacionTexto,
+      fondoCodigo,
+      isFinal: expectedOrder === totalEscenarios,
+    };
+  }
+
+  private buildFallbackScenarioSkeletons(
+    cantidadEscenarios: number,
+    metadata: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    },
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
+  ): Array<Omit<CasoGeneradoIa['escenarios'][number], 'pregunta'>> {
+    return Array.from({ length: cantidadEscenarios }, (_, index) =>
+      this.buildFallbackScenarioSkeleton(
+        index + 1,
+        cantidadEscenarios,
+        metadata,
+        context,
+      ),
+    );
+  }
+
+  private buildFallbackScenarioSkeleton(
+    orden: number,
+    totalEscenarios: number,
+    metadata: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    },
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
+  ): Omit<CasoGeneradoIa['escenarios'][number], 'pregunta'> {
+    const baseContext =
+      context.referenciasTexto[0] ??
+      context.referenciasCasos[0]?.descripcion ??
+      metadata.descripcion ??
+      context.instruccion ??
+      'Analiza el caso, identifica factores de riesgo y propone una intervencion inicial.';
+
+    const total = totalEscenarios > 1 ? totalEscenarios : 1;
+    const etapa =
+      orden === total
+        ? 'cierre y evaluacion del proceso'
+        : orden === 1
+          ? 'apertura y exploracion inicial'
+          : `profundizacion del caso en la etapa ${orden} de ${total}`;
+
+    return {
+      orden,
+      titulo:
+        orden === total
+          ? `Cierre del caso ${metadata.titulo}`
+          : `Escenario ${orden}: ${metadata.titulo}`,
+      situacionTexto: this.compactText(
+        `${etapa}. ${baseContext}`,
+        900,
+      ),
+      fondoCodigo:
+        orden === total ? 'oficina_psicologica' : 'aula',
+      isFinal: orden === total,
+    };
+  }
+
+  private buildLocalPartialDraftResult(metadata: {
+    titulo: string;
+    descripcion: string | null;
+    objetivoAprendizaje: string | null;
+  }): CasoIaGenerationResult & {
+    borradorParcial: true;
+    partialCase: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    };
+  } {
+    return {
+      rawJson: JSON.stringify(metadata),
+      provider: this.ollamaService.getProviderName(),
+      model: this.ollamaService.getModelName(),
+      borradorParcial: true,
+      partialCase: metadata,
+    };
+  }
+
+  private resolveLocalScenarioCount(requestedScenarioCount: number): number {
+    return Math.max(
+      1,
+      Math.min(
+        requestedScenarioCount,
+        GeneracionCasosIaService.LOCAL_FALLBACK_MAX_SCENARIOS,
+      ),
+    );
+  }
+
+  private canPersistPartialDraft(
+    generationResult: CasoIaGenerationResult,
+    rawPayload: unknown,
+  ): boolean {
+    if (generationResult.provider !== 'ollama') {
+      return false;
+    }
+
+    if (!rawPayload || typeof rawPayload !== 'object' || Array.isArray(rawPayload)) {
+      return true;
+    }
+
+    const raw = rawPayload as Record<string, unknown>;
+    return (
+      typeof raw.titulo === 'string' ||
+      typeof raw.descripcion === 'string' ||
+      typeof raw.objetivoAprendizaje === 'string'
+    );
+  }
+
+  private buildPartialDraft(
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
+    rawPayload: unknown,
+  ): {
+    titulo: string;
+    descripcion: string | null;
+    objetivoAprendizaje: string | null;
+  } {
+    const raw =
+      rawPayload && typeof rawPayload === 'object' && !Array.isArray(rawPayload)
+        ? (rawPayload as Record<string, unknown>)
+        : {};
+
+    const titulo =
+      this.safePartialText(raw.titulo, 3, 120) ??
+      this.buildFallbackTitle(context);
+    const descripcion =
+      this.safePartialText(raw.descripcion, 20, 1000) ??
+      this.buildFallbackDescription(context);
+    const objetivoAprendizaje =
+      this.safePartialText(raw.objetivoAprendizaje, 10, 1000) ??
+      this.buildFallbackObjective(context);
+
+    return {
+      titulo,
+      descripcion,
+      objetivoAprendizaje,
+    };
+  }
+
+  private safePartialText(
+    value: unknown,
+    minLength: number,
+    maxLength: number,
+  ): string | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const normalized = value.replace(/\s+/g, ' ').trim();
+    if (normalized.length < minLength) {
+      return null;
+    }
+
+    return normalized.slice(0, maxLength);
+  }
+
+  private buildFallbackTitle(context: {
+    instruccion: string | null;
+    referenciasTexto: string[];
+    referenciasCasos: CasoPreviewTree[];
+  }): string {
+    const base =
+      context.instruccion ??
+      context.referenciasCasos[0]?.titulo ??
+      context.referenciasTexto[0] ??
+      'Caso asistido por IA local';
+    const compact = this.compactText(base, 90);
+    return compact.length >= 3 ? compact : 'Caso asistido por IA local';
+  }
+
+  private buildFallbackDescription(context: {
+    instruccion: string | null;
+    referenciasTexto: string[];
+    referenciasCasos: CasoPreviewTree[];
+  }): string | null {
+    const source =
+      context.referenciasTexto[0] ??
+      context.referenciasCasos[0]?.descripcion ??
+      context.instruccion;
+    return source ? this.compactText(source, 1000) : null;
+  }
+
+  private buildFallbackObjective(context: {
+    instruccion: string | null;
+    referenciasTexto: string[];
+    referenciasCasos: CasoPreviewTree[];
+  }): string | null {
+    const source =
+      context.referenciasCasos[0]?.objetivoAprendizaje ??
+      context.instruccion ??
+      'Revisar el borrador local, completar escenarios y afinar decisiones pedagogicas.';
+    return this.compactText(source, 1000);
+  }
+
+  private async persistPartialDraftCase(
+    partialCase: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    },
+    currentUser: AuthenticatedUser,
+  ): Promise<{ id: string; titulo: string }> {
+    const casoCreado = await this.casosService.create(
+      {
+        titulo: partialCase.titulo,
+        descripcion: partialCase.descripcion ?? undefined,
+        objetivoAprendizaje: partialCase.objetivoAprendizaje ?? undefined,
+      } satisfies CreateCasoDto,
+      currentUser,
+    );
+
+    return {
+      id: casoCreado.id,
+      titulo: casoCreado.titulo,
+    };
+  }
+
   private async generateAndValidate(
     prompt: string,
+    localPrompt: string,
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
     cantidadEscenarios: number,
-  ): Promise<CasoGeneradoIa> {
+  ): Promise<
+    | (CasoIaGenerationResult & { casoGenerado: CasoGeneradoIa })
+    | (CasoIaGenerationResult & {
+        borradorParcial: true;
+        partialCase: {
+          titulo: string;
+          descripcion: string | null;
+          objetivoAprendizaje: string | null;
+        };
+      })
+  > {
     let lastErrorMessage =
       'La IA devolvio una estructura que no cumple los requisitos minimos.';
     const collectedErrors: string[] = [];
+    let lastGenerationResult: CasoIaGenerationResult | null = null;
+    let lastRawPayload: unknown = null;
 
     for (
       let intento = 0;
@@ -220,9 +902,21 @@ export class GeneracionCasosIaService {
       intento += 1
     ) {
       try {
-        const raw = await this.geminiService.generateJson(prompt);
-        const parsed = JSON.parse(raw) as unknown;
-        return this.validateGeneratedCase(parsed, cantidadEscenarios);
+        const generationResult = await this.iaGenerationProvider.generateJson(
+          prompt,
+          localPrompt,
+        );
+        lastGenerationResult = generationResult;
+        const parsed = JSON.parse(generationResult.rawJson) as unknown;
+        lastRawPayload = parsed;
+        const expectedScenarioCount =
+          generationResult.provider === 'ollama'
+            ? this.resolveLocalScenarioCount(cantidadEscenarios)
+            : cantidadEscenarios;
+        return {
+          ...generationResult,
+          casoGenerado: this.validateGeneratedCase(parsed, expectedScenarioCount),
+        };
       } catch (error) {
         if (error instanceof SyntaxError) {
           const message =
@@ -238,8 +932,23 @@ export class GeneracionCasosIaService {
           continue;
         }
 
+        if (this.shouldAttemptLocalStagedGeneration(error)) {
+          return this.generateWithLocalStages(context, cantidadEscenarios);
+        }
+
         throw error;
       }
+    }
+
+    if (
+      lastGenerationResult?.provider === 'ollama' &&
+      this.canPersistPartialDraft(lastGenerationResult, lastRawPayload)
+    ) {
+      return {
+        ...lastGenerationResult,
+        borradorParcial: true,
+        partialCase: this.buildPartialDraft(context, lastRawPayload),
+      };
     }
 
     throw new UnprocessableEntityException({
@@ -440,8 +1149,12 @@ export class GeneracionCasosIaService {
     }
 
     const nota = numeric > 5 ? numeric / 20 : numeric;
+    const notaNormalizada = Math.min(nota, 5);
 
-    return Number(Math.min(nota, 5).toFixed(1));
+    // La persistencia actual usa columnas integer para puntajes.
+    // Redondeamos a la escala entera 0..5 para mantener compatibilidad
+    // con PostgREST/PostgreSQL y evitar errores cuando la IA devuelve 0.5, 2.7, etc.
+    return Math.round(notaNormalizada);
   }
 
   private validateFeedback(payload: unknown) {

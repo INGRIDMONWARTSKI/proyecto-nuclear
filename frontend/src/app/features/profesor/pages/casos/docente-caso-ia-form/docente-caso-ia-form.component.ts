@@ -218,6 +218,14 @@ export class DocenteCasoIaFormComponent implements OnInit {
           return 'El servicio de IA está temporalmente saturado. Intenta de nuevo en unos minutos.';
         case 'IA_CONNECTION_ERROR':
           return 'No se pudo conectar con el servicio de IA. Verifica la conexión e intenta de nuevo.';
+        case 'IA_LOCAL_TIMEOUT':
+          return 'La IA local tardó demasiado en responder. Prueba con un modelo más ligero o aumenta el tiempo de espera del backend.';
+        case 'IA_LOCAL_CONNECTION_ERROR':
+          return 'No se pudo conectar con la IA local. Verifica que Ollama esté ejecutándose y accesible en la URL configurada.';
+        case 'IA_LOCAL_NOT_CONFIGURED':
+          return 'La IA local no está configurada todavía en el backend.';
+        case 'IA_LOCAL_EMPTY_RESPONSE':
+          return 'La IA local no devolvió contenido utilizable para generar el caso.';
         case 'IA_DRAFT_INVALID':
           return typeof body?.message === 'string'
             ? body.message

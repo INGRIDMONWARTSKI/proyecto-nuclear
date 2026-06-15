@@ -10,4 +10,7 @@ export interface GenerarCasoIaResponse {
   titulo: string;
   totalEscenarios: number;
   modelo: string;
+  proveedor: string;
+  borradorParcial?: boolean;
+  advertencia?: string;
 }

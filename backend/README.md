@@ -14,6 +14,7 @@ POSTGREST_URL=http://localhost:3001
 POSTGREST_SCHEMA=public
 GEMINI_API_KEY=tu-api-key
 GEMINI_MODEL=gemini-2.5-flash
+OLLAMA_MODEL=llama3.1
 FRONTEND_URL=http://localhost:4200
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
@@ -22,6 +23,8 @@ SMTP_USER=tu-cuenta@gmail.com
 SMTP_PASS=tu-app-password-sin-espacios
 SMTP_FROM="MENTORA <tu-cuenta@gmail.com>"
 # GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models
+# OLLAMA_BASE_URL=http://127.0.0.1:11434
+# OLLAMA_TIMEOUT_MS=300000
 # POSTGREST_API_KEY=
 ADMIN_EMAIL=admin@nuclear.local
 ADMIN_PASSWORD=Admin123*
@@ -142,7 +145,7 @@ Los endpoints frontend del modulo de simulacion, editor visual y pruebas E2E int
 
 ## Generacion de casos con IA
 
-El backend expone `POST /api/simulacion/docente/casos/generar` para crear un borrador completo en estado `draft` usando Gemini.
+El backend expone `POST /api/simulacion/docente/casos/generar` para crear un borrador completo en estado `draft` usando Gemini como proveedor primario y Ollama como fallback local opcional ante fallos tecnicos.
 
 Payload de ejemplo:
 
@@ -165,12 +168,15 @@ Respuesta de ejemplo:
   "casoId": "uuid-generado",
   "titulo": "Caso generado por IA",
   "totalEscenarios": 3,
-  "modelo": "gemini-2.5-flash"
+  "modelo": "gemini-2.5-flash",
+  "proveedor": "gemini"
 }
 ```
 
 Notas:
 
 - Se requiere `GEMINI_API_KEY` en entorno; no se debe versionar ni dejar hardcodeada.
+- `OLLAMA_MODEL` habilita el fallback local; si no esta configurado, el sistema conserva el comportamiento actual y devuelve el error original de Gemini.
+- Para modelos locales pesados como `qwen2.5:7b`, usa `OLLAMA_BASE_URL=http://127.0.0.1:11434` y aumenta `OLLAMA_TIMEOUT_MS` si la respuesta tarda varios minutos.
 - El endpoint acepta texto libre, casos existentes del sistema o ambos como referencia.
 - El caso se persiste usando la misma estructura actual de `casos`, `escenarios`, `preguntas_decision`, `opciones_respuesta` y `retroalimentaciones`.

@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CasoIaProvider } from './interfaces/caso-ia-provider.interface';
 
 type GeminiErrorKind =
   | 'not_configured'
@@ -16,7 +17,7 @@ type GeminiErrorKind =
   | 'empty_response';
 
 @Injectable()
-export class GeminiService {
+export class GeminiService implements CasoIaProvider {
   private static readonly TRANSIENT_STATUS_CODES = new Set([500, 502, 503, 504]);
   private static readonly MAX_ATTEMPTS = 3;
   private static readonly RETRY_DELAYS_MS = [300, 900];
@@ -38,6 +39,10 @@ export class GeminiService {
 
   getModelName(): string {
     return this.model;
+  }
+
+  getProviderName(): string {
+    return 'gemini';
   }
 
   isConfigured(): boolean {
@@ -81,7 +86,11 @@ export class GeminiService {
           const detail = await this.safeReadError(response);
           const errorKind = this.classifyHttpError(response.status, detail);
 
-          if (errorKind === 'rate_limit' || errorKind === 'quota_exceeded') {
+          if (
+            errorKind === 'rate_limit' ||
+            errorKind === 'quota_exceeded' ||
+            errorKind === 'not_configured'
+          ) {
             this.logSafeFailure(errorKind, response.status, detail, endpoint, attempt);
             throw this.buildProviderException(errorKind, detail);
           }

@@ -4,6 +4,7 @@ import { PostgrestModule } from '../postgrest/postgrest.module';
 import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 import { UsuariosModule } from '../usuarios/usuarios.module';
 import { AsignacionesService } from './asignaciones.service';
+import { CasoIaGenerationProviderService } from './caso-ia-generation-provider.service';
 import { CasoEditorBuilderService } from './caso-editor-builder.service';
 import { CasoPreviewBuilderService } from './caso-preview-builder.service';
 import { CasosService } from './casos.service';
@@ -23,6 +24,7 @@ import {
 import { EstudianteSimulacionController } from './estudiante-simulacion.controller';
 import { GeminiService } from './gemini.service';
 import { GeneracionCasosIaService } from './generacion-casos-ia.service';
+import { OllamaService } from './ollama.service';
 import { PublicacionService } from './publicacion.service';
 import { RespuestasEstudianteService } from './respuestas-estudiante.service';
 import { ResultadosService } from './resultados.service';
@@ -55,6 +57,8 @@ import { SesionesSimulacionService } from './sesiones-simulacion.service';
     RubricaService,
     PublicacionService,
     GeminiService,
+    OllamaService,
+    CasoIaGenerationProviderService,
     GeneracionCasosIaService,
     SesionesSimulacionService,
     RespuestasEstudianteService,

@@ -10,8 +10,6 @@ import { PageHeaderComponent } from '../../../../../shared/ui/page-header/page-h
 import { GruposService } from '../../../services/grupos.service';
 import { UsuariosApiService } from '../../../services/usuarios-api.service';
 import { Usuario } from '../../../../../core/models/usuario.model';
-import { AdminAmbientComponent } from '../../../../admin/shared/admin-ambient/admin-ambient.component';
-
 @Component({
   selector: 'app-grupo-form',
   standalone: true,
@@ -21,7 +19,6 @@ import { AdminAmbientComponent } from '../../../../admin/shared/admin-ambient/ad
     AlertMessageComponent,
     LoadingStateComponent,
     PageHeaderComponent,
-    AdminAmbientComponent,
   ],
   templateUrl: './grupo-form.component.html',
   styleUrl: './grupo-form.component.scss',

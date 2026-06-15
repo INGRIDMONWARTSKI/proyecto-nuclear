@@ -4,11 +4,12 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Notificacion } from '../../core/models/notificacion.model';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
+import { AdminAmbientComponent } from '../../features/admin/shared/admin-ambient/admin-ambient.component';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, AdminAmbientComponent],
   templateUrl: './admin-layout.component.html',
   styleUrl: './actor-layout.component.scss',
 })

@@ -19,8 +19,6 @@ import {
   SiepRoleBadge,
   StatusBadgeComponent,
 } from '../../../../shared/ui/status-badge/status-badge.component';
-import { AdminAmbientComponent } from '../../shared/admin-ambient/admin-ambient.component';
-
 type PanelMode = 'none' | 'create' | 'edit';
 
 export interface GrupoEstudiantesView {
@@ -40,7 +38,6 @@ export interface GrupoEstudiantesView {
     PageHeaderComponent,
     StatusBadgeComponent,
     ConfirmDialogComponent,
-    AdminAmbientComponent,
   ],
   templateUrl: './admin-usuarios.component.html',
   styleUrl: './admin-usuarios.component.scss',

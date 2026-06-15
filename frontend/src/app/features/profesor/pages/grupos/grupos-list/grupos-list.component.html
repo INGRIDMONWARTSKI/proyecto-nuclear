@@ -1,8 +1,4 @@
 ﻿<section class="siep-page grupos-page" [class.admin-page]="authService.hasRole(Role.ADMIN)">
-  @if (authService.hasRole(Role.ADMIN)) {
-    <app-admin-ambient />
-  }
-
   <div [class.admin-page__content]="authService.hasRole(Role.ADMIN)">
     @if (authService.hasRole(Role.ADMIN)) {
       <p class="siep-brand" aria-hidden="true">MENTORA · Admin</p>

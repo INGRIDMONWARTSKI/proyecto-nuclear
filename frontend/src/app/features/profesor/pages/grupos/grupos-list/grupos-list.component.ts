@@ -15,8 +15,6 @@ import { PageHeaderComponent } from '../../../../../shared/ui/page-header/page-h
 import { StatusBadgeComponent } from '../../../../../shared/ui/status-badge/status-badge.component';
 import { GruposService } from '../../../services/grupos.service';
 import { UsuariosApiService } from '../../../services/usuarios-api.service';
-import { AdminAmbientComponent } from '../../../../admin/shared/admin-ambient/admin-ambient.component';
-
 @Component({
   selector: 'app-grupos-list',
   standalone: true,
@@ -29,7 +27,6 @@ import { AdminAmbientComponent } from '../../../../admin/shared/admin-ambient/ad
     LoadingStateComponent,
     PageHeaderComponent,
     StatusBadgeComponent,
-    AdminAmbientComponent,
   ],
   templateUrl: './grupos-list.component.html',
   styleUrl: './grupos-list.component.scss',

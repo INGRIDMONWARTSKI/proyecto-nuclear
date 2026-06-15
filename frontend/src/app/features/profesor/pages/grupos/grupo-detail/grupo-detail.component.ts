@@ -15,7 +15,6 @@ import { StatusBadgeComponent } from '../../../../../shared/ui/status-badge/stat
 import { ClassroomSceneComponent } from '../../../components/salon-clases/classroom-scene.component';
 import { GruposService } from '../../../services/grupos.service';
 import { filtrarEstudiantesPorBusqueda } from '../../../utils/estudiante-busqueda.util';
-import { AdminAmbientComponent } from '../../../../admin/shared/admin-ambient/admin-ambient.component';
 import { ImportEstudiantesDialogComponent } from '../../../../admin/components/import-estudiantes-dialog/import-estudiantes-dialog.component';
 import type { ImportarEstudiantesResponse } from '../../../../../core/models/import-estudiantes.model';
 
@@ -32,7 +31,6 @@ import type { ImportarEstudiantesResponse } from '../../../../../core/models/imp
     PageHeaderComponent,
     StatusBadgeComponent,
     ClassroomSceneComponent,
-    AdminAmbientComponent,
     ImportEstudiantesDialogComponent,
   ],
   templateUrl: './grupo-detail.component.html',

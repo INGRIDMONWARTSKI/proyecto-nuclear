@@ -293,6 +293,30 @@
 
 .main-content {
   padding-bottom: 2.5rem;
+  // Reserva el ancho mínimo para evitar salto cuando cambia el contenido
+  min-height: calc(100vh - 90px);
+}
+
+// Transición de entrada del contenido al navegar entre páginas admin
+.admin-main {
+  animation: admin-page-enter 0.2s ease both;
+}
+
+@keyframes admin-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-main {
+    animation: none;
+  }
 }
 
 .page-header {

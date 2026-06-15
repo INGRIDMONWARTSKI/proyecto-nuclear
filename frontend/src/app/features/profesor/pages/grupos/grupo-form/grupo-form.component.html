@@ -1,8 +1,4 @@
 <section class="siep-page" [class.admin-page]="authService.hasRole(Role.ADMIN)">
-  @if (authService.hasRole(Role.ADMIN)) {
-    <app-admin-ambient />
-  }
-
   <div [class.admin-page__content]="authService.hasRole(Role.ADMIN)">
   @if (authService.hasRole(Role.ADMIN)) {
     <app-page-header

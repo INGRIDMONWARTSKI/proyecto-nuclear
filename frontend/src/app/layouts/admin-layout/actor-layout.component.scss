@@ -293,19 +293,20 @@
 
 .main-content {
   padding-bottom: 2.5rem;
-  // Reserva el ancho mínimo para evitar salto cuando cambia el contenido
   min-height: calc(100vh - 90px);
 }
 
-// Transición de entrada del contenido al navegar entre páginas admin
-.admin-main {
-  animation: admin-page-enter 0.2s ease both;
+// La animación debe estar en los host elements del router outlet (se recrean en cada nav).
+// ::ng-deep es intencional: permite alcanzar los componentes hijos desde el layout.
+// El <main> en sí es persistente, por eso la animación va en sus hijos directos.
+:host ::ng-deep .admin-main > * {
+  animation: admin-page-enter 240ms ease-out both;
 }
 
 @keyframes admin-page-enter {
   from {
     opacity: 0;
-    transform: translateY(3px);
+    transform: translateY(5px);
   }
   to {
     opacity: 1;
@@ -314,7 +315,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .admin-main {
+  :host ::ng-deep .admin-main > * {
     animation: none;
   }
 }

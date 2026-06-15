@@ -183,6 +183,7 @@ export class CasoEditorBuilderService {
       titulo: caso.titulo,
       descripcion: caso.descripcion,
       objetivoAprendizaje: caso.objetivo_aprendizaje,
+      tiempoMaximoMinutos: caso.tiempo_maximo_minutos ?? 60,
       autorDocenteId: caso.autor_docente_id,
       estado: caso.estado,
       isActive: caso.is_active,

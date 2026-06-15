@@ -80,6 +80,29 @@
 
           </div>
 
+          <div class="score-hero__metric">
+
+            <span class="score-hero__label">No respondidas</span>
+
+            <span class="score-hero__value score-hero__value--sm">{{ r.noRespondidas }}</span>
+
+          </div>
+
+        </div>
+
+        <div class="score-hero score-hero--breakdown" aria-label="Desglose de respuestas">
+          <div class="score-hero__metric">
+            <span class="score-hero__label">Acertadas</span>
+            <span class="score-hero__value score-hero__value--sm">{{ r.respuestasAcertadas }}</span>
+          </div>
+          <div class="score-hero__metric">
+            <span class="score-hero__label">Parciales</span>
+            <span class="score-hero__value score-hero__value--sm">{{ r.respuestasParciales }}</span>
+          </div>
+          <div class="score-hero__metric">
+            <span class="score-hero__label">Fallidas</span>
+            <span class="score-hero__value score-hero__value--sm">{{ r.respuestasFallidas }}</span>
+          </div>
         </div>
 
 
@@ -138,6 +161,19 @@
 
                 {{ item.puntajeObtenido }}
 
+              </p>
+
+              <p class="result-item__row">
+                <span>Tipo de respuesta</span>
+                @if (item.tipoRespuesta === 'correcta') {
+                  Correcta
+                } @else if (item.tipoRespuesta === 'alternativa') {
+                  Alternativa
+                } @else if (item.tipoRespuesta === 'incorrecta') {
+                  Incorrecta
+                } @else {
+                  Sin respuesta
+                }
               </p>
 
               <p class="result-item__row result-item__row--retro">

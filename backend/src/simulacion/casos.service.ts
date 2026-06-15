@@ -27,6 +27,7 @@ export class CasosService {
       titulo: createCasoDto.titulo.trim(),
       descripcion: createCasoDto.descripcion?.trim() || null,
       objetivo_aprendizaje: createCasoDto.objetivoAprendizaje?.trim() || null,
+      tiempo_maximo_minutos: createCasoDto.tiempoMaximoMinutos ?? 60,
       autor_docente_id: currentUser.sub,
       estado: 'draft' as const,
       is_active: true,
@@ -92,7 +93,7 @@ export class CasosService {
       );
     }
 
-    const payload: Record<string, string | boolean | null> = {};
+    const payload: Record<string, string | boolean | number | null> = {};
 
     if (updateCasoDto.titulo !== undefined) {
       payload.titulo = updateCasoDto.titulo.trim();
@@ -109,6 +110,10 @@ export class CasosService {
 
     if (updateCasoDto.isActive !== undefined) {
       payload.is_active = updateCasoDto.isActive;
+    }
+
+    if (updateCasoDto.tiempoMaximoMinutos !== undefined) {
+      payload.tiempo_maximo_minutos = updateCasoDto.tiempoMaximoMinutos;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -184,6 +189,7 @@ export class CasosService {
       titulo: string;
       descripcion: string | null;
       objetivoAprendizaje: string | null;
+      tiempoMaximoMinutos: number;
       totalEscenarios: number;
       publishedAt: string | null;
       tieneReintentoAutorizado: boolean;
@@ -209,6 +215,7 @@ export class CasosService {
       titulo: string;
       descripcion: string | null;
       objetivoAprendizaje: string | null;
+      tiempoMaximoMinutos: number;
       totalEscenarios: number;
       publishedAt: string | null;
       tieneReintentoAutorizado: boolean;
@@ -236,6 +243,7 @@ export class CasosService {
         titulo: caso.titulo,
         descripcion: caso.descripcion,
         objetivoAprendizaje: caso.objetivo_aprendizaje,
+        tiempoMaximoMinutos: caso.tiempo_maximo_minutos ?? 60,
         totalEscenarios: escenarios.length,
         publishedAt: caso.published_at,
         tieneReintentoAutorizado: Boolean(reintento),
@@ -337,6 +345,7 @@ export class CasosService {
       titulo: record.titulo,
       descripcion: record.descripcion,
       objetivoAprendizaje: record.objetivo_aprendizaje,
+      tiempoMaximoMinutos: record.tiempo_maximo_minutos ?? 60,
       autorDocenteId: record.autor_docente_id,
       estado: record.estado,
       isActive: record.is_active,

@@ -8,6 +8,7 @@ export interface SesionSimulacionRecord {
   respondidas: number;
   started_at: string;
   finished_at: string | null;
+  finalizacion_tipo: 'manual' | 'timeout' | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +23,7 @@ export interface SesionSimulacion {
   respondidas: number;
   startedAt: string;
   finishedAt: string | null;
+  finalizacionTipo: 'manual' | 'timeout' | null;
   createdAt: string;
   updatedAt: string;
 }

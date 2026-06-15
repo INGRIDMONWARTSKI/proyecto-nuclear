@@ -50,6 +50,7 @@ export class SimulacionDocenteService {
     titulo: string;
     descripcion?: string;
     objetivoAprendizaje?: string;
+    tiempoMaximoMinutos?: number;
   }) {
     return this.http.post<CasoDocente>(this.casosUrl, payload);
   }
@@ -60,6 +61,7 @@ export class SimulacionDocenteService {
       titulo?: string;
       descripcion?: string;
       objetivoAprendizaje?: string;
+      tiempoMaximoMinutos?: number;
     },
   ) {
     return this.http.patch<CasoDocente>(`${this.casosUrl}/${casoId}`, payload);

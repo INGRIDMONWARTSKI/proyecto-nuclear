@@ -289,8 +289,6 @@ export class ResultadosService {
 
 
 
-    const preguntasById = new Map(preguntas.map((p) => [p.id, p]));
-
     const opcionesById = new Map(opciones.map((o) => [o.id, o]));
 
 
@@ -310,6 +308,56 @@ export class ResultadosService {
     const retroByOption = new Map(retros.map((r) => [r.opcion_id, r.mensaje]));
 
 
+
+    const respuestasDetalladas = preguntas.map((pregunta) => {
+      const respuesta = respuestas.find((item) => item.pregunta_id === pregunta.id);
+      const escenario = escenariosById.get(pregunta.escenario_id);
+
+      if (!respuesta) {
+        return {
+          escenarioOrden: escenario?.orden ?? 0,
+          escenarioTitulo: escenario?.titulo ?? 'Escenario',
+          pregunta: pregunta.enunciado,
+          opcionSeleccionada: 'Sin respuesta',
+          puntajeObtenido: 0,
+          tipoRespuesta: 'sin_respuesta' as const,
+          retroalimentacion:
+            'No se registró respuesta para esta pregunta.',
+        };
+      }
+
+      const opcion = opcionesById.get(respuesta.opcion_id);
+      const puntaje = this.roundNota(this.normalizeNota(respuesta.puntaje_obtenido));
+      const tipoRespuesta =
+        opcion?.is_correcta
+          ? ('correcta' as const)
+          : puntaje > 0
+            ? ('alternativa' as const)
+            : ('incorrecta' as const);
+
+      return {
+        escenarioOrden: escenario?.orden ?? 0,
+        escenarioTitulo: escenario?.titulo ?? 'Escenario',
+        pregunta: pregunta.enunciado,
+        opcionSeleccionada: opcion?.texto ?? 'Opcion',
+        puntajeObtenido: puntaje,
+        tipoRespuesta,
+        retroalimentacion: retroByOption.get(respuesta.opcion_id) ?? null,
+      };
+    });
+
+    const respuestasAcertadas = respuestasDetalladas.filter(
+      (item) => item.tipoRespuesta === 'correcta',
+    ).length;
+    const respuestasParciales = respuestasDetalladas.filter(
+      (item) => item.tipoRespuesta === 'alternativa',
+    ).length;
+    const noRespondidas = respuestasDetalladas.filter(
+      (item) => item.tipoRespuesta === 'sin_respuesta',
+    ).length;
+    const respuestasFallidas = respuestasDetalladas.filter(
+      (item) => item.tipoRespuesta === 'incorrecta',
+    ).length;
 
     return {
 
@@ -334,24 +382,15 @@ export class ResultadosService {
       respondidas: sesion.respondidas,
 
       totalPreguntas,
+      noRespondidas,
+      respuestasAcertadas,
+      respuestasParciales,
+      respuestasFallidas,
+      finalizacionTipo: sesion.finalizacion_tipo ?? null,
 
       resumen,
 
-      respuestas: respuestas.map((r) => ({
-
-        escenarioOrden: escenariosById.get(r.escenario_id)?.orden ?? 0,
-
-        escenarioTitulo: escenariosById.get(r.escenario_id)?.titulo ?? 'Escenario',
-
-        pregunta: preguntasById.get(r.pregunta_id)?.enunciado ?? 'Pregunta',
-
-        opcionSeleccionada: opcionesById.get(r.opcion_id)?.texto ?? 'Opcion',
-
-        puntajeObtenido: this.roundNota(this.normalizeNota(r.puntaje_obtenido)),
-
-        retroalimentacion: retroByOption.get(r.opcion_id) ?? null,
-
-      })),
+      respuestas: respuestasDetalladas,
 
     };
 

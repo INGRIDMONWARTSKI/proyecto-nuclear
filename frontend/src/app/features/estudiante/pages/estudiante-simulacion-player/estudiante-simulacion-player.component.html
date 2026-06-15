@@ -45,6 +45,7 @@
                 [total]="state.progreso.totalPreguntas"
               />
             </div>
+            <p class="player-timer" role="status">Tiempo restante: {{ formatRemaining() }}</p>
           }
         }
       }
@@ -64,35 +65,65 @@
               <app-opciones-respuesta
                 [pregunta]="state.escenario.pregunta"
                 [selectedOpcionId]="selectedOpcion()?.id ?? null"
-                [locked]="feedback() !== null || sending()"
+                [locked]="sending() || completed()"
                 (select)="seleccionarOpcion($event)"
               />
             </section>
           </div>
 
-          @if (feedback(); as fb) {
-            <div class="player-feedback">
-              <app-feedback-panel [feedback]="fb" />
+          @if (responseNotice()) {
+            <div class="player-notice" role="status">
+              {{ responseNotice() }}
             </div>
           }
 
-          <section class="player-actions">
-            @if (!feedback()) {
+          <section class="player-question-nav" aria-label="Navegación de preguntas">
+            @for (item of state.navegacion; track item.preguntaId) {
               <button
-                class="siep-btn-primary"
                 type="button"
-                [disabled]="!selectedOpcion() || sending()"
-                (click)="responder()"
+                class="player-question-nav__item"
+                [class.player-question-nav__item--active]="item.preguntaId === state.escenario.pregunta.id"
+                [class.player-question-nav__item--answered]="item.respondida"
+                [disabled]="completed()"
+                (click)="selectPregunta(item.preguntaId)"
               >
-                {{ sending() ? 'Registrando...' : 'Confirmar intervención' }}
+                E{{ item.escenarioOrden }} · P{{ item.preguntaOrden }}
               </button>
-            } @else if (completed()) {
+            }
+          </section>
+
+          <section class="player-actions">
+            <button
+              class="siep-btn-secondary"
+              type="button"
+              [disabled]="!canGoPrev() || sending() || completed()"
+              (click)="goToPreviousPregunta()"
+            >
+              Anterior
+            </button>
+            <button
+              class="siep-btn-primary"
+              type="button"
+              [disabled]="!selectedOpcion() || sending() || completed()"
+              (click)="responder()"
+            >
+              {{ sending() ? 'Registrando...' : 'Guardar respuesta' }}
+            </button>
+            <button
+              class="siep-btn-secondary"
+              type="button"
+              [disabled]="!canGoNext() || sending() || completed()"
+              (click)="goToNextPregunta()"
+            >
+              Siguiente
+            </button>
+            @if (completed()) {
               <button class="siep-btn-primary" type="button" (click)="handleVerResultadoClick()">
                 Ver resultado del recorrido
               </button>
             } @else {
-              <button class="siep-btn-primary" type="button" (click)="handleContinuarClick()">
-                Continuar recorrido
+              <button class="siep-btn-danger" type="button" [disabled]="sending()" (click)="finalizarManual()">
+                Finalizar simulación
               </button>
             }
           </section>

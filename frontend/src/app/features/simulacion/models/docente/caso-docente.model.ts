@@ -7,6 +7,7 @@ export interface CasoDocente {
   titulo: string;
   descripcion: string | null;
   objetivoAprendizaje: string | null;
+  tiempoMaximoMinutos: number;
   autorDocenteId: string;
   estado: CasoEstado;
   isActive: boolean;

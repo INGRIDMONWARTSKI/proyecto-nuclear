@@ -146,6 +146,7 @@ export class CasoPreviewBuilderService {
       titulo: record.titulo,
       descripcion: record.descripcion,
       objetivoAprendizaje: record.objetivo_aprendizaje,
+      tiempoMaximoMinutos: record.tiempo_maximo_minutos ?? 60,
       autorDocenteId: record.autor_docente_id,
       estado: record.estado,
       isActive: record.is_active,

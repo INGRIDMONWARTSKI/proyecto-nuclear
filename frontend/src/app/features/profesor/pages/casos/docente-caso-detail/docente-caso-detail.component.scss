@@ -270,3 +270,212 @@
 .siep-page > .siep-card + .siep-card {
   margin-top: var(--siep-space-4);
 }
+
+/* — Modal vista previa pedagógica — */
+.preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.preview-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 42, 29, 0.38);
+  backdrop-filter: blur(3px);
+  border: none;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.preview-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(780px, 100%);
+  max-height: min(84vh, 860px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 252, 247, 0.97);
+  border: 1px solid rgba(124, 179, 66, 0.28);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 24px 64px rgba(16, 42, 29, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  animation: preview-modal-in 200ms ease-out both;
+  overflow: hidden;
+}
+
+@keyframes preview-modal-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.preview-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem 0.9rem;
+  border-bottom: 1px solid rgba(205, 232, 181, 0.55);
+  flex-shrink: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-family: var(--siep-font-title);
+    color: var(--siep-forest);
+  }
+}
+
+.preview-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(124, 179, 66, 0.28);
+  border-radius: 50%;
+  background: rgba(241, 248, 233, 0.8);
+  color: var(--siep-forest);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: rgba(205, 232, 181, 0.6);
+    border-color: rgba(124, 179, 66, 0.5);
+  }
+}
+
+.preview-modal__body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 1.2rem 1.4rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.preview-modal__foot {
+  padding: 0.85rem 1.4rem;
+  border-top: 1px solid rgba(205, 232, 181, 0.55);
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* Preview content dentro del modal */
+.preview-item {
+  border: 1px solid rgba(205, 232, 181, 0.6);
+  border-radius: var(--siep-radius-lg);
+  padding: 1rem 1.1rem;
+  background: rgba(246, 251, 246, 0.7);
+}
+
+.preview-item__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.98rem;
+  font-family: var(--siep-font-title);
+  color: var(--siep-forest);
+}
+
+.preview-item__text {
+  margin: 0 0 0.85rem;
+  font-size: 0.88rem;
+  color: var(--siep-text-soft);
+  line-height: 1.5;
+}
+
+.preview-question {
+  margin-top: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  background: rgba(255, 252, 247, 0.9);
+  border: 1px solid rgba(205, 232, 181, 0.5);
+  border-radius: var(--siep-radius-md);
+}
+
+.preview-question__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.88rem;
+  color: var(--siep-text);
+}
+
+.preview-question__options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.5rem;
+    font-size: 0.84rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--siep-radius-sm);
+    background: rgba(241, 248, 233, 0.6);
+  }
+}
+
+.preview-option__text {
+  color: var(--siep-text);
+  font-weight: 500;
+}
+
+.preview-option__score {
+  color: var(--siep-forest);
+  font-weight: 700;
+  font-family: var(--siep-font-title);
+  font-size: 0.8rem;
+}
+
+.preview-option__retro {
+  color: var(--siep-text-soft);
+  font-size: 0.8rem;
+}
+
+.preview-option__warn {
+  color: var(--siep-error);
+  font-size: 0.8rem;
+}
+
+.preview-warn {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--siep-error);
+}
+
+.preview-empty {
+  padding: 0.5rem 0;
+}
+
+.preview-empty__title {
+  margin: 0 0 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--siep-text);
+}
+
+.preview-empty__list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.86rem;
+  color: var(--siep-text-soft);
+}
+
+@media (max-width: 640px) {
+  .preview-modal__panel {
+    max-height: 92vh;
+  }
+  .preview-modal__head,
+  .preview-modal__body,
+  .preview-modal__foot {
+    padding-inline: 1rem;
+  }
+}

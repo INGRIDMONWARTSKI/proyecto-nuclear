@@ -98,6 +98,10 @@ export class DocenteCasoDetailComponent implements OnInit {
     });
   }
 
+  closePreview(): void {
+    this.showPreview.set(false);
+  }
+
   previewMissingItems(): string[] {
     const preview = this.preview();
 

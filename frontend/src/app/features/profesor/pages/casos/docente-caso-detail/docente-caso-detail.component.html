@@ -201,49 +201,6 @@
         </div>
       </section>
 
-      @if (showPreview() && preview(); as p) {
-        <section class="siep-card preview-panel">
-          <h2>Vista previa pedagogica</h2>
-          @if (!hasPreviewContent()) {
-            <div class="preview-empty">
-              <h3>Aun no hay contenido suficiente para generar la vista previa pedagogica.</h3>
-              <ul>
-                @for (item of previewMissingItems(); track item) {
-                  <li>{{ item }}</li>
-                }
-              </ul>
-            </div>
-          } @else {
-            @for (esc of p.escenarios; track esc.id) {
-              <article class="preview-item">
-                <h3>{{ esc.orden }}. {{ esc.titulo }}</h3>
-                <p>{{ esc.situacionTexto }}</p>
-                @if (esc.preguntas.length > 0) {
-                  @for (pregunta of esc.preguntas; track pregunta.id) {
-                    <div class="preview-question">
-                      <p><strong>Pregunta {{ pregunta.orden }}:</strong> {{ pregunta.enunciado }}</p>
-                      <ul>
-                        @for (op of pregunta.opciones; track op.id) {
-                          <li>
-                            {{ op.texto }} · Nota {{ op.puntaje }} / 5.0
-                            @if (op.retroalimentacion) {
-                              · <em>{{ op.retroalimentacion.tipo }}</em>
-                            } @else {
-                              · <span class="warn">Sin retroalimentacion</span>
-                            }
-                          </li>
-                        }
-                      </ul>
-                    </div>
-                  }
-                } @else {
-                  <p class="warn">Sin pregunta configurada.</p>
-                }
-              </article>
-            }
-          }
-        </section>
-      }
 
       @if (showEvidencias()) {
         <section class="siep-card">
@@ -288,4 +245,87 @@
       }
     </section>
   }
+}
+
+@if (showPreview()) {
+  <div
+    class="preview-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="preview-modal-title"
+  >
+    <button
+      type="button"
+      class="preview-modal__backdrop"
+      aria-label="Cerrar vista previa"
+      (click)="closePreview()"
+    ></button>
+    <div class="preview-modal__panel">
+      <div class="preview-modal__head">
+        <h2 id="preview-modal-title">Vista previa pedagógica</h2>
+        <button
+          type="button"
+          class="preview-modal__close"
+          aria-label="Cerrar"
+          (click)="closePreview()"
+        >
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16" aria-hidden="true">
+            <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="preview-modal__body">
+        @if (preview(); as p) {
+          @if (!hasPreviewContent()) {
+            <div class="preview-empty">
+              <p class="preview-empty__title">Aún no hay contenido suficiente para la vista previa.</p>
+              <ul class="preview-empty__list">
+                @for (item of previewMissingItems(); track item) {
+                  <li>{{ item }}</li>
+                }
+              </ul>
+            </div>
+          } @else {
+            @for (esc of p.escenarios; track esc.id) {
+              <article class="preview-item">
+                <h3 class="preview-item__title">{{ esc.orden }}. {{ esc.titulo }}</h3>
+                <p class="preview-item__text">{{ esc.situacionTexto }}</p>
+                @if (esc.preguntas.length > 0) {
+                  @for (pregunta of esc.preguntas; track pregunta.id) {
+                    <div class="preview-question">
+                      <p class="preview-question__label">
+                        <strong>Pregunta {{ pregunta.orden }}:</strong> {{ pregunta.enunciado }}
+                      </p>
+                      <ul class="preview-question__options">
+                        @for (op of pregunta.opciones; track op.id) {
+                          <li>
+                            <span class="preview-option__text">{{ op.texto }}</span>
+                            <span class="preview-option__score">Nota {{ op.puntaje }} / 5.0</span>
+                            @if (op.retroalimentacion) {
+                              <em class="preview-option__retro">{{ op.retroalimentacion.tipo }}</em>
+                            } @else {
+                              <span class="preview-option__warn">Sin retroalimentación</span>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                } @else {
+                  <p class="preview-warn">Sin pregunta configurada.</p>
+                }
+              </article>
+            }
+          }
+        } @else {
+          <app-loading-state message="Cargando vista previa..." />
+        }
+      </div>
+      <div class="preview-modal__foot">
+        <button type="button" class="siep-btn-secondary" (click)="closePreview()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
 }

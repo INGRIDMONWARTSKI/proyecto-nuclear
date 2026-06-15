@@ -1543,18 +1543,38 @@
   }
 }
 
+.scenario-chip__footer {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(31, 61, 46, 0.06);
+}
+
 .scenario-chip__delete {
-  grid-column: 2;
-  justify-self: start;
-  border: 1px solid rgba(124, 179, 66, 0.35);
+  border: 1px solid rgba(200, 80, 80, 0.3);
   border-radius: var(--siep-radius-pill);
-  padding: 0.38rem 0.65rem;
-  background: rgba(241, 248, 233, 0.9);
-  color: #2f5d34;
-  font-size: 0.72rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(255, 235, 235, 0.85);
+  color: #8b2020;
+  font-size: 0.7rem;
   font-family: var(--siep-font-title);
   font-weight: 700;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  margin-left: auto;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 218, 218, 0.95);
+    border-color: rgba(180, 60, 60, 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 .scenario-delete-modal {

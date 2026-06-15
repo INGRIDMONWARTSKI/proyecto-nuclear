@@ -798,20 +798,22 @@
                   <span>E{{ esc.orden }}</span>
                   <strong>{{ esc.titulo }}</strong>
                 </div>
-                <app-status-badge
-                  variant="status"
-                  [status]="currentScenarioStatusVariant(esc)"
-                  [label]="currentScenarioStatusLabel(esc)"
-                />
-                <button
-                  class="scenario-chip__delete"
-                  type="button"
-                  [disabled]="!canDeleteScenario(esc) || deletingScenario()"
-                  [title]="deleteScenarioBlockedReason(esc) || 'Eliminar escena'"
-                  (click)="openDeleteScenarioDialog(esc.id, $event)"
-                >
-                  Eliminar
-                </button>
+                <div class="scenario-chip__footer">
+                  <app-status-badge
+                    variant="status"
+                    [status]="currentScenarioStatusVariant(esc)"
+                    [label]="currentScenarioStatusLabel(esc)"
+                  />
+                  <button
+                    class="scenario-chip__delete"
+                    type="button"
+                    [disabled]="!canDeleteScenario(esc) || deletingScenario()"
+                    [title]="deleteScenarioBlockedReason(esc) || 'Eliminar escena'"
+                    (click)="openDeleteScenarioDialog(esc.id, $event)"
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </article>
             }
           </div>

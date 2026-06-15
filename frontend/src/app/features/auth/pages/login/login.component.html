@@ -113,28 +113,17 @@
         </div>
       </div>
 
-      <aside class="hoja-guia" aria-label="Guía MENTORA">
-        <div class="hoja-guia__float">
-          <img
-            class="hoja-guia__image"
-            src="assets/mentora/ui/hoja-guia.png"
-            alt=""
-            aria-hidden="true"
-            width="520"
-            height="320"
-            loading="eager"
-            decoding="async"
-          />
-
-          <div
-            class="hoja-guia__content"
-            [class.hoja-guia__content--visible]="tipVisible()"
-          >
-            <span class="hoja-guia__kicker">Guía MENTORA</span>
-            <p class="hoja-guia__message">{{ currentTip().message }}</p>
-          </div>
-
-          <span class="hoja-guia__glow" aria-hidden="true"></span>
+      <aside class="guia-card" aria-label="Guía MENTORA" [class.guia-card--visible]="tipVisible()">
+        <span class="guia-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+            <path d="M12 3C7 9 5 14 7 20C8 22.5 10 24 12 24C14 24 16 22.5 17 20C19 14 17 9 12 3Z"
+              fill="currentColor" opacity="0.9"/>
+            <path d="M12 6V22" stroke="white" stroke-width="1" opacity="0.4" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="guia-card__body">
+          <span class="guia-card__kicker">Guía MENTORA</span>
+          <p class="guia-card__message">{{ currentTip().message }}</p>
         </div>
       </aside>
     </aside>

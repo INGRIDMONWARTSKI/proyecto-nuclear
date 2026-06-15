@@ -9,7 +9,9 @@ const sqlFiles = [
   'database/persona-1-auth-recovery.sql',
   'database/persona-1-auth-must-change-password.sql',
   'database/persona-2-grupos.sql',
-  'database/persona-3-simulacion.sql',
+  'database/persona-3-simulacion.sql',
+
+  'database/persona-4-notificaciones-semestre.sql',
 ];
 
 function run(command, args, options = {}) {
@@ -79,7 +81,47 @@ function mustChangePasswordColumnExists() {
   return stdout === 't';
 }
 
-function applySqlFile(file) {
+function gruposSemestreColumnExists() {
+
+  const { ok, stdout } = runPsqlQuery(
+
+    "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='grupos' AND column_name='semestre');",
+
+  );
+
+  if (!ok) {
+
+    console.warn('[db-init] No se pudo verificar grupos.semestre. Aplicando migracion...');
+
+    return false;
+
+  }
+
+  return stdout === 't';
+
+}
+
+function notificacionesTableExists() {
+
+  const { ok, stdout } = runPsqlQuery(
+
+    "SELECT to_regclass('public.notificaciones') IS NOT NULL;",
+
+  );
+
+  if (!ok) {
+
+    console.warn('[db-init] No se pudo verificar tabla notificaciones. Aplicando migracion...');
+
+    return false;
+
+  }
+
+  return stdout === 't';
+
+}
+
+function applySqlFile(file) {
   const sql = readFileSync(join(root, file), 'utf8');
   const apply = spawnSync(
     'docker',
@@ -112,7 +154,19 @@ if (!tableExists() || !recoveryTableExists()) {
   run('docker', ['compose', 'restart', 'postgrest']);
 }
 
-if (shouldSeed || process.env.DB_SEED === '1') {
+if (!shouldSeed && (!gruposSemestreColumnExists() || !notificacionesTableExists())) {
+
+  console.log('[db-init] Aplicando migracion semestre/notificaciones...');
+
+  applySqlFile('database/persona-4-notificaciones-semestre.sql');
+
+  run('docker', ['compose', 'restart', 'postgrest']);
+
+}
+
+
+
+if (shouldSeed || process.env.DB_SEED === '1') {
   console.log('[db-init] Ejecutando seed de usuarios demo...');
   run('npm', ['run', 'db:seed'], { cwd: join(root, 'backend') });
 } else {

@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { PostgrestModule } from './postgrest/postgrest.module';
 import { GruposModule } from './grupos/grupos.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
 import { RolesModule } from './roles/roles.module';
 import { SimulacionModule } from './simulacion/simulacion.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
@@ -27,6 +28,7 @@ import { UsuariosModule } from './usuarios/usuarios.module';
     RolesModule,
     UsuariosModule,
     GruposModule,
+    NotificacionesModule,
     SimulacionModule,
   ],
   controllers: [AppController],

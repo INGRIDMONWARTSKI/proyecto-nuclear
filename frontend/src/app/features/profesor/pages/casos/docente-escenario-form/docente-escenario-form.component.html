@@ -30,16 +30,16 @@
       </div>
 
       <div class="siep-field">
-        <label for="titulo">Titulo</label>
+        <label for="titulo">Título</label>
         <input id="titulo" type="text" formControlName="titulo" />
         @if (hasError('titulo', 'required')) {
-          <p class="field-error">El titulo es obligatorio.</p>
+          <p class="field-error">El título es obligatorio.</p>
         }
         @if (hasError('titulo', 'minlength')) {
-          <p class="field-error">El titulo debe tener al menos 3 caracteres.</p>
+          <p class="field-error">El título debe tener al menos 3 caracteres.</p>
         }
         @if (hasError('titulo', 'maxlength')) {
-          <p class="field-error">El titulo no puede superar 120 caracteres.</p>
+          <p class="field-error">El título no puede superar 120 caracteres.</p>
         }
       </div>
 

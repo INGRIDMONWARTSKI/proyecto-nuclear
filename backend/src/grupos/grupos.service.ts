@@ -21,6 +21,7 @@ import type {
 } from './interfaces/importar-estudiantes.interface';
 import type { UploadedImportFile } from './interfaces/uploaded-import-file.interface';
 import { MailService } from '../mail/mail.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import {
   isValidEmail,
   parseEstudiantesFile,
@@ -32,6 +33,7 @@ export class GruposService {
     private readonly postgrest: PostgrestService,
     private readonly usuariosService: UsuariosService,
     private readonly mailService: MailService,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   async create(crearGrupoDto: CrearGrupoDto, currentUser: AuthenticatedUser) {
@@ -41,15 +43,29 @@ export class GruposService {
     );
 
     try {
-      return await this.postgrest.insert<Grupo>(
+      const grupo = await this.postgrest.insert<Grupo>(
         'grupos',
         {
           nombre: crearGrupoDto.nombre,
           descripcion: crearGrupoDto.descripcion ?? null,
+          semestre: crearGrupoDto.semestre ?? null,
           profesorId,
         },
         { select: '*' },
       );
+
+      if (currentUser.role === Role.PROFESOR) {
+        const profesor = await this.usuariosService.findById(currentUser.sub);
+        await this.notificacionesService.crearParaAdmins({
+          tipo: 'GRUPO_CREADO',
+          titulo: 'Nuevo grupo creado',
+          mensaje: `El docente ${profesor.fullName} creó la comunidad académica ${grupo.nombre}.`,
+          entidad_tipo: 'GRUPO',
+          entidad_id: grupo.id,
+        });
+      }
+
+      return grupo;
     } catch (error) {
       this.rethrowConflict(error, 'No fue posible crear el grupo.');
       throw error;
@@ -281,17 +297,12 @@ export class GruposService {
     file: UploadedImportFile,
     currentUser: AuthenticatedUser,
   ): Promise<ImportarEstudiantesResponse> {
-    if (currentUser.role !== Role.ADMIN) {
-      throw new ForbiddenException(
-        'Solo un administrador puede importar estudiantes.',
-      );
-    }
-
     if (!file) {
       throw new BadRequestException('Debes adjuntar un archivo para importar.');
     }
 
     const grupo = await this.findGrupoById(grupoId);
+    this.assertCanManageGrupo(grupo, currentUser);
 
     if (!grupo.isActive) {
       throw new BadRequestException(
@@ -376,6 +387,19 @@ export class GruposService {
               : `Fila ${row.rowNumber}: no fue posible procesar la fila.`,
         });
       }
+    }
+
+    const cantidad =
+      response.creados.length + response.existentesAsignados.length;
+
+    if (cantidad > 0) {
+      await this.notificacionesService.crearParaAdmins({
+        tipo: 'ESTUDIANTES_IMPORTADOS',
+        titulo: 'Estudiantes importados',
+        mensaje: `Se importaron ${cantidad} estudiantes a la comunidad académica ${grupo.nombre}.`,
+        entidad_tipo: 'GRUPO',
+        entidad_id: grupo.id,
+      });
     }
 
     return response;
@@ -616,6 +640,10 @@ export class GruposService {
 
     if (actualizarGrupoDto.descripcion !== undefined) {
       payload.descripcion = actualizarGrupoDto.descripcion;
+    }
+
+    if (actualizarGrupoDto.semestre !== undefined) {
+      payload.semestre = actualizarGrupoDto.semestre;
     }
 
     if (actualizarGrupoDto.profesorId !== undefined) {

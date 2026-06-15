@@ -18,6 +18,12 @@
     <app-loading-state message="Cargando caso..." />
   } @else {
     <form class="siep-card caso-form" [formGroup]="form" (ngSubmit)="submit()">
+      @if (!isEdit()) {
+        <p class="case-form__note">
+          Crearás la base del caso. Luego podrás agregar escenarios, decisiones y retroalimentaciones desde el editor.
+        </p>
+      }
+
       <div class="siep-field">
         <label for="titulo">Título</label>
         <input id="titulo" type="text" formControlName="titulo" />

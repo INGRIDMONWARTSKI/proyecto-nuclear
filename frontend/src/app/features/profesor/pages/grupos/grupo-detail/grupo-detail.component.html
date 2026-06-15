@@ -13,7 +13,7 @@
             <div actions class="header-actions">
               <a class="siep-btn-secondary" routerLink="..">Volver</a>
               @if (puedeAdministrar()) {
-                @if (authService.hasRole(Role.ADMIN) && g.isActive) {
+                @if (g.isActive) {
                   <button
                     type="button"
                     class="siep-btn-primary"
@@ -45,6 +45,15 @@
               <div actions class="header-actions">
                 <a class="siep-btn-secondary" routerLink="..">Volver</a>
                 @if (puedeAdministrar()) {
+                  @if (g.isActive) {
+                    <button
+                      type="button"
+                      class="siep-btn-primary"
+                      (click)="abrirImportacion()"
+                    >
+                      Importar estudiantes
+                    </button>
+                  }
                   <a class="siep-btn-secondary" [routerLink]="['editar']">Editar</a>
                   <button
                     class="{{ g.isActive ? 'siep-btn-danger' : 'siep-btn-secondary' }}"
@@ -78,6 +87,9 @@
             [label]="g.isActive ? 'Activo' : 'Inactivo'"
           />
           <span class="grupo-detail__meta-item">{{ estudiantes().length }} integrantes</span>
+          @if (g.semestre) {
+            <span class="grupo-detail__meta-item">{{ g.semestre }}</span>
+          }
           <span class="grupo-detail__meta-item">{{ g.createdAt | date: 'mediumDate' }}</span>
         </div>
 

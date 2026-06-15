@@ -1,10 +1,103 @@
+// ── Variables locales ──────────────────────────────────────
+$forest:     #2f5d34;
+$leaf:       #7cb342;
+$leaf-dark:  #558b2f;
+$sage:       #5f7368;
+$gold:       #f3c96b;
+$gold-text:  #7a5a00;
+$cream:      #fffcf7;
+$mint-bg:    rgba(241, 248, 233, 0.75);
+$border:     rgba(205, 232, 181, 0.65);
+
 :host {
   display: block;
 }
 
+// ── Hero ────────────────────────────────────────────────────
+.dash-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.35rem;
+  background: rgba(255, 252, 247, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid $border;
+  border-radius: var(--siep-radius-lg);
+  box-shadow:
+    0 10px 28px rgba(16, 42, 29, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  margin-bottom: 0.85rem;
+  animation: siep-fade-up 0.55s ease both;
+}
+
+.dash-hero__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-hero__kicker {
+  margin: 0;
+  font-family: var(--siep-font-title);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: $leaf;
+}
+
+.dash-hero__title {
+  margin: 0;
+  font-family: var(--siep-font-title);
+  font-size: clamp(1.4rem, 2.2vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: $forest;
+  letter-spacing: 0.01em;
+}
+
+.dash-hero__subtitle {
+  margin: 0.1rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.48;
+  color: $sage;
+  max-width: 54ch;
+}
+
+.dash-hero__desc {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba($sage, 0.85);
+  max-width: 58ch;
+}
+
+.dash-hero__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, rgba(205, 232, 181, 0.55) 0%, rgba(255, 252, 247, 0.8) 100%);
+  border: 1px solid rgba(205, 232, 181, 0.7);
+  box-shadow: 0 3px 12px rgba(47, 93, 52, 0.08);
+
+  @media (max-width: 540px) {
+    display: none;
+  }
+}
+
+// ── Layout general ───────────────────────────────────────────
 .profesor-dashboard {
   position: relative;
-  padding: 0.25rem 0 1.25rem;
+  padding: 0.25rem 0 1.5rem;
 }
 
 .profesor-dashboard__hub,
@@ -12,41 +105,44 @@
 .profesor-dashboard__activity,
 .profesor-dashboard__guidance {
   margin-bottom: 0.85rem;
+  padding: 1.1rem 1.2rem;
 }
 
+// ── Cabecera de sección ──────────────────────────────────────
 .profesor-dashboard__section-head {
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.9rem;
 
   h2 {
     margin: 0 0 0.2rem;
     font-family: var(--siep-font-title);
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--siep-forest);
+    color: $forest;
   }
 
   p {
     margin: 0;
     font-size: 0.82rem;
     line-height: 1.45;
-    color: var(--siep-text-soft);
+    color: $sage;
   }
 }
 
+// ── Tarjetas de métricas ─────────────────────────────────────
 .profesor-dashboard__metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 
 .metric-card {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  min-height: 72px;
-  padding: 0.7rem 0.85rem;
+  gap: 0.85rem;
+  min-height: 80px;
+  padding: 0.8rem 1rem;
   background: rgba(255, 252, 247, 0.72);
-  border: 1px solid var(--siep-border);
+  border: 1px solid $border;
   border-radius: var(--siep-radius-md);
   animation: siep-fade-up 0.5s ease both;
   transition:
@@ -56,27 +152,53 @@
 
   &:hover {
     transform: translateY(-2px);
-    border-color: var(--siep-leaf);
-    box-shadow: 0 0 18px var(--siep-glow-soft), var(--siep-shadow-sm);
+    border-color: rgba($leaf, 0.5);
+    box-shadow: 0 8px 24px rgba(47, 93, 52, 0.1), 0 0 0 1px rgba($leaf, 0.12);
   }
 }
 
 .metric-card__icon {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  color: var(--siep-leaf);
-  background: linear-gradient(145deg, var(--siep-success-bg) 0%, var(--siep-white) 100%);
-  border: 1px solid var(--siep-border);
+  border: 1px solid rgba(205, 232, 181, 0.6);
+  transition: box-shadow var(--siep-transition-base);
 
-  svg {
-    width: 20px;
-    height: 20px;
+  // Casos → verde bosque
+  &--casos {
+    background: linear-gradient(145deg, rgba(47, 93, 52, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: $forest;
+    border-color: rgba(47, 93, 52, 0.22);
   }
+
+  // Comunidades → verde hoja
+  &--grupos {
+    background: linear-gradient(145deg, rgba(124, 179, 66, 0.14) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: $leaf-dark;
+    border-color: rgba(124, 179, 66, 0.28);
+  }
+
+  // Evidencias → dorado
+  &--evidencias {
+    background: linear-gradient(145deg, rgba(243, 201, 107, 0.18) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: $gold-text;
+    border-color: rgba(243, 201, 107, 0.45);
+  }
+
+  // Estudiantes → salvia
+  &--estudiantes {
+    background: linear-gradient(145deg, rgba(95, 115, 104, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: $sage;
+    border-color: rgba(95, 115, 104, 0.22);
+  }
+}
+
+.metric-card:hover .metric-card__icon {
+  box-shadow: 0 4px 14px rgba(47, 93, 52, 0.13);
 }
 
 .metric-card__body {
@@ -86,110 +208,150 @@
 
 .metric-card__label {
   margin: 0 0 0.12rem;
-  font-size: 0.68rem;
+  font-size: 0.67rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--siep-text-soft);
+  color: $sage;
   line-height: 1.3;
 }
 
 .metric-card__value {
   margin: 0;
   font-family: var(--siep-font-title);
-  font-size: clamp(1.45rem, 2.5vw, 1.85rem);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
   font-weight: 800;
   line-height: 1;
-  color: var(--siep-forest);
+  color: $forest;
 }
 
+// ── Acciones docentes ────────────────────────────────────────
 .profesor-dashboard__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.65rem;
+  gap: 0.7rem;
 }
 
 .profesor-dashboard__action {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.85rem;
+  gap: 0.45rem;
+  padding: 0.95rem 1rem;
   text-decoration: none;
   color: inherit;
   background: rgba(255, 252, 247, 0.72);
-  border: 1px solid var(--siep-border);
+  border: 1px solid $border;
   border-radius: var(--siep-radius-md);
   transition:
     transform var(--siep-transition-spring),
     box-shadow var(--siep-transition-base),
-    border-color var(--siep-transition-base);
+    border-color var(--siep-transition-base),
+    background var(--siep-transition-base);
 
   &:hover {
     transform: translateY(-3px);
-    border-color: var(--siep-leaf);
-    box-shadow: 0 0 22px var(--siep-glow-soft), var(--siep-shadow-sm);
+    background: rgba(255, 252, 247, 0.96);
+    border-color: rgba($leaf, 0.5);
+    box-shadow: 0 12px 28px rgba(47, 93, 52, 0.1), 0 0 0 1px rgba($leaf, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $leaf;
+    outline-offset: 2px;
   }
 }
 
 .profesor-dashboard__action-icon {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  color: var(--siep-leaf);
-  background: linear-gradient(145deg, var(--siep-success-bg) 0%, var(--siep-white) 100%);
-  border: 1px solid var(--siep-border);
+  border: 1px solid rgba(205, 232, 181, 0.55);
+  transition: box-shadow var(--siep-transition-base);
 
-  svg {
-    width: 18px;
-    height: 18px;
+  &--casos {
+    background: linear-gradient(135deg, rgba(47, 93, 52, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: $forest;
+    border-color: rgba(47, 93, 52, 0.22);
   }
+
+  &--grupos {
+    background: linear-gradient(135deg, rgba(124, 179, 66, 0.14) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: $leaf-dark;
+    border-color: rgba(124, 179, 66, 0.28);
+  }
+
+  &--asignaciones {
+    background: linear-gradient(135deg, rgba(243, 201, 107, 0.18) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: $gold-text;
+    border-color: rgba(243, 201, 107, 0.45);
+  }
+
+  &--evidencias {
+    background: linear-gradient(135deg, rgba(95, 115, 104, 0.12) 0%, rgba(255, 252, 247, 0.9) 100%);
+    color: $sage;
+    border-color: rgba(95, 115, 104, 0.22);
+  }
+}
+
+.profesor-dashboard__action:hover .profesor-dashboard__action-icon {
+  box-shadow: 0 4px 12px rgba(47, 93, 52, 0.14);
 }
 
 .profesor-dashboard__action-title {
   font-family: var(--siep-font-title);
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--siep-forest);
+  color: $forest;
   line-height: 1.25;
 }
 
 .profesor-dashboard__action-desc {
   font-size: 0.76rem;
   line-height: 1.4;
-  color: var(--siep-text-soft);
+  color: $sage;
 }
 
+// ── Actividad reciente ───────────────────────────────────────
 .profesor-dashboard__activity-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .activity-column {
   min-width: 0;
-  padding: 0.75rem;
+  padding: 0.85rem 0.95rem;
   background: rgba(255, 252, 247, 0.55);
-  border: 1px solid var(--siep-border-soft);
+  border: 1px solid rgba(205, 232, 181, 0.5);
   border-radius: var(--siep-radius-md);
 }
 
 .activity-column__title {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   font-family: var(--siep-font-title);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--siep-forest);
+  color: $forest;
+
+  svg {
+    flex-shrink: 0;
+    color: $leaf;
+  }
 }
 
 .activity-column__empty {
   margin: 0;
   font-size: 0.78rem;
   line-height: 1.45;
-  color: var(--siep-text-soft);
+  color: $sage;
+  font-style: italic;
 }
 
 .activity-list {
@@ -205,19 +367,26 @@
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
-  padding: 0.55rem 0.65rem;
+  padding: 0.55rem 0.7rem;
   text-decoration: none;
   color: inherit;
-  background: rgba(255, 252, 247, 0.85);
-  border: 1px solid var(--siep-border-soft);
+  background: rgba(255, 252, 247, 0.88);
+  border: 1px solid rgba(205, 232, 181, 0.45);
   border-radius: var(--siep-radius-sm);
   transition:
     border-color var(--siep-transition-base),
-    box-shadow var(--siep-transition-base);
+    box-shadow var(--siep-transition-base),
+    transform var(--siep-transition-spring);
 
   &:hover {
-    border-color: var(--siep-leaf);
-    box-shadow: 0 0 12px var(--siep-glow-soft);
+    border-color: rgba($leaf, 0.45);
+    box-shadow: 0 4px 14px rgba(47, 93, 52, 0.08);
+    transform: translateX(2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $leaf;
+    outline-offset: 2px;
   }
 }
 
@@ -225,64 +394,74 @@
   font-family: var(--siep-font-title);
   font-size: 0.82rem;
   font-weight: 700;
-  color: var(--siep-forest);
+  color: $forest;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .activity-item__meta {
-  font-size: 0.74rem;
-  color: var(--siep-text-soft);
+  font-size: 0.73rem;
+  color: $sage;
   line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .activity-item__date {
-  font-size: 0.68rem;
-  color: var(--siep-text-soft);
-  opacity: 0.85;
+  font-size: 0.67rem;
+  color: rgba($sage, 0.8);
 }
 
+// ── Orientación MENTORA ──────────────────────────────────────
 .guidance-card {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
   background: linear-gradient(
     135deg,
-    rgba(241, 248, 233, 0.75) 0%,
-    rgba(255, 252, 247, 0.9) 100%
+    rgba(241, 248, 233, 0.78) 0%,
+    rgba(255, 252, 247, 0.92) 100%
   );
-  border: 1px solid var(--siep-border);
+  border: 1px solid $border;
   border-radius: var(--siep-radius-md);
-  border-left: 4px solid var(--siep-leaf);
+  border-left: 3.5px solid $leaf;
 }
 
-.guidance-card__accent {
+.guidance-card__icon {
   flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  margin-top: 0.35rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
-  background: #f3c96b;
-  box-shadow: 0 0 0 4px rgba(243, 201, 107, 0.25);
+  background: radial-gradient(circle, rgba(205, 232, 181, 0.55) 0%, rgba(255, 252, 247, 0.8) 100%);
+  border: 1px solid rgba(205, 232, 181, 0.65);
+  box-shadow: 0 3px 10px rgba(47, 93, 52, 0.08);
 }
 
 .guidance-card__title {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.4rem;
   font-family: var(--siep-font-title);
-  font-size: 0.92rem;
+  font-size: 0.94rem;
   font-weight: 700;
-  color: var(--siep-forest);
+  color: $forest;
   line-height: 1.3;
 }
 
 .guidance-card__text {
   margin: 0;
   font-size: 0.82rem;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--siep-text);
 }
 
-@media (max-width: 960px) {
+// ── Responsive ───────────────────────────────────────────────
+@media (max-width: 1000px) {
   .profesor-dashboard__metrics,
   .profesor-dashboard__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -293,7 +472,11 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
+  .dash-hero {
+    padding: 0.95rem 1.1rem;
+  }
+
   .profesor-dashboard__metrics,
   .profesor-dashboard__grid {
     grid-template-columns: 1fr;
@@ -301,8 +484,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .dash-hero,
   .metric-card,
-  .profesor-dashboard__action {
+  .profesor-dashboard__action,
+  .activity-item {
+    animation: none;
     transition: none;
 
     &:hover {

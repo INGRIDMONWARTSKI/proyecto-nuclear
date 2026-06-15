@@ -7,6 +7,8 @@ import {
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { PostgrestService } from '../postgrest/postgrest.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { UsuariosService } from '../usuarios/usuarios.service';
 import { ALLOWED_BACKGROUND_CODES } from './constants/backgrounds.constant';
 import { CasoPreviewBuilderService } from './caso-preview-builder.service';
 import { CasosService } from './casos.service';
@@ -23,6 +25,8 @@ export class PublicacionService {
     private readonly postgrest: PostgrestService,
     private readonly casosService: CasosService,
     private readonly previewBuilder: CasoPreviewBuilderService,
+    private readonly notificacionesService: NotificacionesService,
+    private readonly usuariosService: UsuariosService,
   ) {}
 
   async preview(casoId: string, currentUser: AuthenticatedUser) {
@@ -70,7 +74,20 @@ export class PublicacionService {
       },
     );
 
-    return this.toCaso(updated);
+    const publicado = this.toCaso(updated);
+
+    if (currentUser.role === Role.PROFESOR) {
+      const profesor = await this.usuariosService.findById(currentUser.sub);
+      await this.notificacionesService.crearParaAdmins({
+        tipo: 'CASO_PUBLICADO',
+        titulo: 'Caso publicado',
+        mensaje: `El docente ${profesor.fullName} publicó el caso ${publicado.titulo}.`,
+        entidad_tipo: 'CASO',
+        entidad_id: publicado.id,
+      });
+    }
+
+    return publicado;
   }
 
   async validateCaseCompletenessById(casoId: string): Promise<string[]> {

@@ -40,6 +40,7 @@ export class DocenteCasoDetailComponent implements OnInit {
   protected readonly publishing = signal(false);
   protected readonly loadingPreview = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly successMessage = signal<string | null>(null);
   protected readonly publishErrors = signal<string[]>([]);
   protected readonly caso = signal<CasoDocenteDetalle | null>(null);
   protected readonly preview = signal<CasoPreview | null>(null);
@@ -107,11 +108,15 @@ export class DocenteCasoDetailComponent implements OnInit {
   publicar() {
     this.publishing.set(true);
     this.errorMessage.set(null);
+    this.successMessage.set(null);
     this.publishErrors.set([]);
 
     this.simulacionService.publicarCaso(this.casoId).subscribe({
       next: () => {
         this.publishing.set(false);
+        this.successMessage.set(
+          'Caso publicado. Para que los estudiantes puedan verlo, asígnalo a una o más comunidades académicas.',
+        );
         this.cargarCaso();
       },
       error: (error) => {

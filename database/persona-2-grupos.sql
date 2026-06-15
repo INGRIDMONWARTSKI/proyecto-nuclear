@@ -6,6 +6,7 @@ create table if not exists public.grupos (
   id uuid primary key default gen_random_uuid(),
   nombre text not null,
   descripcion text,
+  semestre text,
   "profesorId" uuid not null references public.usuarios (id),
   "isActive" boolean not null default true,
   "createdAt" timestamptz not null default now(),

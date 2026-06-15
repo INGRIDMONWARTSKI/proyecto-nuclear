@@ -16,6 +16,9 @@ import { PublicacionService } from './publicacion.service';
 import { RetroalimentacionesService } from './retroalimentaciones.service';
 
 describe('GeneracionCasosIaService', () => {
+  const referenciaSuficiente =
+    'Adolescente presenta ausentismo, bajo rendimiento y conflicto familiar persistente. El practicante debe explorar riesgos, red de apoyo y objetivo pedagogico.';
+
   const currentUser: AuthenticatedUser = {
     sub: 'doc-1',
     email: 'docente@nuclear.local',
@@ -80,6 +83,19 @@ describe('GeneracionCasosIaService', () => {
     await expect(
       service.generarCaso({ cantidadEscenarios: 3 }, currentUser),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('rechaza referencias de texto con contexto insuficiente', async () => {
+    await expect(
+      service.generarCaso(
+        { casosReferenciaTexto: ['Referencia base'], cantidadEscenarios: 2 },
+        currentUser,
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'IA_PROMPT_INSUFFICIENT',
+      },
+    });
   });
 
   it('rechaza casos de referencia sin permiso', async () => {
@@ -174,7 +190,7 @@ describe('GeneracionCasosIaService', () => {
       .mockResolvedValue([]);
 
     const response = await service.generarCaso(
-      { casosReferenciaTexto: ['Referencia base'], cantidadEscenarios: 2 },
+      { casosReferenciaTexto: [referenciaSuficiente], cantidadEscenarios: 2 },
       currentUser,
     );
 
@@ -298,7 +314,7 @@ describe('GeneracionCasosIaService', () => {
       .mockResolvedValue([]);
 
     const response = await service.generarCaso(
-      { casosReferenciaTexto: ['Referencia base'], cantidadEscenarios: 2 },
+      { casosReferenciaTexto: [referenciaSuficiente], cantidadEscenarios: 2 },
       currentUser,
     );
 
@@ -347,7 +363,7 @@ describe('GeneracionCasosIaService', () => {
       );
 
     const promise = service.generarCaso(
-      { casosReferenciaTexto: ['Referencia base'], cantidadEscenarios: 2 },
+      { casosReferenciaTexto: [referenciaSuficiente], cantidadEscenarios: 2 },
       currentUser,
     );
 
@@ -546,7 +562,7 @@ describe('GeneracionCasosIaService', () => {
 
     await expect(
       service.generarCaso(
-        { casosReferenciaTexto: ['base'], cantidadEscenarios: 2 },
+        { casosReferenciaTexto: [referenciaSuficiente], cantidadEscenarios: 2 },
         currentUser,
       ),
     ).rejects.toThrow('fallo escenario 2');
@@ -637,7 +653,7 @@ describe('GeneracionCasosIaService', () => {
     ]);
 
     const promise = service.generarCaso(
-      { casosReferenciaTexto: ['base'], cantidadEscenarios: 2 },
+      { casosReferenciaTexto: [referenciaSuficiente], cantidadEscenarios: 2 },
       currentUser,
     );
 

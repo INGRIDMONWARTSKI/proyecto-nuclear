@@ -35,6 +35,18 @@ export class GrupoFormComponent implements OnInit {
   protected readonly authService = inject(AuthService);
 
   protected readonly Role = Role;
+  protected readonly semestreOptions = [
+    'Primer semestre',
+    'Segundo semestre',
+    'Tercer semestre',
+    'Cuarto semestre',
+    'Quinto semestre',
+    'Sexto semestre',
+    'Séptimo semestre',
+    'Octavo semestre',
+    'Noveno semestre',
+    'Décimo semestre',
+  ];
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -46,6 +58,7 @@ export class GrupoFormComponent implements OnInit {
   protected readonly form = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     descripcion: ['', [Validators.maxLength(500)]],
+    semestre: ['', [Validators.required]],
     profesorId: [''],
   });
 
@@ -82,10 +95,12 @@ export class GrupoFormComponent implements OnInit {
     const payload: {
       nombre: string;
       descripcion?: string;
+      semestre: string;
       profesorId?: string;
     } = {
       nombre: this.form.controls.nombre.value.trim(),
       descripcion: this.form.controls.descripcion.value.trim() || undefined,
+      semestre: this.form.controls.semestre.value,
     };
 
     if (this.authService.hasRole(Role.ADMIN)) {
@@ -130,6 +145,7 @@ export class GrupoFormComponent implements OnInit {
         this.form.patchValue({
           nombre: grupo.nombre,
           descripcion: grupo.descripcion ?? '',
+          semestre: grupo.semestre ?? '',
           profesorId: grupo.profesorId,
         });
         if (!this.authService.hasRole(Role.ADMIN)) {
@@ -171,7 +187,7 @@ export class GrupoFormComponent implements OnInit {
 
   formSubtitle(): string | undefined {
     if (this.authService.hasRole(Role.PROFESOR) && !this.isEdit()) {
-      return 'Se asignará a tu usuario como profesor.';
+      return 'Este grupo quedará asociado a tu cuenta docente.';
     }
     return undefined;
   }

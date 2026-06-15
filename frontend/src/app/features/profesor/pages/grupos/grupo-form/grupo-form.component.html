@@ -51,6 +51,19 @@
         <textarea id="descripcion" rows="3" formControlName="descripcion" placeholder="Opcional"></textarea>
       </div>
 
+      <div class="siep-field">
+        <label for="semestre">Semestre</label>
+        <select id="semestre" formControlName="semestre">
+          <option value="">Selecciona el semestre del grupo</option>
+          @for (semestre of semestreOptions; track semestre) {
+            <option [value]="semestre">{{ semestre }}</option>
+          }
+        </select>
+        @if (form.controls.semestre.touched && form.controls.semestre.invalid) {
+          <small class="field-error">Selecciona el semestre del grupo.</small>
+        }
+      </div>
+
       @if (authService.hasRole(Role.ADMIN)) {
         <div class="siep-field">
           <label for="profesorId">Profesor</label>
@@ -68,6 +81,10 @@
             }
           }
         </div>
+      }
+
+      @if (authService.hasRole(Role.PROFESOR)) {
+        <p class="hint">Este grupo quedará asociado a tu cuenta docente.</p>
       }
 
       <div class="form-actions">

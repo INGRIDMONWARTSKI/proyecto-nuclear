@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { PostgrestModule } from '../postgrest/postgrest.module';
+import { NotificacionesModule } from '../notificaciones/notificaciones.module';
+import { UsuariosModule } from '../usuarios/usuarios.module';
 import { AsignacionesService } from './asignaciones.service';
 import { CasoEditorBuilderService } from './caso-editor-builder.service';
 import { CasoPreviewBuilderService } from './caso-preview-builder.service';
@@ -28,7 +30,7 @@ import { RetroalimentacionesService } from './retroalimentaciones.service';
 import { SesionesSimulacionService } from './sesiones-simulacion.service';
 
 @Module({
-  imports: [PostgrestModule],
+  imports: [PostgrestModule, NotificacionesModule, UsuariosModule],
   controllers: [
     DocenteCasosController,
     DocenteAsignacionesController,

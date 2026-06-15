@@ -82,7 +82,7 @@ export class GruposController {
 
   @Post(':id/importar-estudiantes')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.PROFESOR)
   @UseInterceptors(FileInterceptor('file'))
   importarEstudiantes(
     @Param('id') id: string,

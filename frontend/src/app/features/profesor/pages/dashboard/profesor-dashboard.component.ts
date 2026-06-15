@@ -10,7 +10,6 @@ import { SimulacionDocenteService } from '../../../simulacion/services/simulacio
 import { GruposService } from '../../services/grupos.service';
 import { AlertMessageComponent } from '../../../../shared/ui/alert-message/alert-message.component';
 import { LoadingStateComponent } from '../../../../shared/ui/loading-state/loading-state.component';
-import { PageHeaderComponent } from '../../../../shared/ui/page-header/page-header.component';
 
 interface OrientacionMentora {
   titulo: string;
@@ -23,7 +22,6 @@ interface OrientacionMentora {
   imports: [
     RouterLink,
     DatePipe,
-    PageHeaderComponent,
     LoadingStateComponent,
     AlertMessageComponent,
   ],

@@ -18,6 +18,7 @@ import { CambiarEstadoUsuarioDto } from './dto/cambiar-estado-usuario.dto';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { UsuariosService } from './usuarios.service';
 import { MailService } from '../mail/mail.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
 @Controller('usuarios')
 @UseGuards(JwtAuthGuard)
@@ -25,6 +26,7 @@ export class UsuariosController {
   constructor(
     private readonly usuariosService: UsuariosService,
     private readonly mailService: MailService,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   @Get()
@@ -58,6 +60,16 @@ export class UsuariosController {
       usuario.email,
       temporaryPassword,
     );
+
+    if (usuario.role === Role.ESTUDIANTE) {
+      await this.notificacionesService.crearParaAdmins({
+        tipo: 'ESTUDIANTE_CREADO',
+        titulo: 'Estudiante creado',
+        mensaje: `Se creó la cuenta del estudiante ${usuario.fullName}.`,
+        entidad_tipo: 'USUARIO',
+        entidad_id: usuario.id,
+      });
+    }
 
     return {
       user: this.usuariosService.sanitizeUser(usuario),

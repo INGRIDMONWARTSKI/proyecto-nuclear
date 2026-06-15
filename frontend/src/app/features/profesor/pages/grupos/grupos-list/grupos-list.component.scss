@@ -200,6 +200,19 @@
   overflow: hidden;
 }
 
+.comunidad-card__semester {
+  margin: 0.45rem 0 0;
+  display: inline-flex;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #f1f8e9;
+  border: 1px solid #cde8b5;
+  color: #2f5d34;
+  font-family: var(--siep-font-title);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
 // Metadatos (chips)
 .comunidad-card__meta {
   display: flex;

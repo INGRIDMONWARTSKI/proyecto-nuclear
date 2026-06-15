@@ -124,6 +124,9 @@
               <p class="comunidad-card__desc">
                 {{ grupo.descripcion || 'Sin descripción asignada.' }}
               </p>
+              @if (grupo.semestre) {
+                <p class="comunidad-card__semester">{{ grupo.semestre }}</p>
+              }
             </header>
 
             <!-- Metadatos -->

@@ -20,6 +20,11 @@ export class ActualizarGrupoDto {
   descripcion?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  semestre?: string;
+
+  @IsOptional()
   @IsUUID('4')
   profesorId?: string;
 

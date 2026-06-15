@@ -75,6 +75,7 @@ export class GruposListComponent implements OnInit {
       return (
         g.nombre.toLowerCase().includes(q) ||
         (g.descripcion ?? '').toLowerCase().includes(q) ||
+        (g.semestre ?? '').toLowerCase().includes(q) ||
         (g.isActive ? 'activo' : 'inactivo').includes(q) ||
         nombreDocente.includes(q)
       );
@@ -103,14 +104,31 @@ export class GruposListComponent implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    // Cargamos grupos y usuarios en paralelo para mostrar nombres de docentes
-    forkJoin({
-      grupos: this.gruposService.listar(),
-      usuarios: this.usuariosApi.listarUsuarios(),
-    }).subscribe({
-      next: ({ grupos, usuarios }) => {
+    if (this.authService.hasRole(Role.ADMIN)) {
+      forkJoin({
+        grupos: this.gruposService.listar(),
+        usuarios: this.usuariosApi.listarUsuarios(),
+      }).subscribe({
+        next: ({ grupos, usuarios }) => {
+          this.grupos.set(grupos);
+          this.usuarios.set(usuarios);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.errorMessage.set(
+            getErrorMessage(error, 'No fue posible cargar los grupos.'),
+          );
+          this.loading.set(false);
+        },
+      });
+      return;
+    }
+
+    this.gruposService.listar().subscribe({
+      next: (grupos) => {
+        const user = this.authService.user();
         this.grupos.set(grupos);
-        this.usuarios.set(usuarios);
+        this.usuarios.set(user ? [user] : []);
         this.loading.set(false);
       },
       error: (error) => {

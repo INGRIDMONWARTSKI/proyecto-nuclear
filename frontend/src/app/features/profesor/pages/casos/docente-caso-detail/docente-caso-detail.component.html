@@ -20,6 +20,9 @@
       @if (errorMessage()) {
         <app-alert-message [message]="errorMessage()!" type="error" />
       }
+      @if (successMessage()) {
+        <app-alert-message [message]="successMessage()!" type="success" />
+      }
 
       @if (publishErrors().length > 0) {
         <section class="siep-card publish-errors">
@@ -55,6 +58,11 @@
           <span>Preguntas situadas</span>
           <span>Rutas de decisión</span>
         </div>
+        @if (c.estado === 'published') {
+          <p class="case-hero__assignment-note">
+            Publicado no significa asignado. Para que los estudiantes puedan verlo, asigna este caso a una o más comunidades académicas.
+          </p>
+        }
       </section>
 
       <section class="siep-card">
@@ -129,6 +137,9 @@
             <button class="siep-btn-secondary" type="button" (click)="cargarEvidencias()">
               Ver evidencias
             </button>
+            <a class="siep-btn-primary" routerLink="/profesor/asignaciones">
+              Asignar a comunidades académicas
+            </a>
           }
           @if (c.estado === 'draft') {
             <button

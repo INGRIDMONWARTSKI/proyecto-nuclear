@@ -19,6 +19,11 @@ export class CrearGrupoDto {
   descripcion?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  semestre?: string;
+
+  @IsOptional()
   @Transform(({ value }) => (value === '' ? undefined : value))
   @IsUUID('4')
   profesorId?: string;

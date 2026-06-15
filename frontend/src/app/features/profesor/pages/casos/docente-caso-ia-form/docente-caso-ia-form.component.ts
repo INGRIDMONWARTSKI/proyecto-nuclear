@@ -26,6 +26,8 @@ export class DocenteCasoIaFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly simulacionService = inject(SimulacionDocenteService);
+  protected readonly minContextCharacters = 120;
+  protected readonly minReferenceCharacters = 80;
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -73,14 +75,21 @@ export class DocenteCasoIaFormComponent implements OnInit {
     }
 
     const raw = this.form.getRawValue();
-    const casosReferenciaTexto = raw.referenciasTexto
-      .split(/\r?\n\s*\r?\n/g)
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
+    const casosReferenciaTexto = this.parseReferenciasTexto(raw.referenciasTexto);
 
     if (casosReferenciaTexto.length === 0 && raw.casosReferenciaIds.length === 0) {
       this.errorMessage.set(
-        'Debes ingresar al menos una referencia en texto o seleccionar un caso existente.',
+        'Agrega más contexto antes de generar el caso. Incluye situación, población, conflicto principal y objetivo pedagógico.',
+      );
+      return;
+    }
+
+    if (
+      raw.casosReferenciaIds.length === 0 &&
+      !this.tieneContextoSuficiente(casosReferenciaTexto)
+    ) {
+      this.errorMessage.set(
+        'Agrega más contexto antes de generar el caso. Incluye situación, población, conflicto principal y objetivo pedagógico.',
       );
       return;
     }
@@ -125,6 +134,26 @@ export class DocenteCasoIaFormComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  private parseReferenciasTexto(value: string): string[] {
+    return value
+      .split(/\r?\n\s*\r?\n/g)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  private tieneContextoSuficiente(referencias: string[]): boolean {
+    const totalCharacters = referencias.join('\n\n').length;
+    const longestReference = referencias.reduce(
+      (max, item) => Math.max(max, item.length),
+      0,
+    );
+
+    return (
+      totalCharacters >= this.minContextCharacters &&
+      longestReference >= this.minReferenceCharacters
+    );
   }
 
   private getIaGenerationErrorMessage(error: unknown): string {

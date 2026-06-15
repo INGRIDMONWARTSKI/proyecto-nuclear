@@ -3,7 +3,7 @@
     <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
     <app-page-header
       title="Generar caso con IA"
-      subtitle="Construye un borrador completo a partir de referencias docentes."
+      subtitle="Construye un borrador de caso psicosocial a partir de referencias docentes."
     >
       <a actions class="siep-btn-secondary" routerLink="/profesor/casos">Volver</a>
     </app-page-header>
@@ -17,6 +17,23 @@
     <app-loading-state message="Cargando referencias disponibles..." />
   } @else {
     <form class="siep-card ia-form" [formGroup]="form" (ngSubmit)="submit()">
+      <section class="ia-guidance" aria-label="Guía para generar con IA">
+        <h2>Describe el caso con suficiente contexto</h2>
+        <p>
+          MENTORA necesita comprender la población, la situación, el conflicto principal,
+          el contexto familiar, social o institucional y el objetivo pedagógico.
+        </p>
+        <ul>
+          <li>Mínimo recomendado: {{ minContextCharacters }} caracteres de contexto total.</li>
+          <li>Si usas referencias en texto, al menos una debe tener {{ minReferenceCharacters }} caracteres o más.</li>
+          <li>También puedes seleccionar un caso existente como referencia para orientar la generación.</li>
+        </ul>
+        <p class="ia-guidance__example">
+          Ejemplo: Estudiante adolescente presenta ausentismo, bajo rendimiento y señales de conflicto familiar.
+          El practicante debe explorar factores de riesgo, red de apoyo y alternativas de intervención institucional.
+        </p>
+      </section>
+
       <div class="siep-field">
         <label for="referenciasTexto">Referencias en texto libre</label>
         <textarea

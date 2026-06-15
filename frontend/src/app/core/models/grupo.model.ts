@@ -2,6 +2,7 @@ export interface Grupo {
   id: string;
   nombre: string;
   descripcion: string | null;
+  semestre: string | null;
   profesorId: string;
   isActive: boolean;
   createdAt: string;
@@ -11,12 +12,14 @@ export interface Grupo {
 export interface CrearGrupoPayload {
   nombre: string;
   descripcion?: string;
+  semestre: string;
   profesorId?: string;
 }
 
 export interface ActualizarGrupoPayload {
   nombre?: string;
   descripcion?: string;
+  semestre?: string;
   profesorId?: string;
   isActive?: boolean;
 }

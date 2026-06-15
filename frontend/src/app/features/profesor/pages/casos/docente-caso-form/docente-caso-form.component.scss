@@ -4,6 +4,16 @@
   gap: var(--siep-space-1);
 }
 
+.case-form__note {
+  margin: 0 0 var(--siep-space-3);
+  padding: var(--siep-space-3);
+  border-radius: var(--siep-radius-md);
+  border: 1px solid rgba(124, 179, 66, 0.28);
+  background: rgba(241, 248, 233, 0.72);
+  color: var(--siep-forest);
+  line-height: 1.5;
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;

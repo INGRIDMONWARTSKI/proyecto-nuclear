@@ -8,10 +8,13 @@ import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.
 import { CasoEditorBuilderService } from './caso-editor-builder.service';
 import { CasosService } from './casos.service';
 import { CreateCasoDto } from './dto/create-caso.dto';
+import { CreateRubricaCriterioDto } from './dto/create-rubrica-criterio.dto';
 import { GenerateCasoIaDto } from './dto/generate-caso-ia.dto';
 import { UpdateCasoDto } from './dto/update-caso.dto';
+import { UpdateRubricaCriterioDto } from './dto/update-rubrica-criterio.dto';
 import { GeneracionCasosIaService } from './generacion-casos-ia.service';
 import { PublicacionService } from './publicacion.service';
+import { RubricaService } from './rubrica.service';
 
 @Controller('simulacion/docente/casos')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,6 +25,7 @@ export class DocenteCasosController {
     private readonly generacionCasosIaService: GeneracionCasosIaService,
     private readonly casoEditorBuilder: CasoEditorBuilderService,
     private readonly publicacionService: PublicacionService,
+    private readonly rubricaService: RubricaService,
   ) {}
 
   @Post()
@@ -51,6 +55,37 @@ export class DocenteCasosController {
   @Get('biblioteca')
   findBiblioteca(@CurrentUser() currentUser: AuthenticatedUser) {
     return this.casosService.findBibliotecaDocente(currentUser);
+  }
+
+  @Patch('rubrica/:criterioId')
+  actualizarCriterioRubrica(
+    @Param('criterioId') criterioId: string,
+    @Body() dto: UpdateRubricaCriterioDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.rubricaService.actualizar(criterioId, dto, currentUser);
+  }
+
+  @Delete('rubrica/:criterioId')
+  eliminarCriterioRubrica(
+    @Param('criterioId') criterioId: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.rubricaService.eliminar(criterioId, currentUser);
+  }
+
+  @Get(':casoId/rubrica')
+  listarRubrica(@Param('casoId') casoId: string) {
+    return this.rubricaService.listar(casoId);
+  }
+
+  @Post(':casoId/rubrica')
+  crearCriterioRubrica(
+    @Param('casoId') casoId: string,
+    @Body() dto: CreateRubricaCriterioDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.rubricaService.crear(casoId, dto, currentUser);
   }
 
   @Get(':casoId')

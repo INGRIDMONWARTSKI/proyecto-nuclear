@@ -18,6 +18,7 @@ import { EscenarioRecord } from './entities/escenario.entity';
 import { OpcionRespuestaRecord } from './entities/opcion-respuesta.entity';
 import { PreguntaDecisionRecord } from './entities/pregunta-decision.entity';
 import { RetroalimentacionRecord } from './entities/retroalimentacion.entity';
+import { RubricaCriterioRecord } from './entities/rubrica-criterio.entity';
 
 @Injectable()
 export class PublicacionService {
@@ -100,6 +101,28 @@ export class PublicacionService {
 
     if (!caso.titulo || caso.titulo.trim().length < 3) {
       errors.push('El caso debe tener un titulo valido.');
+    }
+
+    const rubrica = await this.postgrest.select<RubricaCriterioRecord>(
+      'rubrica_criterios',
+      {
+        filters: { caso_id: caso.id },
+        order: 'orden.asc',
+      },
+    );
+
+    if (rubrica.length === 0) {
+      errors.push(
+        'Agrega al menos un criterio de rubrica para justificar la calificacion final.',
+      );
+    }
+
+    for (const criterio of rubrica) {
+      if (!criterio.criterio?.trim() || !criterio.descripcion?.trim()) {
+        errors.push(
+          `El criterio de rubrica ${criterio.orden} debe tener criterio y descripcion.`,
+        );
+      }
     }
 
     const escenarios = await this.postgrest.select<EscenarioRecord>('escenarios', {

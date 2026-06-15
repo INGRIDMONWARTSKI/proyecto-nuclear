@@ -9,6 +9,9 @@ export interface SesionSimulacionRecord {
   started_at: string;
   finished_at: string | null;
   finalizacion_tipo: 'manual' | 'timeout' | null;
+  retroalimentacion_docente_general: string | null;
+  retroalimentacion_docente_at: string | null;
+  retroalimentacion_docente_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +27,9 @@ export interface SesionSimulacion {
   startedAt: string;
   finishedAt: string | null;
   finalizacionTipo: 'manual' | 'timeout' | null;
+  retroalimentacionDocenteGeneral: string | null;
+  retroalimentacionDocenteAt: string | null;
+  retroalimentacionDocenteBy: string | null;
   createdAt: string;
   updatedAt: string;
 }

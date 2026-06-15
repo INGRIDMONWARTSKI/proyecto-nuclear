@@ -140,6 +140,34 @@
   }
 }
 
+.result-rubrica {
+  display: grid;
+  gap: var(--siep-space-2);
+}
+
+.result-rubrica__item {
+  padding: var(--siep-space-3);
+  border: 1px solid var(--siep-border);
+  border-radius: var(--siep-radius-md);
+  background: var(--siep-success-bg);
+
+  strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--siep-forest);
+    font-family: var(--siep-font-title);
+  }
+
+  p + p {
+    margin-top: 0.35rem;
+  }
+
+  span {
+    font-weight: 700;
+    color: var(--siep-forest);
+  }
+}
+
 .result-list__head {
   margin-bottom: var(--siep-space-3);
 

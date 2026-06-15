@@ -122,17 +122,60 @@
 
 .preview-panel,
 .publish-errors,
-.publication-checklist {
+.publication-checklist,
+.rubrica-panel {
   margin-top: var(--siep-space-2);
 }
 
 .preview-panel h2,
 .publish-errors h2,
-.publication-checklist h2 {
+.publication-checklist h2,
+.rubrica-panel h2 {
   margin: 0 0 var(--siep-space-3);
   font-family: var(--siep-font-title);
   font-size: 1.1rem;
   color: var(--siep-forest);
+}
+
+.rubrica-list {
+  display: grid;
+  gap: var(--siep-space-3);
+}
+
+.rubrica-item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--siep-space-3);
+  align-items: flex-start;
+  padding: var(--siep-space-3);
+  border: 1px solid rgba(124, 179, 66, 0.22);
+  border-radius: var(--siep-radius-md);
+  background: rgba(255, 252, 247, 0.78);
+
+  strong {
+    color: var(--siep-forest);
+    font-family: var(--siep-font-title);
+  }
+
+  p {
+    margin: var(--siep-space-1) 0 0;
+    line-height: 1.45;
+  }
+}
+
+.rubrica-form {
+  display: grid;
+  gap: var(--siep-space-3);
+  margin-top: var(--siep-space-4);
+  padding-top: var(--siep-space-4);
+  border-top: 1px solid rgba(124, 179, 66, 0.22);
+
+  h3 {
+    margin: 0;
+    font-family: var(--siep-font-title);
+    color: var(--siep-forest);
+    font-size: 1rem;
+  }
 }
 
 .checklist-list {

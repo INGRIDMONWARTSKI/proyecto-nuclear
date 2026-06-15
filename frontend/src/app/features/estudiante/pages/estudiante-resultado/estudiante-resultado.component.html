@@ -117,6 +117,36 @@
 
       </article>
 
+      <section class="siep-card score-card">
+        <div class="score-card__reflection">
+          <h3>Rúbrica aplicada</h3>
+          @if (r.rubrica.length > 0) {
+            <div class="result-rubrica">
+              @for (criterio of r.rubrica; track criterio.id) {
+                <article class="result-rubrica__item">
+                  <strong>{{ criterio.orden }}. {{ criterio.criterio }}</strong>
+                  <p>{{ criterio.descripcion }}</p>
+                  @if (criterio.nivelEsperado) {
+                    <p><span>Nivel esperado:</span> {{ criterio.nivelEsperado }}</p>
+                  }
+                </article>
+              }
+            </div>
+          } @else {
+            <p>Este caso aún no tiene rúbrica publicada.</p>
+          }
+        </div>
+      </section>
+
+      <section class="siep-card score-card">
+        <div class="score-card__reflection">
+          <h3>Retroalimentación general del docente</h3>
+          <p>
+            {{ r.retroalimentacionDocenteGeneral || 'Aún no hay retroalimentación general del docente.' }}
+          </p>
+        </div>
+      </section>
+
 
 
       <section class="result-list" aria-label="Respuestas y retroalimentación">

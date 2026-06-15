@@ -75,6 +75,83 @@
         }
       </section>
 
+      <section class="siep-card rubrica-panel">
+        <div class="section-header">
+          <div>
+            <h2>Rubrica de calificacion</h2>
+            <p class="muted">Define los criterios con los que se justificara la calificacion final del estudiante.</p>
+          </div>
+          @if ((preview()?.rubrica?.length ?? 0) === 0) {
+            <app-status-badge variant="status" status="pending" label="Pendiente" />
+          } @else {
+            <app-status-badge variant="status" status="success" label="Configurada" />
+          }
+        </div>
+
+        @if ((preview()?.rubrica?.length ?? 0) > 0) {
+          <div class="rubrica-list">
+            @for (criterio of preview()!.rubrica; track criterio.id) {
+              <article class="rubrica-item">
+                <div>
+                  <strong>{{ criterio.orden }}. {{ criterio.criterio }}</strong>
+                  <p>{{ criterio.descripcion }}</p>
+                  @if (criterio.nivelEsperado) {
+                    <p class="muted"><strong>Nivel esperado:</strong> {{ criterio.nivelEsperado }}</p>
+                  }
+                  @if (criterio.peso !== null) {
+                    <p class="muted"><strong>Peso:</strong> {{ criterio.peso }}</p>
+                  }
+                </div>
+                @if (canEditRubrica()) {
+                  <div class="escenario-item__actions">
+                    <button class="siep-btn-secondary siep-btn--compact" type="button" (click)="editarCriterioRubrica(criterio)">
+                      Editar
+                    </button>
+                    <button class="siep-btn-danger siep-btn--compact" type="button" [disabled]="savingRubrica()" (click)="eliminarCriterioRubrica(criterio)">
+                      Eliminar
+                    </button>
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="checklist-success">Aun no hay criterios de rubrica para este caso.</p>
+        }
+
+        @if (canEditRubrica()) {
+          <form class="rubrica-form" [formGroup]="rubricaForm" (ngSubmit)="guardarCriterioRubrica()">
+            <h3>{{ editingRubricaId() ? 'Editar criterio' : 'Agregar criterio' }}</h3>
+            <div class="siep-field">
+              <label for="rubrica-criterio">Criterio</label>
+              <input id="rubrica-criterio" type="text" formControlName="criterio" />
+            </div>
+            <div class="siep-field">
+              <label for="rubrica-descripcion">Descripcion</label>
+              <textarea id="rubrica-descripcion" rows="3" formControlName="descripcion"></textarea>
+            </div>
+            <div class="siep-field">
+              <label for="rubrica-nivel">Nivel esperado</label>
+              <textarea id="rubrica-nivel" rows="2" formControlName="nivelEsperado"></textarea>
+            </div>
+            <div class="siep-field">
+              <label for="rubrica-peso">Peso opcional</label>
+              <input id="rubrica-peso" type="number" min="0" step="0.1" formControlName="peso" />
+            </div>
+            <div class="actions-panel__buttons">
+              <button class="siep-btn-primary" type="submit" [disabled]="savingRubrica()">
+                {{ savingRubrica() ? 'Guardando...' : (editingRubricaId() ? 'Actualizar criterio' : 'Agregar criterio') }}
+              </button>
+              @if (editingRubricaId()) {
+                <button class="siep-btn-secondary" type="button" (click)="cancelarEdicionRubrica()">
+                  Cancelar
+                </button>
+              }
+            </div>
+          </form>
+        }
+      </section>
+
       <section class="siep-card">
         <div class="section-header">
           <h2>Escenarios</h2>
@@ -298,6 +375,24 @@
               </ul>
             </div>
           } @else {
+            <article class="preview-item">
+              <h3>Rubrica de calificacion</h3>
+              @if (p.rubrica.length > 0) {
+                <ul>
+                  @for (criterio of p.rubrica; track criterio.id) {
+                    <li>
+                      <strong>{{ criterio.orden }}. {{ criterio.criterio }}:</strong>
+                      {{ criterio.descripcion }}
+                      @if (criterio.nivelEsperado) {
+                        · <em>{{ criterio.nivelEsperado }}</em>
+                      }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="warn">Sin rubrica configurada.</p>
+              }
+            </article>
             @for (esc of p.escenarios; track esc.id) {
               <article class="preview-item">
                 <h3 class="preview-item__title">{{ esc.orden }}. {{ esc.titulo }}</h3>

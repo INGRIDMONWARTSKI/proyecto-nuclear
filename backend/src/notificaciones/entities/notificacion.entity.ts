@@ -6,7 +6,8 @@ export type NotificacionTipo =
   | 'CASO_ASIGNADO'
   | 'NOTA_DISPONIBLE'
   | 'CASO_ASIGNADO_GRUPO'
-  | 'REINTENTO_AUTORIZADO';
+  | 'REINTENTO_AUTORIZADO'
+  | 'FEEDBACK_DOCENTE';
 
 export type NotificacionEntidadTipo = 'GRUPO' | 'CASO' | 'USUARIO' | 'SESION';
 

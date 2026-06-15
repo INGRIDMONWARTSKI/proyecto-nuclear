@@ -6,6 +6,7 @@ import { EscenarioRecord } from './entities/escenario.entity';
 import { OpcionRespuestaRecord } from './entities/opcion-respuesta.entity';
 import { PreguntaDecisionRecord } from './entities/pregunta-decision.entity';
 import { RetroalimentacionRecord } from './entities/retroalimentacion.entity';
+import { RubricaCriterioRecord } from './entities/rubrica-criterio.entity';
 import {
   CasoPreviewTree,
   EscenarioPreview,
@@ -37,6 +38,13 @@ export class CasoPreviewBuilderService {
       filters: { caso_id: caso.id },
       order: 'orden.asc',
     });
+    const rubrica = await this.postgrest.select<RubricaCriterioRecord>(
+      'rubrica_criterios',
+      {
+        filters: { caso_id: caso.id },
+        order: 'orden.asc',
+      },
+    );
 
     const escenariosPreview: EscenarioPreview[] = [];
 
@@ -137,6 +145,17 @@ export class CasoPreviewBuilderService {
     return {
       ...this.toCaso(caso),
       escenarios: escenariosPreview,
+      rubrica: rubrica.map((criterio) => ({
+        id: criterio.id,
+        casoId: criterio.caso_id,
+        criterio: criterio.criterio,
+        descripcion: criterio.descripcion,
+        nivelEsperado: criterio.nivel_esperado,
+        peso: criterio.peso,
+        orden: criterio.orden,
+        createdAt: criterio.created_at,
+        updatedAt: criterio.updated_at,
+      })),
     };
   }
 

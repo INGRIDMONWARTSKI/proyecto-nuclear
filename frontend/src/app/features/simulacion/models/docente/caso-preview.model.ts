@@ -1,5 +1,6 @@
 import { CasoDocente } from './caso-docente.model';
 import { EscenarioLayout } from './editor-layout.model';
+import { RubricaCriterio } from './rubrica-criterio.model';
 
 export interface RetroalimentacionPreview {
   id: string;
@@ -42,4 +43,5 @@ export interface EscenarioPreview {
 
 export interface CasoPreview extends CasoDocente {
   escenarios: EscenarioPreview[];
+  rubrica: RubricaCriterio[];
 }

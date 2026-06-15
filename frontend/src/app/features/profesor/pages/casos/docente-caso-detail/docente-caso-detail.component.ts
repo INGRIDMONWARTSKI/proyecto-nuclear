@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertMessageComponent } from '../../../../../shared/ui/alert-message/alert-message.component';
@@ -15,6 +16,7 @@ import { Role } from '../../../../../core/models/role.enum';
 import { getErrorMessage } from '../../../../../core/utils/http-error.util';
 import { CasoDocenteDetalle } from '../../../../simulacion/models/docente/caso-docente.model';
 import { CasoPreview, EscenarioPreview } from '../../../../simulacion/models/docente/caso-preview.model';
+import { RubricaCriterio } from '../../../../simulacion/models/docente/rubrica-criterio.model';
 import { SesionEvidencia } from '../../../../simulacion/models/docente/sesion-evidencia.model';
 import { SimulacionDocenteService } from '../../../../simulacion/services/simulacion-docente.service';
 
@@ -23,6 +25,7 @@ import { SimulacionDocenteService } from '../../../../simulacion/services/simula
   standalone: true,
   imports: [
     RouterLink,
+    ReactiveFormsModule,
     DatePipe,
     AlertMessageComponent,
     EmptyStateComponent,
@@ -36,6 +39,7 @@ import { SimulacionDocenteService } from '../../../../simulacion/services/simula
 export class DocenteCasoDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
   private readonly simulacionService = inject(SimulacionDocenteService);
   private readonly authService = inject(AuthService);
 
@@ -51,6 +55,15 @@ export class DocenteCasoDetailComponent implements OnInit {
   protected readonly showPreview = signal(false);
   protected readonly showEvidencias = signal(false);
   protected readonly deletingEscenarioId = signal<string | null>(null);
+  protected readonly editingRubricaId = signal<string | null>(null);
+  protected readonly savingRubrica = signal(false);
+
+  protected readonly rubricaForm = this.fb.nonNullable.group({
+    criterio: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(160)]],
+    descripcion: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]],
+    nivelEsperado: ['', [Validators.maxLength(1000)]],
+    peso: [null as number | null],
+  });
 
   private casoId = '';
 
@@ -123,6 +136,10 @@ export class DocenteCasoDetailComponent implements OnInit {
 
     if (preguntas.length === 0) {
       missing.add('Agrega al menos una pregunta.');
+    }
+
+    if ((preview.rubrica ?? []).length === 0) {
+      missing.add('Agrega al menos un criterio de rubrica.');
     }
 
     for (const escenario of preview.escenarios) {
@@ -200,6 +217,10 @@ export class DocenteCasoDetailComponent implements OnInit {
         label: 'Escenario final definido o ruta de cierre clara.',
         ok: escenarios.some((esc) => esc.isFinal) || opciones.some((op) => !op.escenarioDestinoId),
       },
+      {
+        label: 'Rúbrica de calificación con al menos un criterio.',
+        ok: (preview?.rubrica?.length ?? 0) > 0,
+      },
     ];
   }
 
@@ -211,6 +232,10 @@ export class DocenteCasoDetailComponent implements OnInit {
 
     if (!caso?.titulo?.trim() || !caso?.descripcion?.trim() || !caso?.objetivoAprendizaje?.trim()) {
       pendientes.push('Datos basicos del caso: completa titulo, descripcion y objetivo pedagogico.');
+    }
+
+    if ((preview?.rubrica?.length ?? 0) === 0) {
+      pendientes.push('Caso: agrega al menos un criterio de rubrica para justificar la calificacion final.');
     }
 
     if (escenarios.length === 0) {
@@ -351,6 +376,96 @@ export class DocenteCasoDetailComponent implements OnInit {
       this.authService.canCreateCases() &&
       caso.autorDocenteId === user.id
     );
+  }
+
+  canEditRubrica(): boolean {
+    const user = this.authService.user();
+    const caso = this.caso();
+    if (!user || !caso) {
+      return false;
+    }
+    if (user.role === Role.ADMIN) {
+      return true;
+    }
+    return (
+      user.role === Role.PROFESOR &&
+      this.authService.canCreateCases() &&
+      caso.autorDocenteId === user.id
+    );
+  }
+
+  guardarCriterioRubrica(): void {
+    const preview = this.preview();
+    if (this.rubricaForm.invalid || !preview) {
+      this.rubricaForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.rubricaForm.getRawValue();
+    const payload = {
+      criterio: raw.criterio.trim(),
+      descripcion: raw.descripcion.trim(),
+      nivelEsperado: raw.nivelEsperado.trim() || undefined,
+      peso: raw.peso ?? undefined,
+      orden: this.editingRubricaId()
+        ? preview.rubrica.find((item) => item.id === this.editingRubricaId())?.orden
+        : preview.rubrica.length + 1,
+    };
+
+    this.savingRubrica.set(true);
+    const request$ = this.editingRubricaId()
+      ? this.simulacionService.actualizarCriterioRubrica(this.editingRubricaId()!, payload)
+      : this.simulacionService.crearCriterioRubrica(this.casoId, payload);
+
+    request$.subscribe({
+      next: () => {
+        this.savingRubrica.set(false);
+        this.cancelarEdicionRubrica();
+        this.cargarPreviewParaChecklist();
+      },
+      error: (error) => {
+        this.savingRubrica.set(false);
+        this.errorMessage.set(getErrorMessage(error, 'No fue posible guardar el criterio de rubrica.'));
+      },
+    });
+  }
+
+  editarCriterioRubrica(criterio: RubricaCriterio): void {
+    this.editingRubricaId.set(criterio.id);
+    this.rubricaForm.patchValue({
+      criterio: criterio.criterio,
+      descripcion: criterio.descripcion,
+      nivelEsperado: criterio.nivelEsperado ?? '',
+      peso: criterio.peso,
+    });
+  }
+
+  cancelarEdicionRubrica(): void {
+    this.editingRubricaId.set(null);
+    this.rubricaForm.reset({
+      criterio: '',
+      descripcion: '',
+      nivelEsperado: '',
+      peso: null,
+    });
+  }
+
+  eliminarCriterioRubrica(criterio: RubricaCriterio): void {
+    const confirmed = window.confirm('¿Eliminar este criterio de rubrica?');
+    if (!confirmed) {
+      return;
+    }
+    this.savingRubrica.set(true);
+    this.simulacionService.eliminarCriterioRubrica(criterio.id).subscribe({
+      next: () => {
+        this.savingRubrica.set(false);
+        this.cargarPreviewParaChecklist();
+      },
+      error: (error) => {
+        this.savingRubrica.set(false);
+        this.errorMessage.set(getErrorMessage(error, 'No fue posible eliminar el criterio de rubrica.'));
+      },
+    });
   }
 
   eliminarEscenario(escenario: { id: string; titulo: string }): void {

@@ -6,9 +6,17 @@
       subtitle="Modo lectura para acompañar el aprendizaje: consulta decisiones, puntaje y retroalimentación del estudiante."
       icon="🌿"
     >
+      <ng-container actions>
       @if (revision(); as r) {
         <button
-          actions
+          class="siep-btn-secondary"
+          type="button"
+          [disabled]="downloadingReport()"
+          (click)="descargarReporte()"
+        >
+          {{ downloadingReport() ? 'Descargando...' : 'Descargar reporte' }}
+        </button>
+        <button
           class="siep-btn-primary"
           type="button"
           [disabled]="authorizing()"
@@ -17,9 +25,10 @@
           {{ authorizing() ? 'Autorizando...' : 'Autorizar nuevo intento' }}
         </button>
       }
-      <a actions class="siep-btn-secondary" routerLink="/profesor/evidencias">
+      <a class="siep-btn-secondary" routerLink="/profesor/evidencias">
         Volver a evidencias
       </a>
+      </ng-container>
     </app-page-header>
   </div>
 
@@ -102,6 +111,55 @@
             <p class="revision-card__resumen">{{ r.resumen }}</p>
           </article>
         </div>
+
+        <section class="siep-card revision-card">
+          <h3 class="revision-card__section-title">Rúbrica de calificación</h3>
+          @if (r.rubrica.length > 0) {
+            <div class="revision-rubrica">
+              @for (criterio of r.rubrica; track criterio.id) {
+                <article class="revision-rubrica__item">
+                  <strong>{{ criterio.orden }}. {{ criterio.criterio }}</strong>
+                  <p>{{ criterio.descripcion }}</p>
+                  @if (criterio.nivelEsperado) {
+                    <p><span>Nivel esperado:</span> {{ criterio.nivelEsperado }}</p>
+                  }
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="revision-card__resumen">Este caso no tiene rúbrica configurada.</p>
+          }
+        </section>
+
+        <section class="siep-card revision-card">
+          <h3 class="revision-card__section-title">Retroalimentación general del docente</h3>
+          @if (r.retroalimentacionDocenteGeneral) {
+            <p class="revision-card__resumen">{{ r.retroalimentacionDocenteGeneral }}</p>
+            @if (r.retroalimentacionDocenteAt) {
+              <p class="revision-card__meta">Actualizada: {{ r.retroalimentacionDocenteAt | date: 'medium' }}</p>
+            }
+          } @else {
+            <p class="revision-card__resumen">Aún no has agregado una retroalimentación general para esta participación.</p>
+          }
+
+          <form class="revision-feedback-form" [formGroup]="feedbackForm" (ngSubmit)="guardarRetroalimentacionGeneral()">
+            <div class="siep-field">
+              <label for="feedback-general">Observación general</label>
+              <textarea
+                id="feedback-general"
+                rows="4"
+                formControlName="mensaje"
+                placeholder="Escribe una observación general sobre el desempeño del estudiante..."
+              ></textarea>
+              @if (feedbackForm.controls.mensaje.invalid && (feedbackForm.controls.mensaje.touched || feedbackForm.controls.mensaje.dirty)) {
+                <small>Escribe una retroalimentación general para orientar al estudiante.</small>
+              }
+            </div>
+            <button class="siep-btn-primary" type="submit" [disabled]="savingFeedback()">
+              {{ savingFeedback() ? 'Guardando...' : 'Guardar retroalimentación' }}
+            </button>
+          </form>
+        </section>
 
         <section class="revision-respuestas" aria-label="Respuestas del estudiante">
           <header class="revision-respuestas__head">

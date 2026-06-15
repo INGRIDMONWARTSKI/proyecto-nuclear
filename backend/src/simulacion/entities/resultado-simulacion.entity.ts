@@ -15,6 +15,16 @@ export interface ResultadoSimulacion {
   respuestasParciales: number;
   respuestasFallidas: number;
   finalizacionTipo: 'manual' | 'timeout' | null;
+  retroalimentacionDocenteGeneral: string | null;
+  retroalimentacionDocenteAt: string | null;
+  rubrica: Array<{
+    id: string;
+    criterio: string;
+    descripcion: string;
+    nivelEsperado: string | null;
+    peso: number | null;
+    orden: number;
+  }>;
   resumen: string;
   respuestas: Array<{
     escenarioOrden: number;

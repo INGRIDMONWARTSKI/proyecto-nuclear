@@ -39,6 +39,9 @@
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />
   }
+  @if (successMessage()) {
+    <app-alert-message [message]="successMessage()!" type="success" />
+  }
 
   @if (loading()) {
     <app-loading-state message="Cargando casos..." />
@@ -73,6 +76,14 @@
             </a>
             @if (caso.estado === 'draft') {
               <a class="siep-btn-secondary" [routerLink]="[caso.id, 'editar']">Editar datos</a>
+              <button
+                class="siep-btn-danger"
+                type="button"
+                [disabled]="deletingCasoId() === caso.id"
+                (click)="eliminarBorrador(caso)"
+              >
+                {{ deletingCasoId() === caso.id ? 'Eliminando...' : 'Eliminar borrador' }}
+              </button>
             }
           </div>
         </li>

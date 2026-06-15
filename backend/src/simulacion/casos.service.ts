@@ -131,6 +131,53 @@ export class CasosService {
     return this.toCaso(casoActualizado);
   }
 
+  async removeDraft(casoId: string, currentUser: AuthenticatedUser) {
+    this.assertDocenteRole(currentUser);
+
+    const caso = await this.findCasoById(casoId);
+    this.assertCanAccessCasoDocente(caso, currentUser);
+
+    if (caso.estado !== 'draft') {
+      throw new ConflictException('Solo se pueden eliminar casos en borrador.');
+    }
+
+    const [sesion] = await this.postgrest.select<{ id: string }>(
+      'sesiones_simulacion',
+      {
+        filters: { caso_id: casoId },
+        select: 'id',
+        limit: 1,
+      },
+    );
+
+    if (sesion) {
+      throw new ConflictException(
+        'No se puede eliminar este borrador porque tiene sesiones o evidencias asociadas.',
+      );
+    }
+
+    const [asignacion] = await this.postgrest.select<{ id: string }>(
+      'caso_grupo',
+      {
+        filters: { casoId },
+        select: 'id',
+        limit: 1,
+      },
+    );
+
+    if (asignacion) {
+      throw new ConflictException(
+        'No se puede eliminar este borrador porque tiene asignaciones asociadas.',
+      );
+    }
+
+    await this.postgrest.remove('casos', {
+      filters: { id: casoId },
+    });
+
+    return { message: 'Borrador eliminado correctamente.' };
+  }
+
   async findPublishedForStudent(estudianteId: string): Promise<
     Array<{
       id: string;

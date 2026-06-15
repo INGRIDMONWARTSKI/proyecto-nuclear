@@ -35,7 +35,10 @@ export class NotificacionesService {
     }
   }
 
-  async listarParaUsuarioActual(currentUser: AuthenticatedUser) {
+  async listarParaUsuarioActual(
+    currentUser: AuthenticatedUser,
+    archivadas = false,
+  ) {
     const records = await this.postgrest.select<NotificacionRecord>(
       'notificaciones',
       {
@@ -44,19 +47,21 @@ export class NotificacionesService {
       },
     );
 
-    return records.map((item) => this.toNotificacion(item));
+    return records
+      .filter((item) => Boolean(item.archived_at) === archivadas)
+      .map((item) => this.toNotificacion(item));
   }
 
   async contarNoLeidas(currentUser: AuthenticatedUser) {
-    const records = await this.postgrest.select<Pick<NotificacionRecord, 'id'>>(
+    const records = await this.postgrest.select<Pick<NotificacionRecord, 'id' | 'archived_at'>>(
       'notificaciones',
       {
         filters: { usuario_id_destino: currentUser.sub, leida: false },
-        select: 'id',
+        select: 'id,archived_at',
       },
     );
 
-    return { count: records.length };
+    return { count: records.filter((item) => !item.archived_at).length };
   }
 
   async marcarComoLeida(id: string, currentUser: AuthenticatedUser) {
@@ -78,6 +83,42 @@ export class NotificacionesService {
     );
 
     return { message: 'Notificaciones marcadas como leidas.' };
+  }
+
+  async archivar(id: string, currentUser: AuthenticatedUser) {
+    const record = await this.findOwned(id, currentUser);
+    const [updated] = await this.postgrest.update<NotificacionRecord>(
+      'notificaciones',
+      { leida: true, archived_at: new Date().toISOString() },
+      { filters: { id: record.id }, select: '*' },
+    );
+
+    return this.toNotificacion(updated);
+  }
+
+  async archivarLeidas(currentUser: AuthenticatedUser) {
+    const records = await this.postgrest.select<NotificacionRecord>(
+      'notificaciones',
+      {
+        filters: { usuario_id_destino: currentUser.sub, leida: true },
+        select: '*',
+      },
+    );
+    const ids = records
+      .filter((item) => !item.archived_at)
+      .map((item) => item.id);
+
+    if (ids.length === 0) {
+      return { message: 'No hay notificaciones leidas para archivar.' };
+    }
+
+    await this.postgrest.update<NotificacionRecord>(
+      'notificaciones',
+      { archived_at: new Date().toISOString() },
+      { filters: { id: ids }, select: 'id' },
+    );
+
+    return { message: 'Notificaciones leidas archivadas.' };
   }
 
   private async findOwned(id: string, currentUser: AuthenticatedUser) {
@@ -108,6 +149,7 @@ export class NotificacionesService {
       entidadId: record.entidad_id,
       leida: record.leida,
       createdAt: record.created_at,
+      archivedAt: record.archived_at,
     };
   }
 }

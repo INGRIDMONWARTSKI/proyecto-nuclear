@@ -1,6 +1,7 @@
 export interface PreguntaDecisionRecord {
   id: string;
   escenario_id: string;
+  orden: number;
   enunciado: string;
   tipo: 'single_choice';
   puntaje_maximo: number;
@@ -11,6 +12,7 @@ export interface PreguntaDecisionRecord {
 export interface PreguntaDecision {
   id: string;
   escenarioId: string;
+  orden: number;
   enunciado: string;
   tipo: 'single_choice';
   puntajeMaximo: number;

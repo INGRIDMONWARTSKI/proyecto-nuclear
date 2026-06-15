@@ -3,7 +3,7 @@
     <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
     <app-page-header
       [title]="isEdit() ? 'Editar escenario' : 'Nuevo escenario'"
-      subtitle="Configura la escena narrativa (sin editor visual en esta fase)."
+      subtitle="Configura la escena narrativa. La ambientación visual podrás ajustarla en el editor visual."
       icon="🌿"
     >
       <a actions class="siep-btn-secondary" [routerLink]="volverLink()">Volver al caso</a>
@@ -51,18 +51,6 @@
         }
         @if (hasError('situacionTexto', 'minlength')) {
           <p class="field-error">El texto de situación debe tener al menos 3 caracteres.</p>
-        }
-      </div>
-
-      <div class="siep-field">
-        <label for="fondoCodigo">Fondo</label>
-        <select id="fondoCodigo" formControlName="fondoCodigo">
-          @for (bg of backgrounds; track bg.code) {
-            <option [value]="bg.code">{{ bg.label }}</option>
-          }
-        </select>
-        @if (hasError('fondoCodigo', 'required')) {
-          <p class="field-error">Debes seleccionar un fondo.</p>
         }
       </div>
 

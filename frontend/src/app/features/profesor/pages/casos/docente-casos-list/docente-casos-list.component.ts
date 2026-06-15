@@ -34,16 +34,21 @@ export class DocenteCasosListComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly loading = signal(true);
+  protected readonly deletingCasoId = signal<string | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly successMessage = signal<string | null>(null);
   protected readonly casos = signal<CasoDocente[]>([]);
 
   ngOnInit(): void {
     this.cargarCasos();
   }
 
-  cargarCasos() {
+  cargarCasos(clearMessages = true) {
     this.loading.set(true);
-    this.errorMessage.set(null);
+    if (clearMessages) {
+      this.errorMessage.set(null);
+      this.successMessage.set(null);
+    }
     this.simulacionService.listarCasos().subscribe({
       next: (casos) => {
         this.casos.set(casos);
@@ -88,5 +93,40 @@ export class DocenteCasosListComponent implements OnInit {
 
   totalPorEstado(estado: CasoDocente['estado']): number {
     return this.casos().filter((caso) => caso.estado === estado).length;
+  }
+
+  eliminarBorrador(caso: CasoDocente): void {
+    if (caso.estado !== 'draft' || this.deletingCasoId()) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Quieres eliminar el borrador "${caso.titulo}"? Esta acción no se puede deshacer.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingCasoId.set(caso.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.simulacionService.eliminarBorrador(caso.id).subscribe({
+      next: (response) => {
+        this.deletingCasoId.set(null);
+        this.successMessage.set(response.message || 'Borrador eliminado correctamente.');
+        this.cargarCasos(false);
+      },
+      error: (error) => {
+        this.deletingCasoId.set(null);
+        this.errorMessage.set(
+          getErrorMessage(
+            error,
+            'No fue posible eliminar el borrador. Verifica que no tenga sesiones, evidencias o asignaciones asociadas.',
+          ),
+        );
+      },
+    });
   }
 }

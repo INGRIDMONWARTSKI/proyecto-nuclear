@@ -201,6 +201,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.85rem;
+  flex-wrap: wrap;
 }
 
 .notifications__header h2 {
@@ -208,6 +209,13 @@
   color: #102a1d;
   font-size: 1rem;
   font-family: var(--siep-font-title);
+}
+
+.notifications__header-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
 }
 
 .notifications__mark-all,

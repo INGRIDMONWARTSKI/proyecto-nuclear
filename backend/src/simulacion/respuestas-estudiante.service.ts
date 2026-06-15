@@ -95,12 +95,9 @@ export class RespuestasEstudianteService {
       { select: '*' },
     );
 
-    const nextEscenario = await this.sesionesService.resolveNextAfterAnswer(
-      sesion,
-      escenario,
-      opcion,
-    );
-    const shouldComplete = escenario.is_final || !nextEscenario;
+    const pendingAfterAnswer =
+      await this.sesionesService.findPendingScenarioForSession(sesion);
+    const shouldComplete = !pendingAfterAnswer;
 
     const sesionActualizada = shouldComplete
       ? await this.sesionesService.completeSessionAfterAnswer(
@@ -144,7 +141,7 @@ export class RespuestasEstudianteService {
           }
         : null,
       completed: false,
-      ...(nextEscenario ? { nextEscenarioId: nextEscenario.id } : {}),
+      ...(pendingAfterAnswer ? { nextEscenarioId: pendingAfterAnswer.escenario.id } : {}),
     };
   }
 

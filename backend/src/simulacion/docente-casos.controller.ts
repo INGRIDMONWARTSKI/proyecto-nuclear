@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -77,5 +77,13 @@ export class DocenteCasosController {
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
     return this.casosService.update(casoId, updateCasoDto, currentUser);
+  }
+
+  @Delete(':casoId')
+  removeDraft(
+    @Param('casoId') casoId: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.casosService.removeDraft(casoId, currentUser);
   }
 }

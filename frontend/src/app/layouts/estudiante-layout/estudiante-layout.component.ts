@@ -29,6 +29,7 @@ export class EstudianteLayoutComponent implements OnInit {
   protected readonly notificaciones = signal<Notificacion[]>([]);
   protected readonly unreadCount = signal(0);
   protected readonly notificationsOpen = signal(false);
+  protected readonly showingArchived = signal(false);
   protected readonly hasNotifications = computed(() => this.notificaciones().length > 0);
 
   ngOnInit(): void {
@@ -70,6 +71,38 @@ export class EstudianteLayoutComponent implements OnInit {
     });
   }
 
+  archivar(notificacion: Notificacion): void {
+    this.notificacionesService.archivar(notificacion.id).subscribe({
+      next: () => {
+        this.notificaciones.update((items) =>
+          items.filter((item) => item.id !== notificacion.id),
+        );
+        this.cargarConteo();
+      },
+      error: () => undefined,
+    });
+  }
+
+  archivarLeidas(): void {
+    this.notificacionesService.archivarLeidas().subscribe({
+      next: () => {
+        this.notificaciones.update((items) => items.filter((item) => !item.leida));
+        this.cargarConteo();
+      },
+      error: () => undefined,
+    });
+  }
+
+  verArchivadas(): void {
+    this.showingArchived.set(true);
+    this.cargarNotificaciones();
+  }
+
+  verRecientes(): void {
+    this.showingArchived.set(false);
+    this.cargarNotificaciones();
+  }
+
   notificationLink(notificacion: Notificacion): string[] | null {
     if (notificacion.entidadTipo === 'CASO') {
       return ['/estudiante/casos'];
@@ -90,7 +123,7 @@ export class EstudianteLayoutComponent implements OnInit {
   }
 
   private cargarNotificaciones(): void {
-    this.notificacionesService.listar().subscribe({
+    this.notificacionesService.listar(this.showingArchived()).subscribe({
       next: (items) => this.notificaciones.set(items),
       error: () => {
         this.notificaciones.set([]);

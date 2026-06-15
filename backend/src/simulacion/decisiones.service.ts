@@ -40,20 +40,12 @@ export class DecisionesService {
     this.casosService.assertCanAccessCasoDocente(caso, currentUser);
     this.assertCaseEditable(caso);
 
-    const [existing] = await this.postgrest.select<PreguntaDecisionRecord>(
-      'preguntas_decision',
-      {
-        filters: { escenario_id: escenarioId },
-        limit: 1,
-      },
-    );
-
-    if (existing) {
-      throw new ConflictException('El escenario ya tiene una pregunta de decision.');
-    }
+    const orden = dto.orden ?? (await this.getNextPreguntaOrden(escenarioId));
+    await this.ensureUniquePreguntaOrder(escenarioId, orden);
 
     const payload = {
       escenario_id: escenarioId,
+      orden,
       enunciado: dto.enunciado.trim(),
       tipo: dto.tipo ?? 'single_choice',
       puntaje_maximo: dto.puntajeMaximo ?? 5,
@@ -70,7 +62,7 @@ export class DecisionesService {
     } catch (error) {
       this.rethrowConflict(
         error,
-        'El escenario ya tiene una pregunta de decision.',
+        'Ya existe una pregunta con ese orden en el escenario.',
       );
       throw error;
     }
@@ -134,6 +126,15 @@ export class DecisionesService {
 
     const payload: Record<string, string | number> = {};
 
+    if (dto.orden !== undefined && dto.orden !== context.pregunta.orden) {
+      await this.ensureUniquePreguntaOrder(
+        context.escenario.id,
+        dto.orden,
+        preguntaId,
+      );
+      payload.orden = dto.orden;
+    }
+
     if (dto.enunciado !== undefined) {
       payload.enunciado = dto.enunciado.trim();
     }
@@ -168,6 +169,35 @@ export class DecisionesService {
     }
 
     return this.toPregunta(updated);
+  }
+
+  async removePregunta(preguntaId: string, currentUser: AuthenticatedUser) {
+    this.assertDocenteRole(currentUser);
+
+    const context = await this.getPreguntaContext(preguntaId);
+    this.casosService.assertCanAccessCasoDocente(context.caso, currentUser);
+    this.assertCaseEditable(context.caso);
+
+    const [respuesta] = await this.postgrest.select<{ id: string }>(
+      'respuestas_estudiante',
+      {
+        filters: { pregunta_id: preguntaId },
+        select: 'id',
+        limit: 1,
+      },
+    );
+
+    if (respuesta) {
+      throw new ConflictException(
+        'No se puede eliminar esta pregunta porque ya tiene respuestas registradas.',
+      );
+    }
+
+    await this.postgrest.remove('preguntas_decision', {
+      filters: { id: preguntaId },
+    });
+
+    return { message: 'Pregunta eliminada correctamente.' };
   }
 
   async updateOpcion(
@@ -362,6 +392,42 @@ export class DecisionesService {
     }
   }
 
+  private async getNextPreguntaOrden(escenarioId: string): Promise<number> {
+    const preguntas = await this.postgrest.select<Pick<PreguntaDecisionRecord, 'orden'>>(
+      'preguntas_decision',
+      {
+        filters: { escenario_id: escenarioId },
+        select: 'orden',
+      },
+    );
+
+    if (preguntas.length === 0) {
+      return 1;
+    }
+
+    return Math.max(...preguntas.map((pregunta) => pregunta.orden ?? 1)) + 1;
+  }
+
+  private async ensureUniquePreguntaOrder(
+    escenarioId: string,
+    orden: number,
+    ignorePreguntaId?: string,
+  ): Promise<void> {
+    const [existing] = await this.postgrest.select<PreguntaDecisionRecord>(
+      'preguntas_decision',
+      {
+        filters: { escenario_id: escenarioId, orden },
+        limit: 1,
+      },
+    );
+
+    if (existing && existing.id !== ignorePreguntaId) {
+      throw new ConflictException(
+        'Ya existe una pregunta con ese orden en el escenario.',
+      );
+    }
+  }
+
   private async assertPuntajePreguntaCompatible(
     preguntaId: string,
     puntajeMaximo: number,
@@ -407,6 +473,7 @@ export class DecisionesService {
     return {
       id: record.id,
       escenarioId: record.escenario_id,
+      orden: record.orden,
       enunciado: record.enunciado,
       tipo: record.tipo,
       puntajeMaximo: record.puntaje_maximo,

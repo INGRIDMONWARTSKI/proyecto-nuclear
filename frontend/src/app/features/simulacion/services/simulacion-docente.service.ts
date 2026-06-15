@@ -65,6 +65,10 @@ export class SimulacionDocenteService {
     return this.http.patch<CasoDocente>(`${this.casosUrl}/${casoId}`, payload);
   }
 
+  eliminarBorrador(casoId: string) {
+    return this.http.delete<{ message: string }>(`${this.casosUrl}/${casoId}`);
+  }
+
   generarCasoConIa(payload: GenerarCasoIaPayload) {
     return this.http.post<GenerarCasoIaResponse>(
       `${this.casosUrl}/generar`,
@@ -187,16 +191,22 @@ export class SimulacionDocenteService {
 
   crearPregunta(
     escenarioId: string,
-    payload: { enunciado: string; tipo?: string; puntajeMaximo?: number },
+    payload: { enunciado: string; tipo?: string; puntajeMaximo?: number; orden?: number },
   ) {
     return this.http.post(`${this.docenteUrl}/escenarios/${escenarioId}/pregunta`, payload);
   }
 
   actualizarPregunta(
     preguntaId: string,
-    payload: { enunciado?: string; tipo?: string; puntajeMaximo?: number },
+    payload: { enunciado?: string; tipo?: string; puntajeMaximo?: number; orden?: number },
   ) {
     return this.http.patch(`${this.docenteUrl}/preguntas/${preguntaId}`, payload);
+  }
+
+  eliminarPregunta(preguntaId: string) {
+    return this.http.delete<{ message: string }>(
+      `${this.docenteUrl}/preguntas/${preguntaId}`,
+    );
   }
 
   crearOpcion(

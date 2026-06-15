@@ -196,11 +196,16 @@ export class ResultadosService {
 
   ): Promise<ResultadoSimulacion> {
 
-    const escenarios = await this.postgrest.select<{ id: string }>('escenarios', {
+    const escenarios = await this.postgrest.select<{
+      id: string;
+      orden: number;
+      titulo: string;
+    }>('escenarios', {
 
       filters: { caso_id: sesion.caso_id },
 
     });
+    const escenariosById = new Map(escenarios.map((escenario) => [escenario.id, escenario]));
 
 
 
@@ -333,6 +338,10 @@ export class ResultadosService {
       resumen,
 
       respuestas: respuestas.map((r) => ({
+
+        escenarioOrden: escenariosById.get(r.escenario_id)?.orden ?? 0,
+
+        escenarioTitulo: escenariosById.get(r.escenario_id)?.titulo ?? 'Escenario',
 
         pregunta: preguntasById.get(r.pregunta_id)?.enunciado ?? 'Pregunta',
 

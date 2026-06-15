@@ -7,7 +7,7 @@
         <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
         <app-page-header
           [title]="c.titulo"
-          subtitle="Gestiona escenarios, contenido pedagógico, editor visual y publicación."
+          subtitle="Gestiona escenarios, contenido pedagogico, editor visual y publicacion."
           icon="🧠"
         >
           <div actions class="case-header-actions">
@@ -48,7 +48,7 @@
             </a>
           }
         </div>
-        <p class="caso-meta__text">{{ c.descripcion || 'Sin descripción' }}</p>
+        <p class="caso-meta__text">{{ c.descripcion || 'Sin descripcion' }}</p>
         <p class="caso-meta__text">
           <strong>Objetivo:</strong>
           {{ c.objetivoAprendizaje || 'Sin objetivo definido' }}
@@ -56,11 +56,11 @@
         <div class="case-hero__chips">
           <span>Escenas interactivas</span>
           <span>Preguntas situadas</span>
-          <span>Rutas de decisión</span>
+          <span>Rutas de decision</span>
         </div>
         @if (c.estado === 'published') {
           <p class="case-hero__assignment-note">
-            Publicado no significa asignado. Para que los estudiantes puedan verlo, asigna este caso a una o más comunidades académicas.
+            Publicado no significa asignado. Para que los estudiantes puedan verlo, asigna este caso a una o mas comunidades academicas.
           </p>
         }
       </section>
@@ -111,8 +111,16 @@
                       [routerLink]="['/profesor/escenarios', esc.id, 'decision']"
                       [queryParams]="{ casoId: c.id }"
                     >
-                      Configurar decisión
+                      Configurar decision
                     </a>
+                    <button
+                      class="siep-btn-danger siep-btn--compact"
+                      type="button"
+                      [disabled]="deletingEscenarioId() === esc.id"
+                      (click)="eliminarEscenario(esc)"
+                    >
+                      {{ deletingEscenarioId() === esc.id ? 'Eliminando...' : 'Eliminar escena' }}
+                    </button>
                   }
                 </div>
               </li>
@@ -121,24 +129,63 @@
         }
       </section>
 
+      <section class="siep-card publication-checklist">
+        <div class="section-header">
+          <h2>Requisitos para publicar</h2>
+          @if (cumpleRequisitosPublicacion()) {
+            <app-status-badge
+              variant="status"
+              status="success"
+              label="Listo para publicacion"
+            />
+          } @else {
+            <app-status-badge
+              variant="status"
+              status="pending"
+              label="Pendientes"
+            />
+          }
+        </div>
+        @if (cumpleRequisitosPublicacion()) {
+          <p class="checklist-success">El caso cumple los requisitos para publicacion.</p>
+        } @else {
+          <div class="checklist-detail">
+            <h3>Pendientes detectados</h3>
+            <ul>
+              @for (pendiente of pendientesPublicacionDetallados(); track pendiente) {
+                <li>{{ pendiente }}</li>
+              }
+            </ul>
+          </div>
+        }
+        <ul class="checklist-list">
+          @for (item of requisitosPublicacion(); track item.label) {
+            <li [class.checklist-list__item--ok]="item.ok">
+              <span aria-hidden="true">{{ item.ok ? '✓' : '•' }}</span>
+              {{ item.label }}
+            </li>
+          }
+        </ul>
+      </section>
+
       <section class="siep-card actions-panel">
         <h2>Acciones del caso</h2>
         <div class="actions-panel__buttons">
-          <a class="siep-btn-primary" [routerLink]="['canvas']">Diseñar en editor visual</a>
+          <a class="siep-btn-primary" [routerLink]="['canvas']">Disenar en editor visual</a>
           <button
             class="siep-btn-secondary"
             type="button"
             [disabled]="loadingPreview()"
             (click)="cargarPreview()"
           >
-            {{ loadingPreview() ? 'Cargando...' : 'Vista previa pedagógica' }}
+            {{ loadingPreview() ? 'Cargando...' : 'Vista previa pedagogica' }}
           </button>
           @if (c.estado === 'published') {
             <button class="siep-btn-secondary" type="button" (click)="cargarEvidencias()">
               Ver evidencias
             </button>
             <a class="siep-btn-primary" routerLink="/profesor/asignaciones">
-              Asignar a comunidades académicas
+              Asignar a comunidades academicas
             </a>
           }
           @if (c.estado === 'draft') {
@@ -156,29 +203,44 @@
 
       @if (showPreview() && preview(); as p) {
         <section class="siep-card preview-panel">
-          <h2>Vista previa pedagógica</h2>
-          @for (esc of p.escenarios; track esc.id) {
-            <article class="preview-item">
-              <h3>{{ esc.orden }}. {{ esc.titulo }}</h3>
-              <p>{{ esc.situacionTexto }}</p>
-              @if (esc.pregunta) {
-                <p><strong>Pregunta:</strong> {{ esc.pregunta.enunciado }}</p>
-                <ul>
-                  @for (op of esc.pregunta.opciones; track op.id) {
-                    <li>
-                      {{ op.texto }}
-                      @if (op.retroalimentacion) {
-                        · <em>{{ op.retroalimentacion.tipo }}</em>
-                      } @else {
-                        · <span class="warn">Sin retroalimentación</span>
-                      }
-                    </li>
+          <h2>Vista previa pedagogica</h2>
+          @if (!hasPreviewContent()) {
+            <div class="preview-empty">
+              <h3>Aun no hay contenido suficiente para generar la vista previa pedagogica.</h3>
+              <ul>
+                @for (item of previewMissingItems(); track item) {
+                  <li>{{ item }}</li>
+                }
+              </ul>
+            </div>
+          } @else {
+            @for (esc of p.escenarios; track esc.id) {
+              <article class="preview-item">
+                <h3>{{ esc.orden }}. {{ esc.titulo }}</h3>
+                <p>{{ esc.situacionTexto }}</p>
+                @if (esc.preguntas.length > 0) {
+                  @for (pregunta of esc.preguntas; track pregunta.id) {
+                    <div class="preview-question">
+                      <p><strong>Pregunta {{ pregunta.orden }}:</strong> {{ pregunta.enunciado }}</p>
+                      <ul>
+                        @for (op of pregunta.opciones; track op.id) {
+                          <li>
+                            {{ op.texto }} · Nota {{ op.puntaje }} / 5.0
+                            @if (op.retroalimentacion) {
+                              · <em>{{ op.retroalimentacion.tipo }}</em>
+                            } @else {
+                              · <span class="warn">Sin retroalimentacion</span>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    </div>
                   }
-                </ul>
-              } @else {
-                <p class="warn">Sin pregunta configurada.</p>
-              }
-            </article>
+                } @else {
+                  <p class="warn">Sin pregunta configurada.</p>
+                }
+              </article>
+            }
           }
         </section>
       }
@@ -215,7 +277,7 @@
         <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
         <app-page-header
           title="Caso no disponible"
-          subtitle="No se pudo cargar la información del caso."
+          subtitle="No se pudo cargar la informacion del caso."
           icon="🧠"
         >
           <a actions class="siep-btn-secondary" routerLink="..">Volver</a>

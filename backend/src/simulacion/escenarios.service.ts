@@ -248,10 +248,6 @@ export class EscenariosService {
       order: 'orden.asc',
     });
 
-    if (escenarios.length <= 1) {
-      throw new ConflictException('El caso debe conservar al menos una escena.');
-    }
-
     const sesiones = await this.postgrest.select<{ id: string }>('sesiones_simulacion', {
       filters: { caso_id: casoId },
       limit: 1,

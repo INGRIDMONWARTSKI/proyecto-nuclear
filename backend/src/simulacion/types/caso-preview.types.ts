@@ -21,6 +21,7 @@ export interface OpcionPreview {
 
 export interface PreguntaPreview {
   id: string;
+  orden: number;
   enunciado: string;
   tipo: 'single_choice';
   puntajeMaximo: number;
@@ -52,6 +53,7 @@ export interface EscenarioPreview {
   elementos: ElementoEscenaPreview[];
   layout: EscenarioLayout;
   pregunta: PreguntaPreview | null;
+  preguntas: PreguntaPreview[];
 }
 
 export interface CasoPreviewTree extends Caso {

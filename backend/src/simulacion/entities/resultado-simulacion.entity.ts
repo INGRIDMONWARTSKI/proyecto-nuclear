@@ -12,6 +12,8 @@ export interface ResultadoSimulacion {
   totalPreguntas: number;
   resumen: string;
   respuestas: Array<{
+    escenarioOrden: number;
+    escenarioTitulo: string;
     pregunta: string;
     opcionSeleccionada: string;
     puntajeObtenido: number;

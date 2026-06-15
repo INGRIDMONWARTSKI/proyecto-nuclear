@@ -1,11 +1,17 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 
 export class CreatePreguntaDecisionDto {
   @IsString()
   @MinLength(10)
   @MaxLength(500)
   enunciado: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  orden?: number;
 
   @IsOptional()
   @IsIn(['single_choice'])

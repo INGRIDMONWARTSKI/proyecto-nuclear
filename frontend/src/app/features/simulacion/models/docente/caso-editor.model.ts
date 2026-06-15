@@ -28,6 +28,7 @@ export interface CasoEditorOpcion {
 
 export interface CasoEditorPregunta {
   id: string;
+  orden: number;
   enunciado: string;
   tipo: 'single_choice';
   puntajeMaximo: number;
@@ -45,6 +46,7 @@ export interface CasoEditorEscenario {
   isFinal: boolean;
   layout: EscenarioLayout;
   pregunta: CasoEditorPregunta | null;
+  preguntas: CasoEditorPregunta[];
 }
 
 export interface CasoEditor extends CasoDocente {

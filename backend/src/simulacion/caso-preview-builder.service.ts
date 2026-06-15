@@ -49,17 +49,17 @@ export class CasoPreviewBuilderService {
         },
       );
 
-      const [pregunta] = await this.postgrest.select<PreguntaDecisionRecord>(
+      const preguntas = await this.postgrest.select<PreguntaDecisionRecord>(
         'preguntas_decision',
         {
           filters: { escenario_id: escenario.id },
-          limit: 1,
+          order: 'orden.asc',
         },
       );
 
-      let preguntaPreview: EscenarioPreview['pregunta'] = null;
+      const preguntasPreview: NonNullable<EscenarioPreview['pregunta']>[] = [];
 
-      if (pregunta) {
+      for (const pregunta of preguntas) {
         const opciones = await this.postgrest.select<OpcionRespuestaRecord>(
           'opciones_respuesta',
           {
@@ -97,13 +97,14 @@ export class CasoPreviewBuilderService {
           });
         }
 
-        preguntaPreview = {
+        preguntasPreview.push({
           id: pregunta.id,
+          orden: pregunta.orden,
           enunciado: pregunta.enunciado,
           tipo: pregunta.tipo,
           puntajeMaximo: pregunta.puntaje_maximo,
           opciones: opcionesPreview,
-        };
+        });
       }
 
       escenariosPreview.push({
@@ -128,7 +129,8 @@ export class CasoPreviewBuilderService {
           updatedAt: el.updated_at,
         })),
         layout: normalizeLayout(escenario.layout_data, escenario, elementos),
-        pregunta: preguntaPreview,
+        pregunta: preguntasPreview[0] ?? null,
+        preguntas: preguntasPreview,
       });
     }
 

@@ -121,16 +121,97 @@
 }
 
 .preview-panel,
-.publish-errors {
+.publish-errors,
+.publication-checklist {
   margin-top: var(--siep-space-2);
 }
 
 .preview-panel h2,
-.publish-errors h2 {
+.publish-errors h2,
+.publication-checklist h2 {
   margin: 0 0 var(--siep-space-3);
   font-family: var(--siep-font-title);
   font-size: 1.1rem;
   color: var(--siep-forest);
+}
+
+.checklist-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--siep-space-2);
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--siep-space-2);
+    padding: 0.7rem 0.8rem;
+    border: 1px solid rgba(124, 179, 66, 0.22);
+    border-radius: var(--siep-radius-md);
+    background: rgba(255, 252, 247, 0.72);
+    color: var(--siep-text-soft);
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  span {
+    color: var(--siep-error);
+    font-weight: 800;
+  }
+}
+
+.checklist-list__item--ok {
+  background: #f1f8e9 !important;
+  color: var(--siep-forest) !important;
+
+  span {
+    color: var(--siep-success) !important;
+  }
+}
+
+.checklist-success,
+.preview-empty {
+  margin: 0 0 var(--siep-space-3);
+  padding: var(--siep-space-3);
+  border: 1px solid rgba(124, 179, 66, 0.28);
+  border-radius: var(--siep-radius-md);
+  background: #f1f8e9;
+  color: var(--siep-forest);
+  line-height: 1.5;
+}
+
+.checklist-detail {
+  margin: 0 0 var(--siep-space-3);
+  padding: var(--siep-space-3);
+  border: 1px solid rgba(124, 179, 66, 0.28);
+  border-radius: var(--siep-radius-md);
+  background: rgba(255, 252, 247, 0.82);
+
+  h3 {
+    margin: 0 0 var(--siep-space-2);
+    font-family: var(--siep-font-title);
+    font-size: 0.98rem;
+    color: var(--siep-forest);
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: var(--siep-error-text);
+    line-height: 1.55;
+  }
+}
+
+.preview-empty h3 {
+  margin: 0 0 var(--siep-space-2);
+  font-family: var(--siep-font-title);
+  font-size: 1rem;
+}
+
+.preview-empty ul {
+  margin: 0;
+  padding-left: 1.25rem;
 }
 
 .preview-item {

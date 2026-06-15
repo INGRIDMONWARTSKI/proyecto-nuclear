@@ -49,6 +49,14 @@ export class DocenteDecisionesController {
     return this.decisionesService.updatePregunta(preguntaId, dto, currentUser);
   }
 
+  @Delete('preguntas/:preguntaId')
+  removePregunta(
+    @Param('preguntaId') preguntaId: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.decisionesService.removePregunta(preguntaId, currentUser);
+  }
+
   @Post('preguntas/:preguntaId/opciones')
   createOpcion(
     @Param('preguntaId') preguntaId: string,

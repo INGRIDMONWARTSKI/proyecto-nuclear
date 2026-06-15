@@ -5,7 +5,6 @@ import { AlertMessageComponent } from '../../../../../shared/ui/alert-message/al
 import { LoadingStateComponent } from '../../../../../shared/ui/loading-state/loading-state.component';
 import { PageHeaderComponent } from '../../../../../shared/ui/page-header/page-header.component';
 import { getErrorMessage } from '../../../../../core/utils/http-error.util';
-import { BACKGROUND_OPTIONS } from '../../../../simulacion/constants/backgrounds.constant';
 import { SimulacionDocenteService } from '../../../../simulacion/services/simulacion-docente.service';
 
 @Component({
@@ -27,7 +26,6 @@ export class DocenteEscenarioFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly simulacionService = inject(SimulacionDocenteService);
 
-  protected readonly backgrounds = BACKGROUND_OPTIONS;
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -81,7 +79,7 @@ export class DocenteEscenarioFormComponent implements OnInit {
       orden: Number(raw.orden),
       titulo: raw.titulo.trim(),
       situacionTexto: raw.situacionTexto.trim(),
-      fondoCodigo: raw.fondoCodigo,
+      fondoCodigo: raw.fondoCodigo || 'aula',
       isFinal: raw.isFinal,
     };
 
@@ -109,7 +107,7 @@ export class DocenteEscenarioFormComponent implements OnInit {
   }
 
   protected hasError(
-    field: 'orden' | 'titulo' | 'situacionTexto' | 'fondoCodigo',
+    field: 'orden' | 'titulo' | 'situacionTexto',
     error: string,
   ): boolean {
     const control = this.form.controls[field];

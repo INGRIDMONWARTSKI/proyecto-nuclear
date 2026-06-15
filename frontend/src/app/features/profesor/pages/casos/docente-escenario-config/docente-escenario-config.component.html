@@ -2,7 +2,7 @@
   <div class="profesor-page-hero">
     <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
     <app-page-header
-      title="Configurar decisión"
+      title="Configurar decisiones"
       [subtitle]="configSubtitle()"
       icon="🌿"
     >
@@ -15,40 +15,119 @@
   }
 
   @if (loading()) {
-    <app-loading-state message="Cargando configuración..." />
+    <app-loading-state message="Cargando configuracion..." />
   } @else {
     <section class="siep-card">
-      <h2 class="panel-title">Pregunta de decisión</h2>
-      @if (pregunta()) {
-        <p class="locked-note">
-          Pregunta registrada: <strong>{{ pregunta()!.enunciado }}</strong>
-        </p>
-        <p class="muted">Nota máxima institucional: 5.0</p>
-      } @else {
-        <form class="form-grid" [formGroup]="preguntaForm" (ngSubmit)="guardarPregunta()">
-          <div class="siep-field">
-            <label for="enunciado">Enunciado</label>
-            <textarea id="enunciado" rows="3" formControlName="enunciado"></textarea>
-          </div>
-          <div class="siep-field">
-            <label for="puntajeMaximo">Nota máxima institucional</label>
-            <input
-              id="puntajeMaximo"
-              type="number"
-              min="0"
-              max="5"
-              step="0.1"
-              formControlName="puntajeMaximo"
-            />
-          </div>
-          <button class="siep-btn-primary" type="submit" [disabled]="saving()">Crear pregunta</button>
-        </form>
-      }
-    </section>
+      <h2 class="panel-title">Preguntas de esta escena</h2>
+      <p class="helper-note">
+        Agrega una o varias preguntas para orientar las decisiones del estudiante en este escenario. La pregunta debe ser clara y suficientemente descriptiva.
+      </p>
 
-    @if (pregunta(); as p) {
-      <section class="siep-card">
-        <h2 class="panel-title">Opciones de respuesta</h2>
+      @if (preguntas().length > 0) {
+        <ul class="preguntas-list">
+          @for (item of preguntas(); track item.id) {
+            <li
+              class="siep-card-row pregunta-item"
+              [class.pregunta-item--active]="selectedPreguntaId() === item.id"
+            >
+              <div>
+                <strong>{{ item.orden }}. {{ item.enunciado }}</strong>
+                <p class="muted">
+                  Nota maxima: {{ item.puntajeMaximo }} / 5.0 · {{ item.opciones.length }} opciones
+                </p>
+                @if (item.opciones.length < 2) {
+                  <p class="warn">Agrega minimo dos opciones de respuesta.</p>
+                }
+                @if (!preguntaTieneCorrecta(item)) {
+                  <p class="warn">Marca al menos una opcion como correcta.</p>
+                }
+                @if (!preguntaTieneRetroCompleta(item)) {
+                  <p class="warn">Agrega retroalimentacion para todas las opciones.</p>
+                }
+              </div>
+              <div class="opcion-item__actions">
+                <button
+                  class="siep-btn-primary siep-btn--compact"
+                  type="button"
+                  (click)="abrirRespuestasModal(item.id)"
+                >
+                  Configurar respuestas
+                </button>
+                <button
+                  class="siep-btn-secondary siep-btn--compact"
+                  type="button"
+                  (click)="editarPregunta(item)"
+                >
+                  Editar pregunta
+                </button>
+                <button
+                  class="siep-btn-danger siep-btn--compact"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="eliminarPregunta(item)"
+                >
+                  Eliminar pregunta
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+
+      <h3 class="subpanel-title">{{ editingPreguntaId() ? 'Editar pregunta' : 'Agregar pregunta' }}</h3>
+      <form class="form-grid" [formGroup]="preguntaForm" (ngSubmit)="guardarPregunta()">
+        <div class="siep-field">
+          <label for="enunciado">Enunciado</label>
+          <textarea id="enunciado" rows="3" formControlName="enunciado"></textarea>
+          <small class="muted">
+            Ejemplo: ¿Cual deberia ser la primera accion del practicante al acercarse a la familia en esta situacion de crisis?
+          </small>
+          @if (preguntaEnunciadoCorto()) {
+            <small class="warn">
+              Escribe una pregunta mas completa para orientar la decision del estudiante.
+            </small>
+          }
+        </div>
+        <div class="siep-field">
+          <label for="puntajeMaximo">Nota maxima institucional</label>
+          <input
+            id="puntajeMaximo"
+            type="number"
+            min="0"
+            max="5"
+            step="0.1"
+            formControlName="puntajeMaximo"
+          />
+        </div>
+        <button class="siep-btn-primary" type="submit" [disabled]="saving()">
+          {{ editingPreguntaId() ? 'Actualizar pregunta' : 'Agregar pregunta' }}
+        </button>
+      </form>
+    </section>
+  }
+
+  @if (respuestasModalOpen() && pregunta(); as p) {
+    <div class="decision-modal-backdrop" role="presentation" (click)="cerrarRespuestasModal()">
+      <section
+        class="decision-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="respuestas-modal-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="decision-modal__header">
+          <div>
+            <h2 id="respuestas-modal-title">Configurar respuestas</h2>
+            <p>Pregunta: {{ p.enunciado }}</p>
+          </div>
+          <button class="decision-modal__close" type="button" (click)="cerrarRespuestasModal()">
+            Cerrar
+          </button>
+        </header>
+
+        <p class="helper-note">
+          Agrega las opciones que el estudiante podra elegir. Cada opcion debe tener nota, destino y retroalimentacion.
+        </p>
 
         @if (p.opciones.length > 0) {
           <ul class="opciones-list">
@@ -67,9 +146,9 @@
                     />
                   </p>
                   @if (op.retroalimentacion) {
-                    <p class="opcion-retro">Retro: {{ op.retroalimentacion.mensaje }}</p>
+                    <p class="opcion-retro">Retroalimentacion: {{ op.retroalimentacion.mensaje }}</p>
                   } @else {
-                    <p class="warn">Sin retroalimentación</p>
+                    <p class="warn">Pendiente: agrega retroalimentacion.</p>
                   }
                 </div>
                 <div class="opcion-item__actions">
@@ -85,7 +164,7 @@
                     type="button"
                     (click)="prepararRetro(op)"
                   >
-                    Retro
+                    {{ op.retroalimentacion ? 'Editar retroalimentacion' : 'Agregar retroalimentacion' }}
                   </button>
                   <button
                     class="siep-btn-danger siep-btn--compact"
@@ -98,9 +177,11 @@
               </li>
             }
           </ul>
+        } @else {
+          <p class="warn">Agrega minimo dos opciones de respuesta.</p>
         }
 
-        <h3 class="subpanel-title">{{ editingOpcionId() ? 'Editar opción' : 'Nueva opción' }}</h3>
+        <h3 class="subpanel-title">{{ editingOpcionId() ? 'Editar opcion' : 'Nueva opcion' }}</h3>
         <form class="form-grid" [formGroup]="opcionForm" (ngSubmit)="guardarOpcion()">
           <div class="siep-field">
             <label for="opcion-texto">Texto</label>
@@ -121,11 +202,9 @@
               formControlName="puntaje"
               (input)="marcarNotaManual()"
             />
-            <small class="muted">Este valor define cuánto aporta esta decisión a la nota del estudiante.</small>
+            <small class="muted">Este valor define cuanto aporta esta decision a la nota del estudiante.</small>
             @if (notaOpcionInvalida()) {
-              <small class="warn">
-                La nota debe estar entre 0.0 y 5.0.
-              </small>
+              <small class="warn">La nota debe estar entre 0.0 y 5.0.</small>
             }
           </div>
           <label class="checkbox-row">
@@ -134,7 +213,7 @@
               formControlName="isCorrecta"
               (change)="sugerirNotaPorTipo($any($event.target).checked)"
             />
-            Marcar como opción correcta
+            Marcar como opcion correcta
           </label>
           <div class="siep-field">
             <label for="escenarioDestinoId">Escenario destino</label>
@@ -146,37 +225,61 @@
             </select>
           </div>
           <button class="siep-btn-primary" type="submit" [disabled]="saving()">
-            {{ editingOpcionId() ? 'Actualizar opción' : 'Agregar opción' }}
+            {{ editingOpcionId() ? 'Actualizar opcion' : 'Agregar opcion' }}
           </button>
         </form>
       </section>
+    </div>
+  }
 
-      @if (opcionParaRetro(); as op) {
-        <section class="siep-card retro-panel">
-          <h2 class="panel-title">Retroalimentación — {{ op.texto }}</h2>
-          <form class="form-grid" [formGroup]="retroForm" (ngSubmit)="guardarRetroalimentacion(op)">
-            <div class="siep-field">
-              <label for="retro-mensaje">Mensaje</label>
-              <textarea id="retro-mensaje" rows="4" formControlName="mensaje"></textarea>
-            </div>
-            <div class="siep-field">
-              <label for="retro-tipo">Tipo</label>
-              <select id="retro-tipo" formControlName="tipo">
-                <option value="pedagogica">Pedagógica</option>
-                <option value="correctiva">Correctiva</option>
-                <option value="refuerzo">Refuerzo</option>
-              </select>
-            </div>
-            <div class="siep-field">
-              <label for="retro-referencia">Referencia teórica (opcional)</label>
-              <textarea id="retro-referencia" rows="2" formControlName="referenciaTeorica"></textarea>
-            </div>
-            <button class="siep-btn-primary" type="submit" [disabled]="saving()">
-              Guardar retroalimentación
-            </button>
-          </form>
-        </section>
-      }
-    }
+  @if (retroModalOpen() && opcionParaRetro(); as op) {
+    <div class="decision-modal-backdrop decision-modal-backdrop--front" role="presentation" (click)="cerrarRetroModal()">
+      <section
+        class="decision-modal decision-modal--small"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="retro-modal-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="decision-modal__header">
+          <div>
+            <h2 id="retro-modal-title">Retroalimentacion de la opcion</h2>
+            <p>{{ op.texto }} · Nota {{ formatNota(op.puntaje) }} / 5.0 · {{ tipoOpcionLabel(op) }}</p>
+          </div>
+          <button class="decision-modal__close" type="button" (click)="cerrarRetroModal()">
+            Cerrar
+          </button>
+        </header>
+
+        <p class="helper-note">
+          Explica al estudiante por que esta decision es adecuada, parcial o riesgosa.
+        </p>
+
+        <form class="form-grid" [formGroup]="retroForm" (ngSubmit)="guardarRetroalimentacion(op)">
+          <div class="siep-field">
+            <label for="retro-mensaje">Mensaje</label>
+            <textarea id="retro-mensaje" rows="4" formControlName="mensaje"></textarea>
+            @if (retroForm.controls.mensaje.invalid && (retroForm.controls.mensaje.touched || retroForm.controls.mensaje.dirty)) {
+              <small class="warn">Agrega una retroalimentacion para orientar el aprendizaje del estudiante.</small>
+            }
+          </div>
+          <div class="siep-field">
+            <label for="retro-tipo">Tipo</label>
+            <select id="retro-tipo" formControlName="tipo">
+              <option value="pedagogica">Pedagogica</option>
+              <option value="correctiva">Correctiva</option>
+              <option value="refuerzo">Refuerzo</option>
+            </select>
+          </div>
+          <div class="siep-field">
+            <label for="retro-referencia">Referencia teorica (opcional)</label>
+            <textarea id="retro-referencia" rows="2" formControlName="referenciaTeorica"></textarea>
+          </div>
+          <button class="siep-btn-primary" type="submit" [disabled]="saving()">
+            Guardar retroalimentacion
+          </button>
+        </form>
+      </section>
+    </div>
   }
 </section>

@@ -582,11 +582,10 @@ export class SesionesSimulacionService {
       'preguntas_decision',
       {
         filters: { escenario_id: escenarios.map((esc) => esc.id) },
+        order: 'orden.asc',
       },
     );
-    const preguntasByEscenarioId = new Map(
-      preguntas.map((pregunta) => [pregunta.escenario_id, pregunta]),
-    );
+    const preguntasByEscenarioId = this.groupPreguntasByEscenario(preguntas);
 
     const respuestas = await this.postgrest.select<RespuestaEstudianteRecord>(
       'respuestas_estudiante',
@@ -595,18 +594,50 @@ export class SesionesSimulacionService {
         order: 'respondida_at.asc',
       },
     );
+    const answeredQuestionIds = new Set(respuestas.map((r) => r.pregunta_id));
 
     let escenarioPendiente: EscenarioRecord | null = null;
 
     if (respuestas.length === 0) {
-      escenarioPendiente = escenarios[0] ?? null;
+      for (const escenario of escenarios) {
+        const pregunta = this.findFirstUnansweredPregunta(
+          preguntasByEscenarioId.get(escenario.id) ?? [],
+          answeredQuestionIds,
+        );
+        if (pregunta) {
+          return {
+            escenario,
+            pregunta,
+            respondidas: sesion.respondidas,
+            totalPreguntas: sesion.total_preguntas,
+          };
+        }
+      }
     } else {
       const ultimaRespuesta = respuestas[respuestas.length - 1];
       const escenarioActual = escenarios.find(
         (escenario) => escenario.id === ultimaRespuesta.escenario_id,
       );
 
-      if (!escenarioActual || escenarioActual.is_final) {
+      if (!escenarioActual) {
+        return null;
+      }
+
+      const siguientePreguntaMismoEscenario = this.findFirstUnansweredPregunta(
+        preguntasByEscenarioId.get(escenarioActual.id) ?? [],
+        answeredQuestionIds,
+      );
+
+      if (siguientePreguntaMismoEscenario) {
+        return {
+          escenario: escenarioActual,
+          pregunta: siguientePreguntaMismoEscenario,
+          respondidas: sesion.respondidas,
+          totalPreguntas: sesion.total_preguntas,
+        };
+      }
+
+      if (escenarioActual.is_final) {
         return null;
       }
 
@@ -623,15 +654,12 @@ export class SesionesSimulacionService {
       return null;
     }
 
-    const pregunta = preguntasByEscenarioId.get(escenarioPendiente.id);
+    const pregunta = this.findFirstUnansweredPregunta(
+      preguntasByEscenarioId.get(escenarioPendiente.id) ?? [],
+      answeredQuestionIds,
+    );
 
     if (!pregunta) {
-      return null;
-    }
-
-    const answeredQuestionIds = new Set(respuestas.map((r) => r.pregunta_id));
-
-    if (answeredQuestionIds.has(pregunta.id)) {
       return null;
     }
 
@@ -1000,6 +1028,32 @@ export class SesionesSimulacionService {
       filters: { caso_id: casoId },
       order: 'orden.asc',
     });
+  }
+
+  private groupPreguntasByEscenario(
+    preguntas: PreguntaDecisionRecord[],
+  ): Map<string, PreguntaDecisionRecord[]> {
+    const byEscenario = new Map<string, PreguntaDecisionRecord[]>();
+
+    for (const pregunta of preguntas) {
+      const actuales = byEscenario.get(pregunta.escenario_id) ?? [];
+      actuales.push(pregunta);
+      byEscenario.set(pregunta.escenario_id, actuales);
+    }
+
+    return byEscenario;
+  }
+
+  private findFirstUnansweredPregunta(
+    preguntas: PreguntaDecisionRecord[],
+    answeredQuestionIds: Set<string>,
+  ): PreguntaDecisionRecord | null {
+    return (
+      preguntas
+        .slice()
+        .sort((a, b) => a.orden - b.orden)
+        .find((pregunta) => !answeredQuestionIds.has(pregunta.id)) ?? null
+    );
   }
 
   private async findOpcionById(id: string): Promise<OpcionRespuestaRecord> {

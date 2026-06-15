@@ -48,4 +48,18 @@ export const adminRoutes: Routes = [
         (m) => m.GrupoDetailComponent,
       ),
   },
+  {
+    path: 'casos',
+    loadComponent: () =>
+      import('../../profesor/pages/casos/docente-casos-list/docente-casos-list.component').then(
+        (m) => m.DocenteCasosListComponent,
+      ),
+  },
+  {
+    path: 'casos/:casoId',
+    loadComponent: () =>
+      import('../../profesor/pages/casos/docente-caso-detail/docente-caso-detail.component').then(
+        (m) => m.DocenteCasoDetailComponent,
+      ),
+  },
 ];

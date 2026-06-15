@@ -9,11 +9,14 @@ export interface CasoDocente {
   objetivoAprendizaje: string | null;
   tiempoMaximoMinutos: number;
   autorDocenteId: string;
+  autorDocenteNombre?: string | null;
   estado: CasoEstado;
   isActive: boolean;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  totalEscenarios?: number;
+  totalPreguntas?: number;
 }
 
 export interface CasoDocenteDetalle extends CasoDocente {

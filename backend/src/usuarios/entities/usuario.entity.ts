@@ -7,6 +7,7 @@ export interface Usuario {
   passwordHash: string;
   role: Role;
   tokenVersion: number;
+  puedeCrearCasos: boolean;
   isActive: boolean;
   mustChangePassword: boolean;
   createdAt: string;

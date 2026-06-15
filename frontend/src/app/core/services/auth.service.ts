@@ -135,6 +135,20 @@ export class AuthService {
     return this.hasRole(Role.ADMIN, Role.PROFESOR);
   }
 
+  canCreateCases(): boolean {
+    const user = this.user();
+    if (!user) {
+      return false;
+    }
+    if (user.role === Role.ADMIN) {
+      return true;
+    }
+    if (user.role !== Role.PROFESOR) {
+      return false;
+    }
+    return user.puedeCrearCasos ?? true;
+  }
+
   getDefaultRouteForRole(role: Role): string {
     switch (role) {
       case Role.ADMIN:

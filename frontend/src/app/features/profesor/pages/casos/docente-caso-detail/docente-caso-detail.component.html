@@ -12,7 +12,13 @@
         >
           <div actions class="case-header-actions">
             <a class="siep-btn-secondary" routerLink="..">Volver</a>
-            <a class="siep-btn-primary" [routerLink]="['canvas']">Abrir editor visual</a>
+            @if (canEditCase()) {
+              <a class="siep-btn-primary" [routerLink]="['canvas']">Abrir editor visual</a>
+            } @else {
+              <a class="siep-btn-primary" routerLink="/profesor/asignaciones">
+                Asignar a comunidades
+              </a>
+            }
           </div>
         </app-page-header>
       </div>
@@ -42,7 +48,7 @@
             [status]="estadoBadge(c.estado)"
             [label]="estadoLabel(c.estado)"
           />
-          @if (c.estado === 'draft') {
+          @if (c.estado === 'draft' && canEditCase()) {
             <a class="siep-btn-secondary siep-btn--compact" [routerLink]="['editar']">
               Editar datos
             </a>
@@ -76,7 +82,7 @@
             <a class="siep-btn-secondary siep-btn--compact" [routerLink]="['canvas']">
               Ver mapa visual
             </a>
-            @if (c.estado === 'draft') {
+            @if (c.estado === 'draft' && canEditCase()) {
               <a class="siep-btn-primary siep-btn--compact" [routerLink]="['escenarios', 'nuevo']">
                 Agregar escenario
               </a>
@@ -102,7 +108,7 @@
                   </p>
                 </div>
                 <div class="escenario-item__actions">
-                  @if (c.estado === 'draft') {
+                  @if (c.estado === 'draft' && canEditCase()) {
                     <a
                       class="siep-btn-secondary siep-btn--compact"
                       [routerLink]="['/profesor/escenarios', esc.id, 'editar']"
@@ -175,7 +181,9 @@
       <section class="siep-card actions-panel">
         <h2>Acciones del caso</h2>
         <div class="actions-panel__buttons">
-          <a class="siep-btn-primary" [routerLink]="['canvas']">Disenar en editor visual</a>
+          @if (canEditCase()) {
+            <a class="siep-btn-primary" [routerLink]="['canvas']">Disenar en editor visual</a>
+          }
           <button
             class="siep-btn-secondary"
             type="button"
@@ -192,7 +200,7 @@
               Asignar a comunidades academicas
             </a>
           }
-          @if (c.estado === 'draft') {
+          @if (c.estado === 'draft' && canEditCase()) {
             <button
               class="siep-btn-primary"
               type="button"

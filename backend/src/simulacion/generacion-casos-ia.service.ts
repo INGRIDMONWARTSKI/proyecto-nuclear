@@ -720,6 +720,15 @@ export class GeneracionCasosIaService {
   }
 
   private assertDocenteRole(currentUser: AuthenticatedUser): void {
+    const casosServiceWithPermission = this.casosService as CasosService & {
+      assertCanCreateCases?: (user: AuthenticatedUser) => void;
+    };
+
+    if (typeof casosServiceWithPermission.assertCanCreateCases === 'function') {
+      casosServiceWithPermission.assertCanCreateCases(currentUser);
+      return;
+    }
+
     if (currentUser.role === Role.PROFESOR || currentUser.role === Role.ADMIN) {
       return;
     }

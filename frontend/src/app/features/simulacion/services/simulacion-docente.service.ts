@@ -38,6 +38,10 @@ export class SimulacionDocenteService {
     return this.http.get<CasoDocente[]>(this.casosUrl);
   }
 
+  listarBibliotecaCasos() {
+    return this.http.get<CasoDocente[]>(`${this.casosUrl}/biblioteca`);
+  }
+
   obtenerCaso(casoId: string) {
     return this.http.get<CasoDocenteDetalle>(`${this.casosUrl}/${casoId}`);
   }

@@ -41,6 +41,12 @@
                 <div class="caso-item__body">
                   <span class="caso-item__titulo">{{ caso.titulo }}</span>
                   <span class="caso-item__desc">{{ caso.descripcion || 'Sin descripción' }}</span>
+                  <span class="caso-item__desc">
+                    Autor: {{ caso.autorDocenteNombre || 'Docente institucional' }} ·
+                    {{ caso.totalEscenarios ?? 0 }} escenas ·
+                    {{ caso.totalPreguntas ?? 0 }} preguntas ·
+                    {{ caso.tiempoMaximoMinutos }} min
+                  </span>
                 </div>
                 <app-status-badge variant="status" status="success" label="Publicado" />
               </button>

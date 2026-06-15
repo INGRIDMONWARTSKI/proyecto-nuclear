@@ -201,6 +201,7 @@ export class AuthService {
       email: user.email,
       role: user.role as Role,
       tokenVersion: user.tokenVersion,
+      puedeCrearCasos: user.puedeCrearCasos,
     };
 
     return {

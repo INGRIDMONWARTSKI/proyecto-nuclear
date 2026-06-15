@@ -10,6 +10,8 @@ import {
   SiepStatusBadge,
   StatusBadgeComponent,
 } from '../../../../../shared/ui/status-badge/status-badge.component';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { Role } from '../../../../../core/models/role.enum';
 import { getErrorMessage } from '../../../../../core/utils/http-error.util';
 import { CasoDocenteDetalle } from '../../../../simulacion/models/docente/caso-docente.model';
 import { CasoPreview, EscenarioPreview } from '../../../../simulacion/models/docente/caso-preview.model';
@@ -35,6 +37,7 @@ export class DocenteCasoDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly simulacionService = inject(SimulacionDocenteService);
+  private readonly authService = inject(AuthService);
 
   protected readonly loading = signal(true);
   protected readonly publishing = signal(false);
@@ -332,6 +335,22 @@ export class DocenteCasoDetailComponent implements OnInit {
       default:
         return 'pending';
     }
+  }
+
+  canEditCase(): boolean {
+    const user = this.authService.user();
+    const caso = this.caso();
+    if (!user || !caso) {
+      return false;
+    }
+    if (user.role === Role.ADMIN) {
+      return false;
+    }
+    return (
+      user.role === Role.PROFESOR &&
+      this.authService.canCreateCases() &&
+      caso.autorDocenteId === user.id
+    );
   }
 
   eliminarEscenario(escenario: { id: string; titulo: string }): void {

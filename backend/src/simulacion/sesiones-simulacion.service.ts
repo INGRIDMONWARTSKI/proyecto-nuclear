@@ -622,9 +622,6 @@ export class SesionesSimulacionService {
       );
     }
 
-    const caso = await this.casosService.findCasoById(sesion.caso_id);
-    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
-
     const allowed = await this.isEstudianteAsignadoAlCasoEnGruposDocente(
       sesion.caso_id,
       sesion.estudiante_id,
@@ -653,8 +650,7 @@ export class SesionesSimulacionService {
       finishedAt: string | null;
     }>
   > {
-    const caso = await this.casosService.findCasoById(casoId);
-    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+    this.assertDocenteRole(currentUser);
     const allowedPairs = await this.buildAllowedCasoEstudiantePairs(currentUser);
 
     if (allowedPairs.size === 0) {
@@ -1164,33 +1160,20 @@ export class SesionesSimulacionService {
       });
     }
 
-    const casos = await this.postgrest.select<CasoRecord>('casos', {
-      filters: { autor_docente_id: currentUser.sub },
+    const grupos = await this.postgrest.select<{ id: string }>('grupos', {
+      filters: { profesorId: currentUser.sub },
+      select: 'id',
     });
-
-    if (casos.length === 0) {
+    const grupoIds = grupos.map((grupo) => grupo.id);
+    if (grupoIds.length === 0) {
       return [];
     }
 
     const asignaciones = await this.postgrest.select<CasoGrupo>('caso_grupo', {
-      filters: { casoId: casos.map((caso) => caso.id) },
+      filters: { grupoId: grupoIds },
       order: 'createdAt.desc',
     });
-
-    const grupos = await this.postgrest.select<{ id: string; profesorId: string }>(
-      'grupos',
-      {
-        filters: {
-          id: [...new Set(asignaciones.map((item) => item.grupoId))],
-          profesorId: currentUser.sub,
-        },
-      },
-    );
-    const grupoIdsPermitidos = new Set(grupos.map((grupo) => grupo.id));
-
-    return asignaciones.filter((asignacion) =>
-      grupoIdsPermitidos.has(asignacion.grupoId),
-    );
+    return asignaciones;
   }
 
   private async isEstudianteAsignadoAlCasoEnGruposDocente(

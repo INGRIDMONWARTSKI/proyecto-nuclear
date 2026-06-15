@@ -48,6 +48,11 @@ export class DocenteCasosController {
     return this.casosService.findAllDocente(currentUser);
   }
 
+  @Get('biblioteca')
+  findBiblioteca(@CurrentUser() currentUser: AuthenticatedUser) {
+    return this.casosService.findBibliotecaDocente(currentUser);
+  }
+
   @Get(':casoId')
   findOne(
     @Param('casoId') casoId: string,

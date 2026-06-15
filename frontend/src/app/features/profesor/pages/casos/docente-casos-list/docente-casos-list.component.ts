@@ -10,6 +10,8 @@ import {
   StatusBadgeComponent,
 } from '../../../../../shared/ui/status-badge/status-badge.component';
 import { getErrorMessage } from '../../../../../core/utils/http-error.util';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { Role } from '../../../../../core/models/role.enum';
 import { CasoDocente } from '../../../../simulacion/models/docente/caso-docente.model';
 import { SimulacionDocenteService } from '../../../../simulacion/services/simulacion-docente.service';
 
@@ -30,6 +32,7 @@ import { SimulacionDocenteService } from '../../../../simulacion/services/simula
 })
 export class DocenteCasosListComponent implements OnInit {
   private readonly simulacionService = inject(SimulacionDocenteService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -39,7 +42,13 @@ export class DocenteCasosListComponent implements OnInit {
   protected readonly successMessage = signal<string | null>(null);
   protected readonly casos = signal<CasoDocente[]>([]);
 
+  protected readonly canCreateCases = signal(false);
+  protected readonly isAdmin = signal(false);
+
   ngOnInit(): void {
+    const user = this.authService.user();
+    this.isAdmin.set(user?.role === Role.ADMIN);
+    this.canCreateCases.set(this.authService.canCreateCases());
     this.cargarCasos();
   }
 
@@ -49,6 +58,12 @@ export class DocenteCasosListComponent implements OnInit {
       this.errorMessage.set(null);
       this.successMessage.set(null);
     }
+    if (!this.canCreateCases() && !this.isAdmin()) {
+      this.casos.set([]);
+      this.loading.set(false);
+      return;
+    }
+
     this.simulacionService.listarCasos().subscribe({
       next: (casos) => {
         this.casos.set(casos);
@@ -91,6 +106,10 @@ export class DocenteCasosListComponent implements OnInit {
     void this.router.navigate(['nuevo'], { relativeTo: this.route });
   }
 
+  irABiblioteca(): void {
+    void this.router.navigate(['/profesor/casos/biblioteca']);
+  }
+
   totalPorEstado(estado: CasoDocente['estado']): number {
     return this.casos().filter((caso) => caso.estado === estado).length;
   }
@@ -128,5 +147,19 @@ export class DocenteCasosListComponent implements OnInit {
         );
       },
     });
+  }
+
+  protected pageTitle(): string {
+    return this.isAdmin() ? 'Casos institucionales' : 'Casos de simulación';
+  }
+
+  protected pageSubtitle(): string {
+    if (this.isAdmin()) {
+      return 'Consulta casos creados por docentes y su estado institucional.';
+    }
+    if (!this.canCreateCases()) {
+      return 'Tu perfil está configurado para aplicar casos institucionales publicados.';
+    }
+    return 'Organiza, edita y publica experiencias psicológicas construidas por escenas.';
   }
 }

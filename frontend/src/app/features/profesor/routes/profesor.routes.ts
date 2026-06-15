@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from '../../../core/guards/role.guard';
+import { profesorCaseCreatorGuard } from '../../../core/guards/profesor-case-creator.guard';
 import { Role } from '../../../core/models/role.enum';
 
 const placeholder = (
@@ -62,13 +63,22 @@ export const profesorRoutes: Routes = [
   },
   {
     path: 'casos/nuevo',
+    canActivate: [profesorCaseCreatorGuard],
     loadComponent: () =>
       import('../pages/casos/docente-caso-form/docente-caso-form.component').then(
         (m) => m.DocenteCasoFormComponent,
       ),
   },
   {
+    path: 'casos/biblioteca',
+    loadComponent: () =>
+      import('../pages/asignaciones/docente-asignaciones.component').then(
+        (m) => m.DocenteAsignacionesComponent,
+      ),
+  },
+  {
     path: 'casos/generar',
+    canActivate: [profesorCaseCreatorGuard],
     loadComponent: () =>
       import('../pages/casos/docente-caso-ia-form/docente-caso-ia-form.component').then(
         (m) => m.DocenteCasoIaFormComponent,
@@ -76,6 +86,7 @@ export const profesorRoutes: Routes = [
   },
   {
     path: 'casos/:casoId/editar',
+    canActivate: [profesorCaseCreatorGuard],
     loadComponent: () =>
       import('../pages/casos/docente-caso-form/docente-caso-form.component').then(
         (m) => m.DocenteCasoFormComponent,
@@ -90,6 +101,7 @@ export const profesorRoutes: Routes = [
   },
   {
     path: 'casos/:casoId/escenarios/nuevo',
+    canActivate: [profesorCaseCreatorGuard],
     loadComponent: () =>
       import('../pages/casos/docente-escenario-form/docente-escenario-form.component').then(
         (m) => m.DocenteEscenarioFormComponent,
@@ -97,6 +109,7 @@ export const profesorRoutes: Routes = [
   },
   {
     path: 'escenarios/:escenarioId/editar',
+    canActivate: [profesorCaseCreatorGuard],
     loadComponent: () =>
       import('../pages/casos/docente-escenario-form/docente-escenario-form.component').then(
         (m) => m.DocenteEscenarioFormComponent,
@@ -104,6 +117,7 @@ export const profesorRoutes: Routes = [
   },
   {
     path: 'escenarios/:escenarioId/decision',
+    canActivate: [profesorCaseCreatorGuard],
     loadComponent: () =>
       import('../pages/casos/docente-escenario-config/docente-escenario-config.component').then(
         (m) => m.DocenteEscenarioConfigComponent,
@@ -111,6 +125,7 @@ export const profesorRoutes: Routes = [
   },
   {
     path: 'casos/:casoId/canvas',
+    canActivate: [profesorCaseCreatorGuard],
     loadComponent: () =>
       import('../pages/casos/caso-canvas/docente-caso-canvas.component').then(
         (m) => m.DocenteCasoCanvasComponent,

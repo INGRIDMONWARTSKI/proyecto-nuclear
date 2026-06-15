@@ -231,11 +231,13 @@ export class AdminUsuariosComponent implements OnInit {
     fullName: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
     role: [Role.ESTUDIANTE, [Validators.required]],
+    puedeCrearCasos: [true],
   });
 
   protected readonly editForm = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(3)]],
     role: [Role.ESTUDIANTE, [Validators.required]],
+    puedeCrearCasos: [true],
   });
 
   ngOnInit(): void {
@@ -344,7 +346,9 @@ export class AdminUsuariosComponent implements OnInit {
       fullName: '',
       email: '',
       role: Role.ESTUDIANTE,
+      puedeCrearCasos: true,
     });
+    this.syncPuedeCrearCasosControl('create');
     this.panelMode.set('create');
   }
 
@@ -355,12 +359,14 @@ export class AdminUsuariosComponent implements OnInit {
     this.editForm.reset({
       fullName: usuario.fullName,
       role: usuario.role,
+      puedeCrearCasos: usuario.puedeCrearCasos,
     });
     if (this.esAdminActual(usuario)) {
       this.editForm.controls.role.disable();
     } else {
       this.editForm.controls.role.enable();
     }
+    this.syncPuedeCrearCasosControl('edit');
     this.panelMode.set('edit');
   }
 
@@ -399,7 +405,15 @@ export class AdminUsuariosComponent implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    this.usuariosApi.crearUsuario(this.createForm.getRawValue()).subscribe({
+    const raw = this.createForm.getRawValue();
+    this.usuariosApi
+      .crearUsuario({
+        fullName: raw.fullName.trim(),
+        email: raw.email.trim(),
+        role: raw.role,
+        puedeCrearCasos: raw.role === Role.PROFESOR ? raw.puedeCrearCasos : undefined,
+      })
+      .subscribe({
       next: (response) => {
         this.saving.set(false);
         if (response.warning) {
@@ -420,7 +434,7 @@ export class AdminUsuariosComponent implements OnInit {
           getErrorMessage(error, 'No fue posible crear el usuario.'),
         );
       },
-    });
+      });
   }
 
   guardarEdicion() {
@@ -431,12 +445,17 @@ export class AdminUsuariosComponent implements OnInit {
     }
 
     const raw = this.editForm.getRawValue();
-    const payload: { fullName?: string; role?: Role } = {
+    const payload: { fullName?: string; role?: Role; puedeCrearCasos?: boolean } = {
       fullName: raw.fullName.trim(),
     };
 
     if (!this.esAdminActual(usuario) && raw.role !== usuario.role) {
       payload.role = raw.role;
+    }
+
+    const roleSeleccionado = payload.role ?? usuario.role;
+    if (roleSeleccionado === Role.PROFESOR) {
+      payload.puedeCrearCasos = raw.puedeCrearCasos;
     }
 
     this.saving.set(true);
@@ -558,6 +577,31 @@ export class AdminUsuariosComponent implements OnInit {
         return 'profesor';
       default:
         return 'estudiante';
+    }
+  }
+
+  protected onCreateRoleChange(): void {
+    this.syncPuedeCrearCasosControl('create');
+  }
+
+  protected onEditRoleChange(): void {
+    this.syncPuedeCrearCasosControl('edit');
+  }
+
+  protected mostrarPermisoCrearCasos(mode: 'create' | 'edit'): boolean {
+    const roleControl =
+      mode === 'create' ? this.createForm.controls.role : this.editForm.controls.role;
+    return roleControl.value === Role.PROFESOR;
+  }
+
+  private syncPuedeCrearCasosControl(mode: 'create' | 'edit'): void {
+    const form = mode === 'create' ? this.createForm : this.editForm;
+    const role = form.controls.role.value;
+    if (role === Role.PROFESOR) {
+      form.controls.puedeCrearCasos.enable({ emitEvent: false });
+    } else {
+      form.controls.puedeCrearCasos.setValue(false, { emitEvent: false });
+      form.controls.puedeCrearCasos.disable({ emitEvent: false });
     }
   }
 }

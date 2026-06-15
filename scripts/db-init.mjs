@@ -13,6 +13,7 @@ const sqlFiles = [
 
   'database/persona-4-notificaciones-semestre.sql',
   'database/persona-5-tiempo-maximo-simulacion.sql',
+  'database/persona-9-permisos-docente-casos.sql',
 ];
 
 function run(command, args, options = {}) {
@@ -135,6 +136,19 @@ function tiempoMaximoCasoColumnExists() {
   return stdout === 't';
 }
 
+function puedeCrearCasosColumnExists() {
+  const { ok, stdout } = runPsqlQuery(
+    "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='usuarios' AND column_name='puedeCrearCasos');",
+  );
+
+  if (!ok) {
+    console.warn('[db-init] No se pudo verificar usuarios.puedeCrearCasos. Aplicando migracion...');
+    return false;
+  }
+
+  return stdout === 't';
+}
+
 function applySqlFile(file) {
   const sql = readFileSync(join(root, file), 'utf8');
   const apply = spawnSync(
@@ -181,6 +195,12 @@ if (!shouldSeed && (!gruposSemestreColumnExists() || !notificacionesTableExists(
 if (!shouldSeed && !tiempoMaximoCasoColumnExists()) {
   console.log('[db-init] Aplicando migracion de tiempo maximo de simulacion...');
   applySqlFile('database/persona-5-tiempo-maximo-simulacion.sql');
+  run('docker', ['compose', 'restart', 'postgrest']);
+}
+
+if (!shouldSeed && !puedeCrearCasosColumnExists()) {
+  console.log('[db-init] Aplicando migracion de permisos docente para casos...');
+  applySqlFile('database/persona-9-permisos-docente-casos.sql');
   run('docker', ['compose', 'restart', 'postgrest']);
 }
 

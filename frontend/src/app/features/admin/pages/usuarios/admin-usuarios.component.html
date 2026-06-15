@@ -64,6 +64,7 @@
             id="create-role"
             formControlName="role"
             [class.is-invalid]="createForm.controls.role.touched && createForm.controls.role.invalid"
+            (change)="onCreateRoleChange()"
           >
             @for (rol of roles; track rol) {
               <option [value]="rol">{{ roleLabel(rol) }}</option>
@@ -73,6 +74,18 @@
             <span class="field-error">Selecciona un rol.</span>
           }
         </div>
+        @if (mostrarPermisoCrearCasos('create')) {
+          <div class="siep-field siep-field--full usuarios__permiso-casos">
+            <label class="usuarios__permiso-casos-check">
+              <input type="checkbox" formControlName="puedeCrearCasos" />
+              <span>Permiso para crear casos</span>
+            </label>
+            <span class="field__hint">
+              Permite que este docente diseñe, edite y publique casos de estudio.
+              Si está desactivado, solo podrá aplicar casos ya publicados.
+            </span>
+          </div>
+        }
         <div class="form-actions">
           <button type="button" class="siep-btn-secondary" (click)="cerrarPanel()">Cancelar</button>
           <button type="submit" class="siep-btn-primary" [disabled]="saving()">
@@ -113,6 +126,7 @@
             id="edit-role"
             formControlName="role"
             [class.is-invalid]="editForm.controls.role.touched && editForm.controls.role.invalid"
+            (change)="onEditRoleChange()"
           >
             @for (rol of roles; track rol) {
               <option [value]="rol">{{ roleLabel(rol) }}</option>
@@ -125,6 +139,18 @@
             <span class="field__hint">No puedes cambiar tu propio rol de administrador.</span>
           }
         </div>
+        @if (mostrarPermisoCrearCasos('edit')) {
+          <div class="siep-field siep-field--full usuarios__permiso-casos">
+            <label class="usuarios__permiso-casos-check">
+              <input type="checkbox" formControlName="puedeCrearCasos" />
+              <span>Permiso para crear casos</span>
+            </label>
+            <span class="field__hint">
+              Permite que este docente diseñe, edite y publique casos de estudio.
+              Si está desactivado, solo podrá aplicar casos ya publicados.
+            </span>
+          </div>
+        }
         <div class="form-actions">
           <button type="button" class="siep-btn-secondary" (click)="cerrarPanel()">Cancelar</button>
           <button type="submit" class="siep-btn-primary" [disabled]="saving()">
@@ -400,6 +426,14 @@
                           <dt>Estado</dt>
                           <dd class="usuario-detalle__estado usuario-detalle__estado--activo">Activo</dd>
                         </div>
+                        @if (usuario.role === Role.PROFESOR) {
+                          <div class="usuario-detalle__item">
+                            <dt>Permiso de casos</dt>
+                            <dd>
+                              {{ usuario.puedeCrearCasos ? 'Creador de casos' : 'Aplicador de casos' }}
+                            </dd>
+                          </div>
+                        }
                         <div class="usuario-detalle__item usuario-detalle__item--full">
                           <dt>Grupos asociados</dt>
                           <dd>
@@ -566,6 +600,14 @@
                               <dt>Estado</dt>
                               <dd class="usuario-detalle__estado usuario-detalle__estado--activo">Activo</dd>
                             </div>
+                            @if (usuario.role === Role.PROFESOR) {
+                              <div class="usuario-detalle__item">
+                                <dt>Permiso de casos</dt>
+                                <dd>
+                                  {{ usuario.puedeCrearCasos ? 'Creador de casos' : 'Aplicador de casos' }}
+                                </dd>
+                              </div>
+                            }
                             <div class="usuario-detalle__item usuario-detalle__item--full">
                               <dt>Grupo actual</dt>
                               <dd>

@@ -28,6 +28,7 @@ export class DocenteCasoIaFormComponent implements OnInit {
   private readonly simulacionService = inject(SimulacionDocenteService);
   protected readonly minContextCharacters = 120;
   protected readonly minReferenceCharacters = 80;
+  protected readonly maxReferences = 5;
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -54,18 +55,38 @@ export class DocenteCasoIaFormComponent implements OnInit {
     const exists = values.includes(casoId);
 
     if (checked && !exists) {
+      if (this.referenciasUsadas() >= this.maxReferences) {
+        this.errorMessage.set(
+          'Puedes usar máximo 5 referencias para orientar la generación. Elimina algunas referencias antes de continuar.',
+        );
+        return;
+      }
+
       this.casosReferenciaIds.push(this.fb.control(casoId, { nonNullable: true }));
+      this.errorMessage.set(null);
       return;
     }
 
     if (!checked && exists) {
       const index = values.findIndex((value) => value === casoId);
       this.casosReferenciaIds.removeAt(index);
+      this.errorMessage.set(null);
     }
   }
 
   isSelected(casoId: string): boolean {
     return (this.casosReferenciaIds.getRawValue() as string[]).includes(casoId);
+  }
+
+  protected referenciasUsadas(): number {
+    return (
+      this.parseReferenciasTexto(this.form.controls.referenciasTexto.value).length +
+      this.casosReferenciaIds.length
+    );
+  }
+
+  protected seleccionBloqueada(casoId: string): boolean {
+    return !this.isSelected(casoId) && this.referenciasUsadas() >= this.maxReferences;
   }
 
   submit(): void {
@@ -76,16 +97,27 @@ export class DocenteCasoIaFormComponent implements OnInit {
 
     const raw = this.form.getRawValue();
     const casosReferenciaTexto = this.parseReferenciasTexto(raw.referenciasTexto);
+    const casosReferenciaIds = raw.casosReferenciaIds.filter(
+      (value): value is string => typeof value === 'string' && value.length > 0,
+    );
+    const totalReferencias = casosReferenciaTexto.length + casosReferenciaIds.length;
 
-    if (casosReferenciaTexto.length === 0 && raw.casosReferenciaIds.length === 0) {
+    if (casosReferenciaTexto.length === 0 && casosReferenciaIds.length === 0) {
       this.errorMessage.set(
         'Agrega más contexto antes de generar el caso. Incluye situación, población, conflicto principal y objetivo pedagógico.',
       );
       return;
     }
 
+    if (totalReferencias > this.maxReferences) {
+      this.errorMessage.set(
+        'Puedes usar máximo 5 referencias para orientar la generación. Elimina algunas referencias antes de continuar.',
+      );
+      return;
+    }
+
     if (
-      raw.casosReferenciaIds.length === 0 &&
+      casosReferenciaIds.length === 0 &&
       !this.tieneContextoSuficiente(casosReferenciaTexto)
     ) {
       this.errorMessage.set(
@@ -102,9 +134,7 @@ export class DocenteCasoIaFormComponent implements OnInit {
         instruccion: raw.instruccion.trim() || undefined,
         cantidadEscenarios: raw.cantidadEscenarios,
         casosReferenciaTexto,
-        casosReferenciaIds: raw.casosReferenciaIds.filter(
-          (value): value is string => typeof value === 'string' && value.length > 0,
-        ),
+        casosReferenciaIds,
       })
       .subscribe({
         next: (response) => {
@@ -137,8 +167,14 @@ export class DocenteCasoIaFormComponent implements OnInit {
   }
 
   private parseReferenciasTexto(value: string): string[] {
-    return value
-      .split(/\r?\n\s*\r?\n/g)
+    const normalized = value.trim();
+
+    if (!normalized) {
+      return [];
+    }
+
+    return normalized
+      .split(/^\s*-{3,}\s*$/gm)
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
   }
@@ -160,6 +196,15 @@ export class DocenteCasoIaFormComponent implements OnInit {
     if (error instanceof HttpErrorResponse) {
       const body = getErrorBody(error);
       const code = body?.code;
+      const message = Array.isArray(body?.message)
+        ? body.message.join('. ')
+        : typeof body?.message === 'string'
+          ? body.message
+          : '';
+
+      if (this.isMaxReferencesError(message)) {
+        return 'No fue posible generar el caso porque se superó el número máximo de referencias permitidas.';
+      }
 
       switch (code) {
         case 'IA_NOT_CONFIGURED':
@@ -185,11 +230,19 @@ export class DocenteCasoIaFormComponent implements OnInit {
           : 'La IA generó un borrador inválido y no se guardó. Intenta nuevamente con referencias más específicas.';
       }
 
-      if (error.status === 400 && typeof body?.message === 'string') {
-        return body.message;
+      if (error.status === 400 && message) {
+        return message;
       }
     }
 
     return getErrorMessage(error, 'No se pudo generar el caso en este momento.');
+  }
+
+  private isMaxReferencesError(message: string): boolean {
+    const normalized = message.toLowerCase();
+    return (
+      normalized.includes('casosreferenciatexto must contain no more than 5 elements') ||
+      normalized.includes('casosreferenciaids must contain no more than 5 elements')
+    );
   }
 }

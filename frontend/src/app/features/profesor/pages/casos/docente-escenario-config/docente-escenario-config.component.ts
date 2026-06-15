@@ -1,12 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlertMessageComponent } from '../../../../../shared/ui/alert-message/alert-message.component';
 import { LoadingStateComponent } from '../../../../../shared/ui/loading-state/loading-state.component';
@@ -49,24 +42,20 @@ export class DocenteEscenarioConfigComponent implements OnInit {
 
   private casoId = '';
   private escenarioId = '';
+  private notaEditadaManualmente = false;
 
   protected readonly preguntaForm = this.fb.nonNullable.group({
     enunciado: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
-    puntajeMaximo: [10, [Validators.required, Validators.min(0)]],
+    puntajeMaximo: [5, [Validators.required, Validators.min(0), Validators.max(5)]],
   });
 
-  protected readonly opcionForm = this.fb.nonNullable.group(
-    {
-      texto: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(500)]],
-      orden: [1, [Validators.required, Validators.min(1)]],
-      puntaje: [0, [Validators.required, Validators.min(0)]],
-      isCorrecta: [false],
-      escenarioDestinoId: [''],
-    },
-    {
-      validators: [this.puntajeDentroDelMaximoValidator()],
-    },
-  );
+  protected readonly opcionForm = this.fb.nonNullable.group({
+    texto: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(500)]],
+    orden: [1, [Validators.required, Validators.min(1)]],
+    puntaje: [3, [Validators.required, Validators.min(0), Validators.max(5)]],
+    isCorrecta: [false],
+    escenarioDestinoId: [''],
+  });
 
   protected readonly retroForm = this.fb.nonNullable.group({
     mensaje: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(1200)]],
@@ -103,7 +92,7 @@ export class DocenteEscenarioConfigComponent implements OnInit {
         if (escenario?.pregunta) {
           this.preguntaForm.patchValue({
             enunciado: escenario.pregunta.enunciado,
-            puntajeMaximo: escenario.pregunta.puntajeMaximo,
+            puntajeMaximo: Math.min(5, escenario.pregunta.puntajeMaximo),
           });
           const nextOrden = escenario.pregunta.opciones.length + 1;
           this.opcionForm.patchValue({ orden: nextOrden });
@@ -191,10 +180,11 @@ export class DocenteEscenarioConfigComponent implements OnInit {
         this.opcionForm.reset({
           texto: '',
           orden: (pregunta.opciones.length || 0) + 1,
-          puntaje: 0,
+          puntaje: 3,
           isCorrecta: false,
           escenarioDestinoId: '',
         });
+        this.notaEditadaManualmente = false;
         this.cargarPreview();
       },
       error: (error) => {
@@ -207,10 +197,11 @@ export class DocenteEscenarioConfigComponent implements OnInit {
   editarOpcion(opcion: OpcionPreview) {
     this.retroOpcionId.set(null);
     this.editingOpcionId.set(opcion.id);
+    this.notaEditadaManualmente = true;
     this.opcionForm.patchValue({
       texto: opcion.texto,
       orden: opcion.orden,
-      puntaje: opcion.puntaje,
+      puntaje: this.normalizeNota(opcion.puntaje),
       isCorrecta: opcion.isCorrecta,
       escenarioDestinoId: opcion.escenarioDestinoId ?? '',
     });
@@ -312,28 +303,41 @@ export class DocenteEscenarioConfigComponent implements OnInit {
   }
 
   puntajeMaximoPregunta(): number | null {
-    return this.pregunta()?.puntajeMaximo ?? null;
+    return 5;
   }
 
-  puntajeOpcionExcedeMaximo(): boolean {
-    return Boolean(
-      this.opcionForm.errors?.['puntajeMayorQuePregunta'] &&
-        (this.opcionForm.touched || this.opcionForm.dirty),
-    );
+  marcarNotaManual(): void {
+    this.notaEditadaManualmente = true;
   }
 
-  private puntajeDentroDelMaximoValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const puntajeMaximo = this.pregunta()?.puntajeMaximo;
-      const puntaje = Number(control.get('puntaje')?.value ?? 0);
+  sugerirNotaPorTipo(isCorrecta: boolean): void {
+    if (this.notaEditadaManualmente) {
+      return;
+    }
 
-      if (puntajeMaximo === null || puntajeMaximo === undefined || Number.isNaN(puntaje)) {
-        return null;
-      }
+    this.opcionForm.controls.puntaje.setValue(isCorrecta ? 5 : 3);
+  }
 
-      return puntaje <= puntajeMaximo
-        ? null
-        : { puntajeMayorQuePregunta: true };
-    };
+  notaOpcionInvalida(): boolean {
+    const control = this.opcionForm.controls.puntaje;
+    return control.invalid && (control.touched || control.dirty);
+  }
+
+  formatNota(value: number): string {
+    return this.normalizeNota(value).toFixed(1);
+  }
+
+  tipoOpcionLabel(opcion: OpcionPreview): string {
+    if (opcion.isCorrecta) {
+      return 'Correcta';
+    }
+
+    return this.normalizeNota(opcion.puntaje) <= 0 ? 'Incorrecta' : 'Alternativa';
+  }
+
+  private normalizeNota(value: number): number {
+    const numeric = Number(value);
+    const nota = numeric > 5 ? numeric / 20 : numeric;
+    return Number(Math.min(Math.max(nota, 0), 5).toFixed(1));
   }
 }

@@ -2,9 +2,13 @@ export type NotificacionTipo =
   | 'GRUPO_CREADO'
   | 'CASO_PUBLICADO'
   | 'ESTUDIANTE_CREADO'
-  | 'ESTUDIANTES_IMPORTADOS';
+  | 'ESTUDIANTES_IMPORTADOS'
+  | 'CASO_ASIGNADO'
+  | 'NOTA_DISPONIBLE'
+  | 'CASO_ASIGNADO_GRUPO'
+  | 'REINTENTO_AUTORIZADO';
 
-export type NotificacionEntidadTipo = 'GRUPO' | 'CASO' | 'USUARIO';
+export type NotificacionEntidadTipo = 'GRUPO' | 'CASO' | 'USUARIO' | 'SESION';
 
 export interface NotificacionRecord {
   id: string;

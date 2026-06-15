@@ -289,6 +289,13 @@ export class SimulacionDocenteService {
     );
   }
 
+  autorizarReintento(casoId: string, estudianteId: string, motivo?: string) {
+    return this.http.post<{ message: string }>(
+      `${this.docenteUrl}/casos/${casoId}/estudiantes/${estudianteId}/reintentos/autorizar`,
+      { motivo: motivo?.trim() || undefined },
+    );
+  }
+
   listarGruposAsignados(casoId: string) {
     return this.http.get<CasoGrupoAsignado[]>(
       `${this.casosUrl}/${casoId}/grupos`,

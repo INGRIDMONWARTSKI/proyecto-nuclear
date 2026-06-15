@@ -21,6 +21,29 @@
   z-index: 2;
 }
 
+.topbar--estudiante {
+  z-index: 100;
+  overflow: visible;
+}
+
+.topbar--estudiante .topbar__inner {
+  position: relative;
+  overflow: visible;
+}
+
+.topbar--estudiante .notifications {
+  position: relative;
+  z-index: 120;
+}
+
+.topbar--estudiante .notifications__panel {
+  z-index: 12000;
+}
+
+.main-content.estudiante-shell__content {
+  z-index: 1;
+}
+
 // Transparent page backgrounds so the ambient shows through
 .estudiante-shell ::ng-deep .siep-page {
   background: transparent;

@@ -1,4 +1,4 @@
-export type NotificacionEntidadTipo = 'GRUPO' | 'CASO' | 'USUARIO';
+export type NotificacionEntidadTipo = 'GRUPO' | 'CASO' | 'USUARIO' | 'SESION';
 
 export interface Notificacion {
   id: string;

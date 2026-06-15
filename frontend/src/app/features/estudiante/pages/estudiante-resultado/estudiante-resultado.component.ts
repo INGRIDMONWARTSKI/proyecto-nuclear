@@ -29,7 +29,6 @@ export class EstudianteResultadoComponent implements OnInit {
   private readonly simulacionService = inject(SimulacionEstudianteService);
 
   protected readonly loading = signal(true);
-  protected readonly retrying = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly resultado = signal<ResultadoSimulacion | null>(null);
   private sesionId = '';
@@ -67,26 +66,4 @@ export class EstudianteResultadoComponent implements OnInit {
     void this.router.navigate(['/estudiante/casos']);
   }
 
-  reintentar() {
-    const casoId = this.resultado()?.caso.id;
-    if (!casoId || this.retrying()) {
-      return;
-    }
-
-    this.retrying.set(true);
-    this.errorMessage.set(null);
-
-    this.simulacionService.startSesion(casoId).subscribe({
-      next: (res) => {
-        this.retrying.set(false);
-        void this.router.navigate(['/estudiante/sesiones', res.sesionId]);
-      },
-      error: (error) => {
-        this.retrying.set(false);
-        this.errorMessage.set(
-          getErrorMessage(error, 'No fue posible iniciar un nuevo intento.'),
-        );
-      },
-    });
-  }
 }

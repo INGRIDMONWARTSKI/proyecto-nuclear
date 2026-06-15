@@ -1,23 +1,85 @@
-import { Component, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Notificacion } from '../../core/models/notificacion.model';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificacionesService } from '../../core/services/notificaciones.service';
 import { EstudianteAmbientComponent } from '../../features/estudiante/shared/estudiante-ambient/estudiante-ambient.component';
 
 @Component({
   selector: 'app-estudiante-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, EstudianteAmbientComponent],
+  imports: [
+    DatePipe,
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    EstudianteAmbientComponent,
+  ],
   templateUrl: './estudiante-layout.component.html',
   styleUrls: [
     '../admin-layout/actor-layout.component.scss',
     './estudiante-layout.component.scss',
   ],
 })
-export class EstudianteLayoutComponent {
+export class EstudianteLayoutComponent implements OnInit {
   protected readonly authService = inject(AuthService);
+  private readonly notificacionesService = inject(NotificacionesService);
+
+  protected readonly notificaciones = signal<Notificacion[]>([]);
+  protected readonly unreadCount = signal(0);
+  protected readonly notificationsOpen = signal(false);
+  protected readonly hasNotifications = computed(() => this.notificaciones().length > 0);
+
+  ngOnInit(): void {
+    this.cargarNotificaciones();
+  }
 
   logout() {
     this.authService.logout();
+  }
+
+  toggleNotifications(): void {
+    this.notificationsOpen.update((open) => !open);
+    if (this.notificationsOpen()) {
+      this.cargarNotificaciones();
+    }
+  }
+
+  marcarComoLeida(notificacion: Notificacion): void {
+    this.notificacionesService.marcarComoLeida(notificacion.id).subscribe({
+      next: (updated) => {
+        this.notificaciones.update((items) =>
+          items.map((item) => (item.id === updated.id ? updated : item)),
+        );
+        this.cargarConteo();
+      },
+      error: () => undefined,
+    });
+  }
+
+  marcarTodasComoLeidas(): void {
+    this.notificacionesService.marcarTodasComoLeidas().subscribe({
+      next: () => {
+        this.notificaciones.update((items) =>
+          items.map((item) => ({ ...item, leida: true })),
+        );
+        this.unreadCount.set(0);
+      },
+      error: () => undefined,
+    });
+  }
+
+  notificationLink(notificacion: Notificacion): string[] | null {
+    if (notificacion.entidadTipo === 'CASO') {
+      return ['/estudiante/casos'];
+    }
+
+    if (notificacion.entidadTipo === 'SESION' && notificacion.entidadId) {
+      return ['/estudiante/resultados', notificacion.entidadId];
+    }
+
+    return null;
   }
 
   userInitials(fullName: string): string {
@@ -25,5 +87,23 @@ export class EstudianteLayoutComponent {
     if (parts.length === 0) return '?';
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  private cargarNotificaciones(): void {
+    this.notificacionesService.listar().subscribe({
+      next: (items) => this.notificaciones.set(items),
+      error: () => {
+        this.notificaciones.set([]);
+        this.unreadCount.set(0);
+      },
+    });
+    this.cargarConteo();
+  }
+
+  private cargarConteo(): void {
+    this.notificacionesService.contarNoLeidas().subscribe({
+      next: ({ count }) => this.unreadCount.set(count),
+      error: () => this.unreadCount.set(0),
+    });
   }
 }

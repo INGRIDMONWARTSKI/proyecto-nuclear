@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { PostgrestService } from '../postgrest/postgrest.service';
 import { CasosService } from './casos.service';
 import { StartSesionSimulacionDto } from './dto/start-sesion-simulacion.dto';
@@ -43,11 +44,25 @@ export interface OpcionSafeRecord {
   orden: number;
 }
 
+interface ReintentoAutorizadoRecord {
+  id: string;
+  caso_id: string;
+  estudiante_id: string;
+  docente_id: string;
+  autorizado_por: string;
+  motivo: string | null;
+  usado: boolean;
+  usado_en_sesion_id: string | null;
+  created_at: string;
+  used_at: string | null;
+}
+
 @Injectable()
 export class SesionesSimulacionService {
   constructor(
     private readonly postgrest: PostgrestService,
     private readonly casosService: CasosService,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   async start(
@@ -115,6 +130,28 @@ export class SesionesSimulacionService {
       return this.buildStartResponse(caso, escenarios, sesionExistente.id);
     }
 
+    const [sesionCompletada] = await this.postgrest.select<SesionSimulacionRecord>(
+      'sesiones_simulacion',
+      {
+        filters: {
+          caso_id: caso.id,
+          estudiante_id: currentUser.sub,
+          estado: 'completed',
+        },
+        order: 'finished_at.desc',
+        limit: 1,
+      },
+    );
+
+    if (
+      sesionCompletada &&
+      !(await this.findReintentoAutorizadoPendiente(caso.id, currentUser.sub))
+    ) {
+      throw new ConflictException(
+        'Ya completaste este caso. Para realizar un nuevo intento necesitas autorización del docente.',
+      );
+    }
+
     const preguntas = await this.postgrest.select<PreguntaDecisionRecord>(
       'preguntas_decision',
       {
@@ -134,6 +171,17 @@ export class SesionesSimulacionService {
       },
       { select: '*' },
     );
+
+    if (sesionCompletada) {
+      const reintentoAutorizado = await this.findReintentoAutorizadoPendiente(
+        caso.id,
+        currentUser.sub,
+      );
+
+      if (reintentoAutorizado) {
+        await this.consumirReintentoAutorizado(reintentoAutorizado.id, sesion.id);
+      }
+    }
 
     return this.buildStartResponse(caso, escenarios, sesion.id);
   }
@@ -266,7 +314,7 @@ export class SesionesSimulacionService {
       casoId: sesion.caso_id,
       casoTitulo: casoById.get(sesion.caso_id)?.titulo ?? 'Caso',
       estado: 'completed' as const,
-      puntajeTotal: sesion.puntaje_total,
+      puntajeTotal: this.computeNotaFinal(sesion),
       fechaInicio: sesion.started_at,
       fechaFinalizacion: sesion.finished_at,
     }));
@@ -333,7 +381,7 @@ export class SesionesSimulacionService {
         estudianteNombre: estudiante?.fullName ?? 'Estudiante',
         estudianteEmail: estudiante?.email ?? '',
         estado: 'completed' as const,
-        puntajeTotal: sesion.puntaje_total,
+        puntajeTotal: this.computeNotaFinal(sesion),
         fechaInicio: sesion.started_at,
         fechaFinalizacion: sesion.finished_at,
       };
@@ -405,12 +453,113 @@ export class SesionesSimulacionService {
         sesionId: sesion.id,
         estudianteId: sesion.estudiante_id,
         estado: sesion.estado,
-        puntajeTotal: sesion.puntaje_total,
+        puntajeTotal: this.computeNotaFinal(sesion),
         totalPreguntas: sesion.total_preguntas,
         respondidas: sesion.respondidas,
         startedAt: sesion.started_at,
         finishedAt: sesion.finished_at,
       }));
+  }
+
+  async autorizarNuevoIntento(
+    casoId: string,
+    estudianteId: string,
+    motivo: string | undefined,
+    currentUser: AuthenticatedUser,
+  ): Promise<{
+    id: string;
+    casoId: string;
+    estudianteId: string;
+    usado: boolean;
+    message: string;
+  }> {
+    if (currentUser.role !== Role.PROFESOR) {
+      throw new ForbiddenException(
+        'Solo el docente creador del caso puede autorizar un nuevo intento.',
+      );
+    }
+
+    const caso = await this.casosService.findCasoById(casoId);
+
+    if (caso.autor_docente_id !== currentUser.sub) {
+      throw new ForbiddenException(
+        'No puedes autorizar intentos de un caso que no creaste.',
+      );
+    }
+
+    const estudianteAsignado = await this.casosService.isCasoAsignadoAEstudiante(
+      casoId,
+      estudianteId,
+    );
+
+    if (!estudianteAsignado) {
+      throw new ForbiddenException(
+        'El estudiante no pertenece a una comunidad académica asignada a este caso.',
+      );
+    }
+
+    const [sesionCompletada] = await this.postgrest.select<SesionSimulacionRecord>(
+      'sesiones_simulacion',
+      {
+        filters: {
+          caso_id: casoId,
+          estudiante_id: estudianteId,
+          estado: 'completed',
+        },
+        order: 'finished_at.desc',
+        limit: 1,
+      },
+    );
+
+    if (!sesionCompletada) {
+      throw new ConflictException(
+        'Solo puedes autorizar nuevo intento cuando el estudiante ya completó el caso.',
+      );
+    }
+
+    const pendiente = await this.findReintentoAutorizadoPendiente(
+      casoId,
+      estudianteId,
+    );
+
+    if (pendiente) {
+      return {
+        id: pendiente.id,
+        casoId: pendiente.caso_id,
+        estudianteId: pendiente.estudiante_id,
+        usado: pendiente.usado,
+        message: 'El estudiante ya tiene un nuevo intento autorizado.',
+      };
+    }
+
+    const reintento = await this.postgrest.insert<ReintentoAutorizadoRecord>(
+      'reintentos_autorizados',
+      {
+        caso_id: casoId,
+        estudiante_id: estudianteId,
+        docente_id: caso.autor_docente_id,
+        autorizado_por: currentUser.sub,
+        motivo: motivo?.trim() || null,
+        usado: false,
+      },
+      { select: '*' },
+    );
+
+    await this.notificacionesService.crearParaUsuario(estudianteId, {
+      tipo: 'REINTENTO_AUTORIZADO',
+      titulo: 'Nuevo intento autorizado',
+      mensaje: `El docente autorizó un nuevo intento para el caso ${caso.titulo}.`,
+      entidad_tipo: 'CASO',
+      entidad_id: casoId,
+    });
+
+    return {
+      id: reintento.id,
+      casoId: reintento.caso_id,
+      estudianteId: reintento.estudiante_id,
+      usado: reintento.usado,
+      message: 'Nuevo intento autorizado.',
+    };
   }
 
   async findPendingScenarioForSession(sesion: SesionSimulacionRecord): Promise<{
@@ -572,6 +721,8 @@ export class SesionesSimulacionService {
       },
     );
 
+    await this.notificarNotaDisponible(updated);
+
     return updated;
   }
 
@@ -592,6 +743,8 @@ export class SesionesSimulacionService {
         select: '*',
       },
     );
+
+    await this.notificarNotaDisponible(updated);
 
     return updated;
   }
@@ -620,6 +773,8 @@ export class SesionesSimulacionService {
         select: '*',
       },
     );
+
+    await this.notificarNotaDisponible(updated);
 
     return updated;
   }
@@ -861,6 +1016,94 @@ export class SesionesSimulacionService {
     }
 
     return opcion;
+  }
+
+  private computeNotaFinal(sesion: SesionSimulacionRecord): number {
+    if (sesion.total_preguntas <= 0) {
+      return 0;
+    }
+
+    const puntajeTotal =
+      sesion.puntaje_total > sesion.total_preguntas * 5
+        ? sesion.puntaje_total / 20
+        : sesion.puntaje_total;
+
+    return Number((puntajeTotal / sesion.total_preguntas).toFixed(1));
+  }
+
+  private async notificarNotaDisponible(
+    sesion: SesionSimulacionRecord,
+  ): Promise<void> {
+    if (sesion.estado !== 'completed') {
+      return;
+    }
+
+    const [existing] = await this.postgrest.select<{ id: string }>(
+      'notificaciones',
+      {
+        filters: {
+          usuario_id_destino: sesion.estudiante_id,
+          tipo: 'NOTA_DISPONIBLE',
+          entidad_tipo: 'SESION',
+          entidad_id: sesion.id,
+        },
+        select: 'id',
+        limit: 1,
+      },
+    );
+
+    if (existing) {
+      return;
+    }
+
+    const caso = await this.casosService.findCasoById(sesion.caso_id);
+    const notaFinal = this.computeNotaFinal(sesion).toFixed(1);
+
+    await this.notificacionesService.crearParaUsuario(sesion.estudiante_id, {
+      tipo: 'NOTA_DISPONIBLE',
+      titulo: 'Nota disponible',
+      mensaje: `Finalizaste el caso ${caso.titulo}. Tu nota final es ${notaFinal} / 5.0.`,
+      entidad_tipo: 'SESION',
+      entidad_id: sesion.id,
+    });
+  }
+
+  private async findReintentoAutorizadoPendiente(
+    casoId: string,
+    estudianteId: string,
+  ): Promise<ReintentoAutorizadoRecord | null> {
+    const [reintento] = await this.postgrest.select<ReintentoAutorizadoRecord>(
+      'reintentos_autorizados',
+      {
+        filters: {
+          caso_id: casoId,
+          estudiante_id: estudianteId,
+          usado: false,
+        },
+        order: 'created_at.asc',
+        limit: 1,
+      },
+    );
+
+    return reintento ?? null;
+  }
+
+  private async consumirReintentoAutorizado(
+    reintentoId: string,
+    sesionId: string,
+  ): Promise<void> {
+    await this.postgrest.update<ReintentoAutorizadoRecord>(
+      'reintentos_autorizados',
+      {
+        usado: true,
+        usado_en_sesion_id: sesionId,
+        used_at: new Date().toISOString(),
+      },
+      {
+        filters: { id: reintentoId },
+        select: 'id',
+      },
+    );
   }
 
   private assertStudentRole(currentUser: AuthenticatedUser): void {

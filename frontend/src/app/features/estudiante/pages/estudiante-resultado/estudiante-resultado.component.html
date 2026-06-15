@@ -66,7 +66,7 @@
 
           <div class="score-hero__metric">
 
-            <span class="score-hero__label">Puntaje</span>
+            <span class="score-hero__label">Nota</span>
 
             <span class="score-hero__value score-hero__value--sm">{{ r.puntajeTotal }} / {{ r.puntajeMaximo }}</span>
 
@@ -134,7 +134,7 @@
 
               <p class="result-item__row">
 
-                <span>Puntaje obtenido</span>
+                <span>Nota obtenida</span>
 
                 {{ item.puntajeObtenido }}
 
@@ -162,21 +162,9 @@
 
         <a class="siep-btn-secondary" routerLink="/estudiante/historial">Ver historial</a>
 
-        <button
-
-          class="siep-btn-primary"
-
-          type="button"
-
-          [disabled]="retrying()"
-
-          (click)="reintentar()"
-
-        >
-
-          {{ retrying() ? 'Iniciando...' : 'Reintentar caso' }}
-
-        </button>
+        <a class="siep-btn-primary" routerLink="/estudiante/casos">
+          Revisar disponibilidad de nuevo intento
+        </a>
 
       </section>
 

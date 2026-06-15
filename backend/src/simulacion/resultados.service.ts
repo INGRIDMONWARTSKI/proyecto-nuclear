@@ -248,13 +248,31 @@ export class ResultadosService {
 
 
 
-    const puntajeMaximo = this.computeMaxScoreByQuestion(preguntas, opciones);
+    const puntajeMaximo = 5;
+
+    const totalPreguntas = sesion.total_preguntas || preguntas.length;
+
+    const puntajeTotalNormalizado = this.normalizePuntajeTotal(
+
+      sesion.puntaje_total,
+
+      totalPreguntas,
+
+    );
+
+    const notaFinal =
+
+      totalPreguntas > 0
+
+        ? this.roundNota(puntajeTotalNormalizado / totalPreguntas)
+
+        : 0;
 
     const porcentaje =
 
       puntajeMaximo > 0
 
-        ? Number(((sesion.puntaje_total / puntajeMaximo) * 100).toFixed(2))
+        ? Number(((notaFinal / puntajeMaximo) * 100).toFixed(2))
 
         : 0;
 
@@ -300,7 +318,7 @@ export class ResultadosService {
 
       },
 
-      puntajeTotal: sesion.puntaje_total,
+      puntajeTotal: notaFinal,
 
       puntajeMaximo,
 
@@ -310,7 +328,7 @@ export class ResultadosService {
 
       respondidas: sesion.respondidas,
 
-      totalPreguntas: sesion.total_preguntas,
+      totalPreguntas,
 
       resumen,
 
@@ -320,7 +338,7 @@ export class ResultadosService {
 
         opcionSeleccionada: opcionesById.get(r.opcion_id)?.texto ?? 'Opcion',
 
-        puntajeObtenido: r.puntaje_obtenido,
+        puntajeObtenido: this.roundNota(this.normalizeNota(r.puntaje_obtenido)),
 
         retroalimentacion: retroByOption.get(r.opcion_id) ?? null,
 
@@ -332,33 +350,29 @@ export class ResultadosService {
 
 
 
-  private computeMaxScoreByQuestion(
+  private roundNota(value: number): number {
 
-    preguntas: PreguntaDecisionRecord[],
+    return Number(value.toFixed(1));
 
-    opciones: OpcionRespuestaRecord[],
+  }
 
-  ): number {
+  private normalizeNota(value: number): number {
 
-    let total = 0;
+    const nota = value > 5 ? value / 20 : value;
 
-    for (const pregunta of preguntas) {
+    return Math.min(Math.max(nota, 0), 5);
 
-      const dePregunta = opciones.filter((o) => o.pregunta_id === pregunta.id);
+  }
 
-      const max = dePregunta.reduce(
+  private normalizePuntajeTotal(value: number, totalPreguntas: number): number {
 
-        (acc, opt) => (opt.puntaje > acc ? opt.puntaje : acc),
+    if (totalPreguntas > 0 && value > totalPreguntas * 5) {
 
-        0,
-
-      );
-
-      total += max;
+      return value / 20;
 
     }
 
-    return total;
+    return value;
 
   }
 

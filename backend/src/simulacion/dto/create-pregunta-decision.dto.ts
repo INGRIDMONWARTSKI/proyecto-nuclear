@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 
 export class CreatePreguntaDecisionDto {
   @IsString()
@@ -13,7 +13,8 @@ export class CreatePreguntaDecisionDto {
 
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 1 })
   @Min(0)
+  @Max(5)
   puntajeMaximo?: number;
 }

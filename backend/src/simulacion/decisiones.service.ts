@@ -56,7 +56,7 @@ export class DecisionesService {
       escenario_id: escenarioId,
       enunciado: dto.enunciado.trim(),
       tipo: dto.tipo ?? 'single_choice',
-      puntaje_maximo: dto.puntajeMaximo ?? 100,
+      puntaje_maximo: dto.puntajeMaximo ?? 5,
     };
 
     try {
@@ -349,9 +349,15 @@ export class DecisionesService {
     puntaje: number,
     pregunta: PreguntaDecisionRecord,
   ): void {
+    if (puntaje < 0 || puntaje > 5) {
+      throw new BadRequestException(
+        'La nota de la respuesta debe estar entre 0.0 y 5.0.',
+      );
+    }
+
     if (puntaje > pregunta.puntaje_maximo) {
       throw new BadRequestException(
-        'El puntaje de la respuesta no puede superar el puntaje maximo de la pregunta.',
+        'La nota de la respuesta no puede superar la nota maxima de la pregunta.',
       );
     }
   }

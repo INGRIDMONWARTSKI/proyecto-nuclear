@@ -139,6 +139,7 @@ export class CasosService {
       objetivoAprendizaje: string | null;
       totalEscenarios: number;
       publishedAt: string | null;
+      tieneReintentoAutorizado: boolean;
     }>
   > {
     const casoIds = await this.findCasoIdsAsignadosAEstudiante(estudianteId);
@@ -163,12 +164,25 @@ export class CasosService {
       objetivoAprendizaje: string | null;
       totalEscenarios: number;
       publishedAt: string | null;
+      tieneReintentoAutorizado: boolean;
     }> = [];
 
     for (const caso of casos) {
       const escenarios = await this.postgrest.select<EscenarioRecord>('escenarios', {
         filters: { caso_id: caso.id },
       });
+      const [reintento] = await this.postgrest.select<{ id: string }>(
+        'reintentos_autorizados',
+        {
+          filters: {
+            caso_id: caso.id,
+            estudiante_id: estudianteId,
+            usado: false,
+          },
+          select: 'id',
+          limit: 1,
+        },
+      );
 
       result.push({
         id: caso.id,
@@ -177,6 +191,7 @@ export class CasosService {
         objetivoAprendizaje: caso.objetivo_aprendizaje,
         totalEscenarios: escenarios.length,
         publishedAt: caso.published_at,
+        tieneReintentoAutorizado: Boolean(reintento),
       });
     }
 

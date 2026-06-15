@@ -7,7 +7,11 @@ import {
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { Grupo } from '../grupos/entities/grupo.entity';
+import { EstudianteGrupo } from '../grupos/entities/estudiante-grupo.entity';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { PostgrestService } from '../postgrest/postgrest.service';
+import { Usuario } from '../usuarios/entities/usuario.entity';
+import { UsuariosService } from '../usuarios/usuarios.service';
 import { CasosService } from './casos.service';
 import { CreateAsignacionDto } from './dto/create-asignacion.dto';
 import { CasoGrupo } from './entities/caso-grupo.entity';
@@ -17,6 +21,8 @@ export class AsignacionesService {
   constructor(
     private readonly postgrest: PostgrestService,
     private readonly casosService: CasosService,
+    private readonly notificacionesService: NotificacionesService,
+    private readonly usuariosService: UsuariosService,
   ) {}
 
   async assign(
@@ -34,11 +40,14 @@ export class AsignacionesService {
     }
 
     const grupoIds = [...new Set(dto.grupoIds)];
+    const gruposById = new Map<string, Grupo>();
+    const gruposNotificados: Grupo[] = [];
 
     // Validacion previa de todos los grupos antes de insertar.
     for (const grupoId of grupoIds) {
       const grupo = await this.findGrupoById(grupoId);
       this.assertCanManageGrupo(grupo, currentUser);
+      gruposById.set(grupoId, grupo);
     }
 
     for (const grupoId of grupoIds) {
@@ -58,6 +67,10 @@ export class AsignacionesService {
           },
           { select: '*' },
         );
+        const grupo = gruposById.get(grupoId);
+        if (grupo) {
+          gruposNotificados.push(grupo);
+        }
       } catch (error) {
         if (error instanceof Error && error.message.includes('23505')) {
           continue;
@@ -65,6 +78,9 @@ export class AsignacionesService {
         throw error;
       }
     }
+
+    await this.notificarCasoAsignado(caso.titulo, casoId, gruposNotificados);
+    await this.notificarAdminsCasoAsignado(caso.titulo, casoId, gruposNotificados, currentUser);
 
     return this.listGruposByCaso(casoId, currentUser);
   }
@@ -146,6 +162,85 @@ export class AsignacionesService {
     });
 
     return asignacion ?? null;
+  }
+
+  private async notificarCasoAsignado(
+    casoTitulo: string,
+    casoId: string,
+    grupos: Grupo[],
+  ): Promise<void> {
+    const estudiantesNotificados = new Set<string>();
+
+    for (const grupo of grupos) {
+      const membresias = await this.postgrest.select<EstudianteGrupo>(
+        'estudiante_grupo',
+        {
+          filters: { grupoId: grupo.id },
+        },
+      );
+
+      if (membresias.length === 0) {
+        continue;
+      }
+
+      const estudianteIds = [
+        ...new Set(
+          membresias
+            .map((membresia) => membresia.estudianteId)
+            .filter((id) => !estudiantesNotificados.has(id)),
+        ),
+      ];
+
+      if (estudianteIds.length === 0) {
+        continue;
+      }
+
+      const estudiantes = await this.postgrest.select<Pick<Usuario, 'id'>>(
+        'usuarios',
+        {
+          filters: {
+            id: estudianteIds,
+            role: Role.ESTUDIANTE,
+            isActive: true,
+          },
+          select: 'id',
+        },
+      );
+
+      for (const estudiante of estudiantes) {
+        estudiantesNotificados.add(estudiante.id);
+        await this.notificacionesService.crearParaUsuario(estudiante.id, {
+          tipo: 'CASO_ASIGNADO',
+          titulo: 'Nuevo caso asignado',
+          mensaje: `El caso ${casoTitulo} fue asignado a tu comunidad académica ${grupo.nombre}.`,
+          entidad_tipo: 'CASO',
+          entidad_id: casoId,
+        });
+      }
+    }
+  }
+
+  private async notificarAdminsCasoAsignado(
+    casoTitulo: string,
+    casoId: string,
+    grupos: Grupo[],
+    currentUser: AuthenticatedUser,
+  ): Promise<void> {
+    if (grupos.length === 0 || currentUser.role !== Role.PROFESOR) {
+      return;
+    }
+
+    const usuario = await this.usuariosService.findById(currentUser.sub);
+
+    for (const grupo of grupos) {
+      await this.notificacionesService.crearParaAdmins({
+        tipo: 'CASO_ASIGNADO_GRUPO',
+        titulo: 'Caso asignado a comunidad',
+        mensaje: `El docente ${usuario.fullName} asignó el caso ${casoTitulo} a la comunidad académica ${grupo.nombre}.`,
+        entidad_tipo: 'CASO',
+        entidad_id: casoId,
+      });
+    }
   }
 
   private assertCanManageGrupo(grupo: Grupo, currentUser: AuthenticatedUser) {

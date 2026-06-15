@@ -2,9 +2,11 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
   MinLength,
@@ -26,8 +28,9 @@ export class UpdateOpcionRespuestaDto {
 
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 1 })
   @Min(0)
+  @Max(5)
   puntaje?: number;
 
   @IsOptional()

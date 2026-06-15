@@ -5,4 +5,5 @@ export interface CasoPublicado {
   objetivoAprendizaje: string | null;
   totalEscenarios: number;
   publishedAt: string | null;
+  tieneReintentoAutorizado: boolean;
 }

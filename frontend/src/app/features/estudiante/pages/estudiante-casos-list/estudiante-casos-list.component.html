@@ -67,6 +67,13 @@
                     status="success"
                     [label]="caso.totalEscenarios + ' escenarios'"
                   />
+                  @if (resumen.estado === 'finalizado' && caso.tieneReintentoAutorizado) {
+                    <app-status-badge
+                      variant="status"
+                      status="active"
+                      label="Nuevo intento autorizado"
+                    />
+                  }
                 </div>
               </div>
 
@@ -88,14 +95,27 @@
                       Ver resultado
                     </a>
                   }
-                  <button
-                    class="siep-btn-primary caso-card__action"
-                    type="button"
-                    [disabled]="startingCasoId() === caso.id"
-                    (click)="requestGuideOrProceed('reintentar', caso.id)"
-                  >
-                    {{ startingCasoId() === caso.id ? 'Iniciando...' : 'Reintentar caso' }}
-                  </button>
+                  @if (caso.tieneReintentoAutorizado) {
+                    <button
+                      class="siep-btn-primary caso-card__action"
+                      type="button"
+                      [disabled]="startingCasoId() === caso.id"
+                      (click)="requestGuideOrProceed('reintentar', caso.id)"
+                    >
+                      {{ startingCasoId() === caso.id ? 'Iniciando...' : 'Iniciar nuevo intento autorizado' }}
+                    </button>
+                  } @else {
+                    <p class="caso-card__blocked">
+                      Ya completaste este caso. Para realizar un nuevo intento necesitas autorización del docente.
+                    </p>
+                    <button
+                      class="siep-btn-secondary caso-card__action"
+                      type="button"
+                      disabled
+                    >
+                      Nuevo intento requiere autorización docente
+                    </button>
+                  }
                 } @else {
                   <button
                     class="siep-btn-primary caso-card__action"

@@ -6,11 +6,26 @@
       subtitle="Modo lectura para acompañar el aprendizaje: consulta decisiones, puntaje y retroalimentación del estudiante."
       icon="🌿"
     >
+      @if (revision(); as r) {
+        <button
+          actions
+          class="siep-btn-primary"
+          type="button"
+          [disabled]="authorizing()"
+          (click)="autorizarNuevoIntento()"
+        >
+          {{ authorizing() ? 'Autorizando...' : 'Autorizar nuevo intento' }}
+        </button>
+      }
       <a actions class="siep-btn-secondary" routerLink="/profesor/evidencias">
         Volver a evidencias
       </a>
     </app-page-header>
   </div>
+
+  @if (successMessage()) {
+    <app-alert-message [message]="successMessage()!" type="success" />
+  }
 
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />
@@ -64,11 +79,11 @@
             <h3 class="revision-card__section-title">Resultado</h3>
             <div class="revision-score-grid">
               <div class="revision-score-item">
-                <span class="revision-score-item__label">Puntaje total</span>
+                <span class="revision-score-item__label">Nota final</span>
                 <span class="revision-score-item__value">{{ r.puntajeTotal }}</span>
               </div>
               <div class="revision-score-item">
-                <span class="revision-score-item__label">Puntaje máximo</span>
+                <span class="revision-score-item__label">Nota máxima</span>
                 <span class="revision-score-item__value">{{ r.puntajeMaximo }}</span>
               </div>
               <div class="revision-score-item">
@@ -107,7 +122,7 @@
                   {{ item.opcionSeleccionada }}
                 </p>
                 <p class="revision-answer__puntaje">
-                  <span>Puntaje obtenido</span>
+                  <span>Nota obtenida</span>
                   {{ item.puntajeObtenido }}
                 </p>
                 <p class="revision-answer__retro">

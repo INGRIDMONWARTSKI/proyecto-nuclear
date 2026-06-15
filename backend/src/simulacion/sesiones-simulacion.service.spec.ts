@@ -1,5 +1,6 @@
 import { Role } from '../common/enums/role.enum';
 import { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { PostgrestService } from '../postgrest/postgrest.service';
 import { CasosService } from './casos.service';
 import { SesionesSimulacionService } from './sesiones-simulacion.service';
@@ -14,6 +15,7 @@ describe('SesionesSimulacionService', () => {
 
   let postgrest: jest.Mocked<PostgrestService>;
   let casosService: jest.Mocked<CasosService>;
+  let notificacionesService: jest.Mocked<NotificacionesService>;
   let service: SesionesSimulacionService;
 
   beforeEach(() => {
@@ -23,11 +25,22 @@ describe('SesionesSimulacionService', () => {
     casosService = {
       findCasoById: jest.fn().mockResolvedValue({
         id: 'case-1',
+        titulo: 'Caso de prueba',
         autor_docente_id: 'prof-1',
+        estado: 'published',
+        is_active: true,
       }),
       assertCanAccessCasoDocente: jest.fn(),
+      isCasoAsignadoAEstudiante: jest.fn().mockResolvedValue(true),
     } as unknown as jest.Mocked<CasosService>;
-    service = new SesionesSimulacionService(postgrest, casosService);
+    notificacionesService = {
+      crearParaUsuario: jest.fn(),
+    } as unknown as jest.Mocked<NotificacionesService>;
+    service = new SesionesSimulacionService(
+      postgrest,
+      casosService,
+      notificacionesService,
+    );
   });
 
   it('filtra evidencias por estudiantes realmente vinculados a grupos del profesor', async () => {
@@ -89,5 +102,55 @@ describe('SesionesSimulacionService', () => {
       sesionId: 'ses-1',
       estudianteId: 'est-1',
     });
+  });
+
+  it('bloquea iniciar un nuevo intento cuando el estudiante ya completo el caso', async () => {
+    const estudiante: AuthenticatedUser = {
+      sub: 'est-1',
+      email: 'estudiante@nuclear.local',
+      role: Role.ESTUDIANTE,
+      tokenVersion: 1,
+    };
+
+    postgrest.select.mockImplementation(
+      async (table: string, options?: { filters?: Record<string, unknown> }) => {
+        if (table === 'escenarios') {
+          return [
+            {
+              id: 'esc-1',
+              caso_id: 'case-1',
+              orden: 1,
+              titulo: 'Escenario 1',
+              situacion_texto: 'Situacion de prueba',
+              fondo_codigo: 'aula',
+              is_final: false,
+            },
+          ] as never;
+        }
+
+        if (table === 'sesiones_simulacion') {
+          if (options?.filters?.estado === 'in_progress') {
+            return [] as never;
+          }
+
+          if (options?.filters?.estado === 'completed') {
+            return [
+              {
+                id: 'ses-completed',
+                caso_id: 'case-1',
+                estudiante_id: 'est-1',
+                estado: 'completed',
+              },
+            ] as never;
+          }
+        }
+
+        return [] as never;
+      },
+    );
+
+    await expect(service.start({ casoId: 'case-1' }, estudiante)).rejects.toThrow(
+      'Ya completaste este caso. Para realizar un nuevo intento necesitas autorización del docente.',
+    );
   });
 });

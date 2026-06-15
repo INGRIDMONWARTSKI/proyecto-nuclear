@@ -174,12 +174,12 @@ export class GeneracionCasosIaService {
               pregunta: {
                 enunciado: 'string',
                 tipo: 'single_choice',
-                puntajeMaximo: 100,
+                puntajeMaximo: 5,
                 opciones: [
                   {
                     orden: 1,
                     texto: 'string',
-                    puntaje: 50,
+                    puntaje: 5,
                     isCorrecta: true,
                     escenarioDestinoOrden: 2,
                     retroalimentacion: {
@@ -373,8 +373,8 @@ export class GeneracionCasosIaService {
     }
 
     const puntajeMaximo = raw.puntajeMaximo === undefined
-      ? 100
-      : this.requireInteger(raw.puntajeMaximo, 'pregunta.puntajeMaximo', 0);
+      ? 5
+      : this.normalizeGeneratedNota(raw.puntajeMaximo, 'pregunta.puntajeMaximo');
 
     if (!Array.isArray(raw.opciones) || raw.opciones.length < 2) {
       throw new BadRequestException(
@@ -405,7 +405,7 @@ export class GeneracionCasosIaService {
     const raw = payload as Record<string, unknown>;
     const orden = this.requireInteger(raw.orden, 'opcion.orden', 1);
     const texto = this.requireTrimmedString(raw.texto, 'opcion.texto', 1, 500);
-    const puntaje = this.requireInteger(raw.puntaje, 'opcion.puntaje', 0);
+    const puntaje = this.normalizeGeneratedNota(raw.puntaje, 'opcion.puntaje');
     const isCorrecta =
       raw.isCorrecta === undefined
         ? false
@@ -430,6 +430,18 @@ export class GeneracionCasosIaService {
       escenarioDestinoOrden,
       retroalimentacion,
     };
+  }
+
+  private normalizeGeneratedNota(value: unknown, field: string): number {
+    const numeric = Number(value);
+
+    if (!Number.isFinite(numeric) || numeric < 0) {
+      throw new BadRequestException(`${field} debe ser un numero mayor o igual a 0.`);
+    }
+
+    const nota = numeric > 5 ? numeric / 20 : numeric;
+
+    return Number(Math.min(nota, 5).toFixed(1));
   }
 
   private validateFeedback(payload: unknown) {

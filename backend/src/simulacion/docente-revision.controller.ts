@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -28,5 +28,20 @@ export class DocenteRevisionController {
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
     return this.resultadosService.getRevisionDocente(sesionId, currentUser);
+  }
+
+  @Post('casos/:casoId/estudiantes/:estudianteId/reintentos/autorizar')
+  autorizarReintento(
+    @Param('casoId') casoId: string,
+    @Param('estudianteId') estudianteId: string,
+    @Body() body: { motivo?: string },
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.sesionesService.autorizarNuevoIntento(
+      casoId,
+      estudianteId,
+      body?.motivo,
+      currentUser,
+    );
   }
 }

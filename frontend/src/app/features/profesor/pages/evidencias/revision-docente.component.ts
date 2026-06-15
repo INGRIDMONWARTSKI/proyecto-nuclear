@@ -31,7 +31,9 @@ export class RevisionDocenteComponent implements OnInit {
   private readonly simulacionService = inject(SimulacionDocenteService);
 
   protected readonly loading = signal(true);
+  protected readonly authorizing = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly successMessage = signal<string | null>(null);
   protected readonly revision = signal<RevisionSesionDocente | null>(null);
 
   private sesionId = '';
@@ -70,5 +72,40 @@ export class RevisionDocenteComponent implements OnInit {
 
   volverEvidencias(): void {
     void this.router.navigate(['/profesor/evidencias']);
+  }
+
+  autorizarNuevoIntento(): void {
+    const revision = this.revision();
+
+    if (!revision || this.authorizing()) {
+      return;
+    }
+
+    const confirmado = window.confirm(
+      '¿Quieres autorizar un nuevo intento para este estudiante? Esta autorización permitirá iniciar una nueva sesión del caso.',
+    );
+
+    if (!confirmado) {
+      return;
+    }
+
+    this.authorizing.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.simulacionService
+      .autorizarReintento(revision.caso.id, revision.estudiante.id)
+      .subscribe({
+        next: (response) => {
+          this.successMessage.set(response.message || 'Nuevo intento autorizado.');
+          this.authorizing.set(false);
+        },
+        error: (error) => {
+          this.errorMessage.set(
+            getErrorMessage(error, 'No fue posible autorizar el nuevo intento.'),
+          );
+          this.authorizing.set(false);
+        },
+      });
   }
 }

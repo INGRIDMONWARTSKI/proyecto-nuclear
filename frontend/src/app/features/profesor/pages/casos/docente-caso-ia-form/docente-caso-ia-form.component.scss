@@ -35,6 +35,12 @@
   color: var(--siep-forest);
 }
 
+.ia-guidance__count {
+  margin: 0 0 var(--siep-space-3);
+  font-weight: 700;
+  color: var(--siep-forest);
+}
+
 .cases-picker {
   display: grid;
   gap: var(--siep-space-3);

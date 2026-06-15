@@ -26,8 +26,10 @@
         <ul>
           <li>Mínimo recomendado: {{ minContextCharacters }} caracteres de contexto total.</li>
           <li>Si usas referencias en texto, al menos una debe tener {{ minReferenceCharacters }} caracteres o más.</li>
-          <li>También puedes seleccionar un caso existente como referencia para orientar la generación.</li>
+          <li>Puedes usar máximo {{ maxReferences }} referencias entre texto libre y casos existentes.</li>
+          <li>Si necesitas separar varias referencias de texto, usa una línea con <code>---</code> entre cada una.</li>
         </ul>
+        <p class="ia-guidance__count">Referencias usadas: {{ referenciasUsadas() }} de {{ maxReferences }}.</p>
         <p class="ia-guidance__example">
           Ejemplo: Estudiante adolescente presenta ausentismo, bajo rendimiento y señales de conflicto familiar.
           El practicante debe explorar factores de riesgo, red de apoyo y alternativas de intervención institucional.
@@ -40,8 +42,9 @@
           id="referenciasTexto"
           rows="10"
           formControlName="referenciasTexto"
-          placeholder="Pega uno o varios casos. Separa cada referencia con una línea en blanco."
+          placeholder="Pega una referencia larga. Para varias referencias, separa cada una con una línea que contenga ---"
         ></textarea>
+        <small class="muted">Referencias usadas: {{ referenciasUsadas() }} de {{ maxReferences }}.</small>
       </div>
 
       <div class="siep-field">
@@ -55,6 +58,7 @@
                 <input
                   type="checkbox"
                   [checked]="isSelected(caso.id)"
+                  [disabled]="seleccionBloqueada(caso.id)"
                   (change)="toggleCaso(caso.id, $any($event.target).checked)"
                 />
                 <span>

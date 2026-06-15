@@ -23,7 +23,7 @@
         <p class="locked-note">
           Pregunta registrada: <strong>{{ pregunta()!.enunciado }}</strong>
         </p>
-        <p class="muted">Puntaje máximo: {{ pregunta()!.puntajeMaximo }}</p>
+        <p class="muted">Nota máxima institucional: 5.0</p>
       } @else {
         <form class="form-grid" [formGroup]="preguntaForm" (ngSubmit)="guardarPregunta()">
           <div class="siep-field">
@@ -31,8 +31,15 @@
             <textarea id="enunciado" rows="3" formControlName="enunciado"></textarea>
           </div>
           <div class="siep-field">
-            <label for="puntajeMaximo">Puntaje máximo</label>
-            <input id="puntajeMaximo" type="number" min="0" formControlName="puntajeMaximo" />
+            <label for="puntajeMaximo">Nota máxima institucional</label>
+            <input
+              id="puntajeMaximo"
+              type="number"
+              min="0"
+              max="5"
+              step="0.1"
+              formControlName="puntajeMaximo"
+            />
           </div>
           <button class="siep-btn-primary" type="submit" [disabled]="saving()">Crear pregunta</button>
         </form>
@@ -50,7 +57,7 @@
                 <div>
                   <strong>{{ op.orden }}. {{ op.texto }}</strong>
                   <p class="muted">
-                    Puntaje: {{ op.puntaje }} · {{ op.isCorrecta ? 'Correcta' : 'Alternativa' }}
+                    Nota: {{ formatNota(op.puntaje) }} / 5.0 · {{ tipoOpcionLabel(op) }}
                   </p>
                   <p class="destino-badge">
                     <app-status-badge
@@ -104,23 +111,29 @@
             <input id="opcion-orden" type="number" min="1" formControlName="orden" />
           </div>
           <div class="siep-field">
-            <label for="opcion-puntaje">Puntaje</label>
+            <label for="opcion-puntaje">Nota de la respuesta</label>
             <input
               id="opcion-puntaje"
               type="number"
               min="0"
-              [attr.max]="puntajeMaximoPregunta()"
+              max="5"
+              step="0.1"
               formControlName="puntaje"
+              (input)="marcarNotaManual()"
             />
-            <small class="muted">Este valor no puede superar {{ p.puntajeMaximo }} puntos.</small>
-            @if (puntajeOpcionExcedeMaximo()) {
+            <small class="muted">Este valor define cuánto aporta esta decisión a la nota del estudiante.</small>
+            @if (notaOpcionInvalida()) {
               <small class="warn">
-                El puntaje de esta respuesta debe ser menor o igual al puntaje de la pregunta.
+                La nota debe estar entre 0.0 y 5.0.
               </small>
             }
           </div>
           <label class="checkbox-row">
-            <input type="checkbox" formControlName="isCorrecta" />
+            <input
+              type="checkbox"
+              formControlName="isCorrecta"
+              (change)="sugerirNotaPorTipo($any($event.target).checked)"
+            />
             Marcar como opción correcta
           </label>
           <div class="siep-field">

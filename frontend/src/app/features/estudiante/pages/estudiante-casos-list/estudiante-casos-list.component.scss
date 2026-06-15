@@ -201,6 +201,18 @@
   text-decoration: none;
 }
 
+.caso-card__blocked {
+  margin: 0;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #cde8b5;
+  border-radius: var(--siep-radius-md);
+  background: #f1f8e9;
+  color: #2f5d34;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 @media (max-width: 560px) {
   .estudiante-casos__grid {
     grid-template-columns: 1fr;

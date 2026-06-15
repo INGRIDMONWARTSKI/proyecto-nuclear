@@ -39,6 +39,21 @@
         <textarea id="objetivoAprendizaje" rows="3" formControlName="objetivoAprendizaje"></textarea>
       </div>
 
+      <div class="siep-field">
+        <label for="tiempoMaximoMinutos">Tiempo máximo de participación (minutos)</label>
+        <input
+          id="tiempoMaximoMinutos"
+          type="number"
+          min="5"
+          max="240"
+          step="1"
+          formControlName="tiempoMaximoMinutos"
+        />
+        <small class="case-form__help">
+          Define cuánto tiempo tendrá el estudiante para resolver el caso una vez lo inicie.
+        </small>
+      </div>
+
       <div class="form-actions">
         <button class="siep-btn-primary" type="submit" [disabled]="saving()">
           {{ saving() ? 'Guardando...' : 'Guardar' }}

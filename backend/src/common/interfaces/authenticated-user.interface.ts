@@ -5,4 +5,5 @@ export interface AuthenticatedUser {
   email: string;
   role: Role;
   tokenVersion: number;
+  puedeCrearCasos?: boolean;
 }

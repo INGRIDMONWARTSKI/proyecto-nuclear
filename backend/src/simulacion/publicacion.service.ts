@@ -18,6 +18,7 @@ import { EscenarioRecord } from './entities/escenario.entity';
 import { OpcionRespuestaRecord } from './entities/opcion-respuesta.entity';
 import { PreguntaDecisionRecord } from './entities/pregunta-decision.entity';
 import { RetroalimentacionRecord } from './entities/retroalimentacion.entity';
+import { RubricaCriterioRecord } from './entities/rubrica-criterio.entity';
 
 @Injectable()
 export class PublicacionService {
@@ -102,6 +103,28 @@ export class PublicacionService {
       errors.push('El caso debe tener un titulo valido.');
     }
 
+    const rubrica = await this.postgrest.select<RubricaCriterioRecord>(
+      'rubrica_criterios',
+      {
+        filters: { caso_id: caso.id },
+        order: 'orden.asc',
+      },
+    );
+
+    if (rubrica.length === 0) {
+      errors.push(
+        'Agrega al menos un criterio de rubrica para justificar la calificacion final.',
+      );
+    }
+
+    for (const criterio of rubrica) {
+      if (!criterio.criterio?.trim() || !criterio.descripcion?.trim()) {
+        errors.push(
+          `El criterio de rubrica ${criterio.orden} debe tener criterio y descripcion.`,
+        );
+      }
+    }
+
     const escenarios = await this.postgrest.select<EscenarioRecord>('escenarios', {
       filters: { caso_id: caso.id },
       order: 'orden.asc',
@@ -119,9 +142,12 @@ export class PublicacionService {
         filters: { escenario_id: escenarios.map((escenario) => escenario.id) },
       },
     );
-    const preguntasByEscenarioId = new Map(
-      preguntas.map((pregunta) => [pregunta.escenario_id, pregunta]),
-    );
+    const preguntasByEscenarioId = new Map<string, PreguntaDecisionRecord[]>();
+    for (const pregunta of preguntas) {
+      const actuales = preguntasByEscenarioId.get(pregunta.escenario_id) ?? [];
+      actuales.push(pregunta);
+      preguntasByEscenarioId.set(pregunta.escenario_id, actuales);
+    }
 
     let opciones: OpcionRespuestaRecord[] = [];
 
@@ -181,69 +207,75 @@ export class PublicacionService {
         );
       }
 
-      const pregunta = preguntasByEscenarioId.get(escenario.id);
-      const escenarioPreguntas = preguntas.filter(
-        (item) => item.escenario_id === escenario.id,
-      );
+      const escenarioPreguntas = preguntasByEscenarioId.get(escenario.id) ?? [];
 
       if (escenario.is_final) {
-        if (escenarioPreguntas.length > 1) {
-          errors.push(
-            `El escenario final ${escenario.orden} no debe tener mas de una pregunta.`,
-          );
-        }
         continue;
       }
 
-      if (escenarioPreguntas.length !== 1) {
+      if (escenarioPreguntas.length < 1) {
         errors.push(
-          `El escenario ${escenario.orden} debe tener exactamente una pregunta.`,
+          `El escenario ${escenario.orden} debe tener al menos una pregunta.`,
         );
         continue;
       }
 
-      const opcionesEscenario = opcionesByPreguntaId.get(pregunta!.id) ?? [];
+      for (const pregunta of escenarioPreguntas) {
+        const opcionesEscenario = opcionesByPreguntaId.get(pregunta.id) ?? [];
 
-      if (opcionesEscenario.length < 2) {
-        errors.push(
-          `La pregunta del escenario ${escenario.orden} debe tener minimo 2 opciones.`,
-        );
-      }
-
-      for (const opcion of opcionesEscenario) {
-        const [retro] = await this.postgrest.select<RetroalimentacionRecord>(
-          'retroalimentaciones',
-          {
-            filters: { opcion_id: opcion.id },
-            limit: 1,
-          },
-        );
-
-        if (!retro) {
+        if (opcionesEscenario.length < 2) {
           errors.push(
-            `La opcion ${opcion.orden} del escenario ${escenario.orden} no tiene retroalimentacion.`,
+            `Escenario ${escenario.orden} → Pregunta ${pregunta.orden} debe tener minimo 2 opciones.`,
           );
         }
 
-        if (opcion.escenario_destino_id) {
-          const destino = escenarioById.get(opcion.escenario_destino_id);
+        if (!opcionesEscenario.some((opcion) => opcion.is_correcta)) {
+          errors.push(
+            `Escenario ${escenario.orden} → Pregunta ${pregunta.orden} no tiene opción correcta.`,
+          );
+        }
 
-          if (!destino || destino.caso_id !== caso.id) {
+        for (const opcion of opcionesEscenario) {
+          const [retro] = await this.postgrest.select<RetroalimentacionRecord>(
+            'retroalimentaciones',
+            {
+              filters: { opcion_id: opcion.id },
+              limit: 1,
+            },
+          );
+
+          if (!retro) {
             errors.push(
-              `La opcion ${opcion.orden} del escenario ${escenario.orden} apunta a un escenario que no pertenece al caso.`,
+              `Escenario ${escenario.orden} → Pregunta ${pregunta.orden} tiene la opcion ${opcion.orden} sin retroalimentacion.`,
             );
+          }
+
+          if (opcion.puntaje < 0 || opcion.puntaje > 5) {
+            errors.push(
+              `Escenario ${escenario.orden} → Pregunta ${pregunta.orden} tiene la opcion ${opcion.orden} con nota fuera de 0.0 a 5.0.`,
+            );
+          }
+
+          if (opcion.escenario_destino_id) {
+            const destino = escenarioById.get(opcion.escenario_destino_id);
+
+            if (!destino || destino.caso_id !== caso.id) {
+              errors.push(
+                `La opcion ${opcion.orden} del escenario ${escenario.orden} apunta a un escenario que no pertenece al caso.`,
+              );
+            }
           }
         }
       }
     }
 
     const escenarioInicial = escenarios[0];
-    const preguntaInicial = preguntasByEscenarioId.get(escenarioInicial.id);
-    const opcionesIniciales = preguntaInicial
-      ? (opcionesByPreguntaId.get(preguntaInicial.id) ?? [])
-      : [];
+    const preguntasIniciales = preguntasByEscenarioId.get(escenarioInicial.id) ?? [];
+    const opcionesIniciales = preguntasIniciales.flatMap(
+      (pregunta) => opcionesByPreguntaId.get(pregunta.id) ?? [],
+    );
 
-    if (!preguntaInicial || opcionesIniciales.length < 2) {
+    if (preguntasIniciales.length === 0 || opcionesIniciales.length < 2) {
       errors.push(
         'El escenario inicial debe tener pregunta y al menos dos opciones.',
       );
@@ -268,7 +300,7 @@ export class PublicacionService {
   private validateCaseFlow(
     casoId: string,
     escenarios: EscenarioRecord[],
-    preguntasByEscenarioId: Map<string, PreguntaDecisionRecord>,
+    preguntasByEscenarioId: Map<string, PreguntaDecisionRecord[]>,
     opcionesByPreguntaId: Map<string, OpcionRespuestaRecord[]>,
   ): string[] {
     const errors: string[] = [];
@@ -300,10 +332,11 @@ export class PublicacionService {
         return true;
       }
 
-      const pregunta = preguntasByEscenarioId.get(escenarioId);
-      const opciones = pregunta
-        ? (opcionesByPreguntaId.get(pregunta.id) ?? [])
-        : [];
+      const opciones = this.getOpcionesByEscenario(
+        escenarioId,
+        preguntasByEscenarioId,
+        opcionesByPreguntaId,
+      );
 
       if (opciones.length === 0) {
         canReachTerminalMemo.set(escenarioId, false);
@@ -429,7 +462,7 @@ export class PublicacionService {
   private collectReachableEscenarios(
     escenarioInicialId: string,
     escenarios: EscenarioRecord[],
-    preguntasByEscenarioId: Map<string, PreguntaDecisionRecord>,
+    preguntasByEscenarioId: Map<string, PreguntaDecisionRecord[]>,
     opcionesByPreguntaId: Map<string, OpcionRespuestaRecord[]>,
     casoId: string,
     escenarioById: Map<string, EscenarioRecord>,
@@ -452,10 +485,11 @@ export class PublicacionService {
         continue;
       }
 
-      const pregunta = preguntasByEscenarioId.get(escenarioId);
-      const opciones = pregunta
-        ? (opcionesByPreguntaId.get(pregunta.id) ?? [])
-        : [];
+      const opciones = this.getOpcionesByEscenario(
+        escenarioId,
+        preguntasByEscenarioId,
+        opcionesByPreguntaId,
+      );
 
       for (const opcion of opciones) {
         const siguiente = this.resolveNextEscenarioForFlow(
@@ -477,7 +511,7 @@ export class PublicacionService {
 
   private hasCycleWithoutTerminalExit(
     escenarios: EscenarioRecord[],
-    preguntasByEscenarioId: Map<string, PreguntaDecisionRecord>,
+    preguntasByEscenarioId: Map<string, PreguntaDecisionRecord[]>,
     opcionesByPreguntaId: Map<string, OpcionRespuestaRecord[]>,
     casoId: string,
     escenarioById: Map<string, EscenarioRecord>,
@@ -506,10 +540,11 @@ export class PublicacionService {
         return false;
       }
 
-      const pregunta = preguntasByEscenarioId.get(escenarioId);
-      const opciones = pregunta
-        ? (opcionesByPreguntaId.get(pregunta.id) ?? [])
-        : [];
+      const opciones = this.getOpcionesByEscenario(
+        escenarioId,
+        preguntasByEscenarioId,
+        opcionesByPreguntaId,
+      );
 
       for (const opcion of opciones) {
         const siguiente = this.resolveNextEscenarioForFlow(
@@ -542,6 +577,16 @@ export class PublicacionService {
     return false;
   }
 
+  private getOpcionesByEscenario(
+    escenarioId: string,
+    preguntasByEscenarioId: Map<string, PreguntaDecisionRecord[]>,
+    opcionesByPreguntaId: Map<string, OpcionRespuestaRecord[]>,
+  ): OpcionRespuestaRecord[] {
+    return (preguntasByEscenarioId.get(escenarioId) ?? []).flatMap(
+      (pregunta) => opcionesByPreguntaId.get(pregunta.id) ?? [],
+    );
+  }
+
   private assertDocenteRole(currentUser: AuthenticatedUser): void {
     if (currentUser.role === Role.PROFESOR || currentUser.role === Role.ADMIN) {
       return;
@@ -558,6 +603,7 @@ export class PublicacionService {
       titulo: record.titulo,
       descripcion: record.descripcion,
       objetivoAprendizaje: record.objetivo_aprendizaje,
+      tiempoMaximoMinutos: record.tiempo_maximo_minutos ?? 60,
       autorDocenteId: record.autor_docente_id,
       estado: record.estado,
       isActive: record.is_active,

@@ -6,7 +6,8 @@ export type NotificacionTipo =
   | 'CASO_ASIGNADO'
   | 'NOTA_DISPONIBLE'
   | 'CASO_ASIGNADO_GRUPO'
-  | 'REINTENTO_AUTORIZADO';
+  | 'REINTENTO_AUTORIZADO'
+  | 'FEEDBACK_DOCENTE';
 
 export type NotificacionEntidadTipo = 'GRUPO' | 'CASO' | 'USUARIO' | 'SESION';
 
@@ -20,6 +21,7 @@ export interface NotificacionRecord {
   entidad_id: string | null;
   leida: boolean;
   created_at: string;
+  archived_at: string | null;
 }
 
 export interface Notificacion {
@@ -32,6 +34,7 @@ export interface Notificacion {
   entidadId: string | null;
   leida: boolean;
   createdAt: string;
+  archivedAt: string | null;
 }
 
 export type CrearNotificacionPayload = Pick<

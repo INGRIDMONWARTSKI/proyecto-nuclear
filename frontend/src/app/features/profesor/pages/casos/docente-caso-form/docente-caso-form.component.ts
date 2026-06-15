@@ -36,6 +36,7 @@ export class DocenteCasoFormComponent implements OnInit {
     titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     descripcion: ['', [Validators.maxLength(1000)]],
     objetivoAprendizaje: ['', [Validators.maxLength(1000)]],
+    tiempoMaximoMinutos: [60, [Validators.required, Validators.min(5), Validators.max(240)]],
   });
 
   ngOnInit(): void {
@@ -64,6 +65,7 @@ export class DocenteCasoFormComponent implements OnInit {
       titulo: raw.titulo.trim(),
       descripcion: raw.descripcion.trim() || undefined,
       objetivoAprendizaje: raw.objetivoAprendizaje.trim() || undefined,
+      tiempoMaximoMinutos: raw.tiempoMaximoMinutos,
     };
 
     const request$ = this.isEdit() && this.casoId
@@ -91,6 +93,7 @@ export class DocenteCasoFormComponent implements OnInit {
           titulo: caso.titulo,
           descripcion: caso.descripcion ?? '',
           objetivoAprendizaje: caso.objetivoAprendizaje ?? '',
+          tiempoMaximoMinutos: caso.tiempoMaximoMinutos ?? 60,
         });
         this.loading.set(false);
       },

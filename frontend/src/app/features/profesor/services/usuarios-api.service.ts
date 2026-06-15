@@ -8,6 +8,7 @@ export interface CrearUsuarioPayload {
   fullName: string;
   email: string;
   role: Role;
+  puedeCrearCasos?: boolean;
 }
 
 export interface CrearUsuarioResponse {
@@ -19,6 +20,7 @@ export interface CrearUsuarioResponse {
 export interface ActualizarUsuarioPayload {
   fullName?: string;
   role?: Role;
+  puedeCrearCasos?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

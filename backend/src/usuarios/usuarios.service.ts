@@ -40,6 +40,10 @@ export class UsuariosService {
           email: crearUsuarioDto.email.trim().toLowerCase(),
           passwordHash,
           role: crearUsuarioDto.role,
+          puedeCrearCasos: this.resolvePuedeCrearCasos(
+            crearUsuarioDto.role,
+            crearUsuarioDto.puedeCrearCasos,
+          ),
           mustChangePassword: false,
         },
         {
@@ -56,6 +60,7 @@ export class UsuariosService {
     fullName: string;
     email: string;
     role: Role;
+    puedeCrearCasos?: boolean;
   }): Promise<{ usuario: Usuario; temporaryPassword: string }> {
     const usuarioExistente = await this.findByEmail(params.email);
 
@@ -74,6 +79,10 @@ export class UsuariosService {
           email: params.email.trim().toLowerCase(),
           passwordHash,
           role: params.role,
+          puedeCrearCasos: this.resolvePuedeCrearCasos(
+            params.role,
+            params.puedeCrearCasos,
+          ),
           mustChangePassword: true,
         },
         {
@@ -119,7 +128,8 @@ export class UsuariosService {
   ): Promise<UsuarioSeguro> {
     const usuario = await this.findById(id);
 
-    const payload: Partial<Pick<Usuario, 'fullName' | 'role'>> = {};
+    const payload: Partial<Pick<Usuario, 'fullName' | 'role' | 'puedeCrearCasos'>> =
+      {};
 
     if (actualizarUsuarioDto.fullName !== undefined) {
       payload.fullName = actualizarUsuarioDto.fullName.trim();
@@ -145,6 +155,21 @@ export class UsuariosService {
       roleChanged = true;
     }
 
+    const nextRole = payload.role ?? usuario.role;
+    const shouldEvaluatePuedeCrearCasos =
+      actualizarUsuarioDto.puedeCrearCasos !== undefined || roleChanged;
+
+    if (shouldEvaluatePuedeCrearCasos) {
+      const nextPuedeCrearCasos = this.resolvePuedeCrearCasos(
+        nextRole,
+        actualizarUsuarioDto.puedeCrearCasos,
+        usuario.puedeCrearCasos,
+      );
+      if (nextPuedeCrearCasos !== usuario.puedeCrearCasos) {
+        payload.puedeCrearCasos = nextPuedeCrearCasos;
+      }
+    }
+
     if (Object.keys(payload).length === 0) {
       throw new BadRequestException('No se enviaron campos para actualizar.');
     }
@@ -162,7 +187,7 @@ export class UsuariosService {
       throw new NotFoundException('Usuario no encontrado.');
     }
 
-    if (roleChanged) {
+    if (roleChanged || payload.puedeCrearCasos !== undefined) {
       await this.incrementTokenVersion(id);
     }
 
@@ -298,5 +323,29 @@ export class UsuariosService {
     if (error instanceof Error && error.message.includes('23505')) {
       throw new ConflictException('Ya existe un usuario con ese correo.');
     }
+  }
+
+  private resolvePuedeCrearCasos(
+    role: Role,
+    requested?: boolean,
+    current?: boolean,
+  ): boolean {
+    if (role === Role.ADMIN) {
+      return true;
+    }
+
+    if (role !== Role.PROFESOR) {
+      return false;
+    }
+
+    if (requested !== undefined) {
+      return requested;
+    }
+
+    if (current !== undefined) {
+      return current;
+    }
+
+    return true;
   }
 }

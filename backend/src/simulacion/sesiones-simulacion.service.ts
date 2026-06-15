@@ -9,6 +9,7 @@ import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { PostgrestService } from '../postgrest/postgrest.service';
+import { normalizeLayout } from './editor-layout.util';
 import { CasosService } from './casos.service';
 import { StartSesionSimulacionDto } from './dto/start-sesion-simulacion.dto';
 import { Usuario } from '../usuarios/entities/usuario.entity';
@@ -36,6 +37,17 @@ interface ElementoEscenaRecord {
   alto: number;
   rotacion: number;
   z_index: number;
+}
+
+interface PreguntaNavegacionItem {
+  preguntaId: string;
+  escenarioId: string;
+  escenarioOrden: number;
+  escenarioTitulo: string;
+  preguntaOrden: number;
+  enunciado: string;
+  respondida: boolean;
+  opcionSeleccionadaId: string | null;
 }
 
 export interface OpcionSafeRecord {
@@ -168,6 +180,7 @@ export class SesionesSimulacionService {
         puntaje_total: 0,
         total_preguntas: preguntas.length,
         respondidas: 0,
+        finalizacion_tipo: null,
       },
       { select: '*' },
     );
@@ -226,6 +239,215 @@ export class SesionesSimulacionService {
     }
 
     return sesion;
+  }
+
+  getRemainingSeconds(
+    sesion: SesionSimulacionRecord,
+    tiempoMaximoMinutos: number,
+  ): number {
+    const startedAt = new Date(sesion.started_at).getTime();
+    const limitMs = Math.max(tiempoMaximoMinutos, 1) * 60 * 1000;
+    const endsAt = startedAt + limitMs;
+    const diff = Math.floor((endsAt - Date.now()) / 1000);
+    return Math.max(0, diff);
+  }
+
+  async ensureSessionCompletedIfTimeExpired(
+    sesion: SesionSimulacionRecord,
+  ): Promise<SesionSimulacionRecord> {
+    if (sesion.estado !== 'in_progress') {
+      return sesion;
+    }
+
+    const caso = await this.casosService.findCasoById(sesion.caso_id);
+    const remainingSeconds = this.getRemainingSeconds(
+      sesion,
+      caso.tiempo_maximo_minutos ?? 60,
+    );
+
+    if (remainingSeconds > 0) {
+      return sesion;
+    }
+
+    const [updated] = await this.postgrest.update<SesionSimulacionRecord>(
+      'sesiones_simulacion',
+      {
+        estado: 'completed',
+        finished_at: new Date().toISOString(),
+        finalizacion_tipo: 'timeout',
+      },
+      {
+        filters: { id: sesion.id },
+        select: '*',
+      },
+    );
+
+    await this.notificarNotaDisponible(updated);
+    return updated;
+  }
+
+  async buildPlayerState(
+    sesion: SesionSimulacionRecord,
+    preguntaId?: string,
+  ): Promise<{
+    sesionId: string;
+    casoId: string;
+    completed: boolean;
+    startedAt: string;
+    tiempoMaximoMinutos: number;
+    remainingSeconds: number;
+    finalizacionTipo: 'manual' | 'timeout' | null;
+    progreso: {
+      totalPreguntas: number;
+      respondidas: number;
+    };
+    navegacion: PreguntaNavegacionItem[];
+    escenario?: {
+      id: string;
+      orden: number;
+      titulo: string;
+      situacionTexto: string;
+      fondoCodigo: string;
+      layout: unknown;
+      elementos: Array<{
+        id: string;
+        tipo: 'personaje' | 'objeto' | 'texto';
+        assetCodigo: string | null;
+        textoContenido: string | null;
+        posX: number;
+        posY: number;
+        ancho: number;
+        alto: number;
+        rotacion: number;
+        zIndex: number;
+      }>;
+      pregunta: {
+        id: string;
+        enunciado: string;
+        tipo: 'single_choice';
+        orden: number;
+        opcionSeleccionadaId: string | null;
+        opciones: OpcionSafeRecord[];
+      };
+    };
+  }> {
+    const refreshed = await this.ensureSessionCompletedIfTimeExpired(sesion);
+    const caso = await this.casosService.findCasoById(refreshed.caso_id);
+
+    const escenarios = await this.listEscenariosByCaso(refreshed.caso_id);
+    const escenarioById = new Map(escenarios.map((escenario) => [escenario.id, escenario]));
+
+    const preguntas = await this.postgrest.select<PreguntaDecisionRecord>(
+      'preguntas_decision',
+      {
+        filters: { escenario_id: escenarios.map((escenario) => escenario.id) },
+      },
+    );
+    const preguntasOrdenadas = preguntas
+      .slice()
+      .sort((a, b) => {
+        const escA = escenarioById.get(a.escenario_id)?.orden ?? 0;
+        const escB = escenarioById.get(b.escenario_id)?.orden ?? 0;
+        if (escA !== escB) return escA - escB;
+        return a.orden - b.orden;
+      });
+
+    const respuestas = await this.postgrest.select<RespuestaEstudianteRecord>(
+      'respuestas_estudiante',
+      {
+        filters: { sesion_id: refreshed.id },
+      },
+    );
+    const respuestaByPreguntaId = new Map(
+      respuestas.map((respuesta) => [respuesta.pregunta_id, respuesta]),
+    );
+
+    const navegacion: PreguntaNavegacionItem[] = preguntasOrdenadas.map((pregunta) => {
+      const escenario = escenarioById.get(pregunta.escenario_id);
+      const respuesta = respuestaByPreguntaId.get(pregunta.id);
+      return {
+        preguntaId: pregunta.id,
+        escenarioId: pregunta.escenario_id,
+        escenarioOrden: escenario?.orden ?? 0,
+        escenarioTitulo: escenario?.titulo ?? 'Escenario',
+        preguntaOrden: pregunta.orden,
+        enunciado: pregunta.enunciado,
+        respondida: Boolean(respuesta),
+        opcionSeleccionadaId: respuesta?.opcion_id ?? null,
+      };
+    });
+
+    const remainingSeconds = this.getRemainingSeconds(
+      refreshed,
+      caso.tiempo_maximo_minutos ?? 60,
+    );
+
+    const baseState = {
+      sesionId: refreshed.id,
+      casoId: refreshed.caso_id,
+      completed: refreshed.estado !== 'in_progress',
+      startedAt: refreshed.started_at,
+      tiempoMaximoMinutos: caso.tiempo_maximo_minutos ?? 60,
+      remainingSeconds,
+      finalizacionTipo: refreshed.finalizacion_tipo ?? null,
+      progreso: {
+        totalPreguntas: refreshed.total_preguntas,
+        respondidas: refreshed.respondidas,
+      },
+      navegacion,
+    };
+
+    if (refreshed.estado !== 'in_progress' || preguntasOrdenadas.length === 0) {
+      return baseState;
+    }
+
+    const preguntaActiva =
+      (preguntaId
+        ? preguntasOrdenadas.find((pregunta) => pregunta.id === preguntaId)
+        : undefined) ??
+      preguntasOrdenadas.find((pregunta) => !respuestaByPreguntaId.has(pregunta.id)) ??
+      preguntasOrdenadas[0];
+
+    const escenario = escenarioById.get(preguntaActiva.escenario_id);
+    if (!escenario) {
+      return baseState;
+    }
+
+    const elementos = await this.listElementosByEscenario(escenario.id);
+    const opciones = await this.listOpcionesPublicasByPregunta(preguntaActiva.id);
+
+    return {
+      ...baseState,
+      escenario: {
+        id: escenario.id,
+        orden: escenario.orden,
+        titulo: escenario.titulo,
+        situacionTexto: escenario.situacion_texto,
+        fondoCodigo: escenario.fondo_codigo,
+        layout: normalizeLayout(escenario.layout_data, escenario, elementos),
+        elementos: elementos.map((el) => ({
+          id: el.id,
+          tipo: el.tipo,
+          assetCodigo: el.asset_codigo,
+          textoContenido: el.texto_contenido,
+          posX: el.pos_x,
+          posY: el.pos_y,
+          ancho: el.ancho,
+          alto: el.alto,
+          rotacion: el.rotacion,
+          zIndex: el.z_index,
+        })),
+        pregunta: {
+          id: preguntaActiva.id,
+          enunciado: preguntaActiva.enunciado,
+          tipo: preguntaActiva.tipo,
+          orden: preguntaActiva.orden,
+          opcionSeleccionadaId:
+            respuestaByPreguntaId.get(preguntaActiva.id)?.opcion_id ?? null,
+          opciones,
+        },
+      },
+    };
   }
 
   assertSesionBelongsToStudent(
@@ -400,9 +622,6 @@ export class SesionesSimulacionService {
       );
     }
 
-    const caso = await this.casosService.findCasoById(sesion.caso_id);
-    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
-
     const allowed = await this.isEstudianteAsignadoAlCasoEnGruposDocente(
       sesion.caso_id,
       sesion.estudiante_id,
@@ -431,8 +650,7 @@ export class SesionesSimulacionService {
       finishedAt: string | null;
     }>
   > {
-    const caso = await this.casosService.findCasoById(casoId);
-    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+    this.assertDocenteRole(currentUser);
     const allowedPairs = await this.buildAllowedCasoEstudiantePairs(currentUser);
 
     if (allowedPairs.size === 0) {
@@ -582,11 +800,10 @@ export class SesionesSimulacionService {
       'preguntas_decision',
       {
         filters: { escenario_id: escenarios.map((esc) => esc.id) },
+        order: 'orden.asc',
       },
     );
-    const preguntasByEscenarioId = new Map(
-      preguntas.map((pregunta) => [pregunta.escenario_id, pregunta]),
-    );
+    const preguntasByEscenarioId = this.groupPreguntasByEscenario(preguntas);
 
     const respuestas = await this.postgrest.select<RespuestaEstudianteRecord>(
       'respuestas_estudiante',
@@ -595,18 +812,50 @@ export class SesionesSimulacionService {
         order: 'respondida_at.asc',
       },
     );
+    const answeredQuestionIds = new Set(respuestas.map((r) => r.pregunta_id));
 
     let escenarioPendiente: EscenarioRecord | null = null;
 
     if (respuestas.length === 0) {
-      escenarioPendiente = escenarios[0] ?? null;
+      for (const escenario of escenarios) {
+        const pregunta = this.findFirstUnansweredPregunta(
+          preguntasByEscenarioId.get(escenario.id) ?? [],
+          answeredQuestionIds,
+        );
+        if (pregunta) {
+          return {
+            escenario,
+            pregunta,
+            respondidas: sesion.respondidas,
+            totalPreguntas: sesion.total_preguntas,
+          };
+        }
+      }
     } else {
       const ultimaRespuesta = respuestas[respuestas.length - 1];
       const escenarioActual = escenarios.find(
         (escenario) => escenario.id === ultimaRespuesta.escenario_id,
       );
 
-      if (!escenarioActual || escenarioActual.is_final) {
+      if (!escenarioActual) {
+        return null;
+      }
+
+      const siguientePreguntaMismoEscenario = this.findFirstUnansweredPregunta(
+        preguntasByEscenarioId.get(escenarioActual.id) ?? [],
+        answeredQuestionIds,
+      );
+
+      if (siguientePreguntaMismoEscenario) {
+        return {
+          escenario: escenarioActual,
+          pregunta: siguientePreguntaMismoEscenario,
+          respondidas: sesion.respondidas,
+          totalPreguntas: sesion.total_preguntas,
+        };
+      }
+
+      if (escenarioActual.is_final) {
         return null;
       }
 
@@ -623,15 +872,12 @@ export class SesionesSimulacionService {
       return null;
     }
 
-    const pregunta = preguntasByEscenarioId.get(escenarioPendiente.id);
+    const pregunta = this.findFirstUnansweredPregunta(
+      preguntasByEscenarioId.get(escenarioPendiente.id) ?? [],
+      answeredQuestionIds,
+    );
 
     if (!pregunta) {
-      return null;
-    }
-
-    const answeredQuestionIds = new Set(respuestas.map((r) => r.pregunta_id));
-
-    if (answeredQuestionIds.has(pregunta.id)) {
       return null;
     }
 
@@ -737,6 +983,7 @@ export class SesionesSimulacionService {
         respondidas: sesion.respondidas + 1,
         estado: 'completed',
         finished_at: new Date().toISOString(),
+        finalizacion_tipo: 'manual',
       },
       {
         filters: { id: sesion.id },
@@ -767,6 +1014,7 @@ export class SesionesSimulacionService {
       {
         estado: 'completed',
         finished_at: new Date().toISOString(),
+        finalizacion_tipo: 'manual',
       },
       {
         filters: { id: sesion.id },
@@ -793,6 +1041,7 @@ export class SesionesSimulacionService {
             respondidas: nextRespondidas,
             estado: 'completed',
             finished_at: new Date().toISOString(),
+            finalizacion_tipo: 'manual',
           }
         : {
             respondidas: nextRespondidas,
@@ -838,23 +1087,10 @@ export class SesionesSimulacionService {
 
     const sesion = await this.findSesionById(sesionId);
     this.assertSesionBelongsToStudent(sesion, currentUser);
+    const validSesion = await this.ensureSessionCompletedIfTimeExpired(sesion);
 
-    if (sesion.estado === 'completed') {
-      return sesion;
-    }
-
-    const pending = await this.findPendingScenarioForSession(sesion);
-
-    if (pending) {
-      throw new ConflictException(
-        'No se puede finalizar la simulacion porque hay escenarios pendientes.',
-      );
-    }
-
-    if (sesion.respondidas === 0) {
-      throw new ConflictException(
-        'No se puede finalizar la simulacion sin responder al menos una pregunta.',
-      );
+    if (validSesion.estado === 'completed') {
+      return validSesion;
     }
 
     const [updated] = await this.postgrest.update<SesionSimulacionRecord>(
@@ -862,6 +1098,7 @@ export class SesionesSimulacionService {
       {
         estado: 'completed',
         finished_at: new Date().toISOString(),
+        finalizacion_tipo: 'manual',
       },
       {
         filters: { id: sesionId },
@@ -923,33 +1160,20 @@ export class SesionesSimulacionService {
       });
     }
 
-    const casos = await this.postgrest.select<CasoRecord>('casos', {
-      filters: { autor_docente_id: currentUser.sub },
+    const grupos = await this.postgrest.select<{ id: string }>('grupos', {
+      filters: { profesorId: currentUser.sub },
+      select: 'id',
     });
-
-    if (casos.length === 0) {
+    const grupoIds = grupos.map((grupo) => grupo.id);
+    if (grupoIds.length === 0) {
       return [];
     }
 
     const asignaciones = await this.postgrest.select<CasoGrupo>('caso_grupo', {
-      filters: { casoId: casos.map((caso) => caso.id) },
+      filters: { grupoId: grupoIds },
       order: 'createdAt.desc',
     });
-
-    const grupos = await this.postgrest.select<{ id: string; profesorId: string }>(
-      'grupos',
-      {
-        filters: {
-          id: [...new Set(asignaciones.map((item) => item.grupoId))],
-          profesorId: currentUser.sub,
-        },
-      },
-    );
-    const grupoIdsPermitidos = new Set(grupos.map((grupo) => grupo.id));
-
-    return asignaciones.filter((asignacion) =>
-      grupoIdsPermitidos.has(asignacion.grupoId),
-    );
+    return asignaciones;
   }
 
   private async isEstudianteAsignadoAlCasoEnGruposDocente(
@@ -1000,6 +1224,32 @@ export class SesionesSimulacionService {
       filters: { caso_id: casoId },
       order: 'orden.asc',
     });
+  }
+
+  private groupPreguntasByEscenario(
+    preguntas: PreguntaDecisionRecord[],
+  ): Map<string, PreguntaDecisionRecord[]> {
+    const byEscenario = new Map<string, PreguntaDecisionRecord[]>();
+
+    for (const pregunta of preguntas) {
+      const actuales = byEscenario.get(pregunta.escenario_id) ?? [];
+      actuales.push(pregunta);
+      byEscenario.set(pregunta.escenario_id, actuales);
+    }
+
+    return byEscenario;
+  }
+
+  private findFirstUnansweredPregunta(
+    preguntas: PreguntaDecisionRecord[],
+    answeredQuestionIds: Set<string>,
+  ): PreguntaDecisionRecord | null {
+    return (
+      preguntas
+        .slice()
+        .sort((a, b) => a.orden - b.orden)
+        .find((pregunta) => !answeredQuestionIds.has(pregunta.id)) ?? null
+    );
   }
 
   private async findOpcionById(id: string): Promise<OpcionRespuestaRecord> {

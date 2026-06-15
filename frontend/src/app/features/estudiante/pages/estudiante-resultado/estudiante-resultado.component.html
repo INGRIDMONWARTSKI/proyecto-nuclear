@@ -80,6 +80,29 @@
 
           </div>
 
+          <div class="score-hero__metric">
+
+            <span class="score-hero__label">No respondidas</span>
+
+            <span class="score-hero__value score-hero__value--sm">{{ r.noRespondidas }}</span>
+
+          </div>
+
+        </div>
+
+        <div class="score-hero score-hero--breakdown" aria-label="Desglose de respuestas">
+          <div class="score-hero__metric">
+            <span class="score-hero__label">Acertadas</span>
+            <span class="score-hero__value score-hero__value--sm">{{ r.respuestasAcertadas }}</span>
+          </div>
+          <div class="score-hero__metric">
+            <span class="score-hero__label">Parciales</span>
+            <span class="score-hero__value score-hero__value--sm">{{ r.respuestasParciales }}</span>
+          </div>
+          <div class="score-hero__metric">
+            <span class="score-hero__label">Fallidas</span>
+            <span class="score-hero__value score-hero__value--sm">{{ r.respuestasFallidas }}</span>
+          </div>
         </div>
 
 
@@ -93,6 +116,36 @@
         </div>
 
       </article>
+
+      <section class="siep-card score-card">
+        <div class="score-card__reflection">
+          <h3>Rúbrica aplicada</h3>
+          @if (r.rubrica.length > 0) {
+            <div class="result-rubrica">
+              @for (criterio of r.rubrica; track criterio.id) {
+                <article class="result-rubrica__item">
+                  <strong>{{ criterio.orden }}. {{ criterio.criterio }}</strong>
+                  <p>{{ criterio.descripcion }}</p>
+                  @if (criterio.nivelEsperado) {
+                    <p><span>Nivel esperado:</span> {{ criterio.nivelEsperado }}</p>
+                  }
+                </article>
+              }
+            </div>
+          } @else {
+            <p>Este caso aún no tiene rúbrica publicada.</p>
+          }
+        </div>
+      </section>
+
+      <section class="siep-card score-card">
+        <div class="score-card__reflection">
+          <h3>Retroalimentación general del docente</h3>
+          <p>
+            {{ r.retroalimentacionDocenteGeneral || 'Aún no hay retroalimentación general del docente.' }}
+          </p>
+        </div>
+      </section>
 
 
 
@@ -138,6 +191,19 @@
 
                 {{ item.puntajeObtenido }}
 
+              </p>
+
+              <p class="result-item__row">
+                <span>Tipo de respuesta</span>
+                @if (item.tipoRespuesta === 'correcta') {
+                  Correcta
+                } @else if (item.tipoRespuesta === 'alternativa') {
+                  Alternativa
+                } @else if (item.tipoRespuesta === 'incorrecta') {
+                  Incorrecta
+                } @else {
+                  Sin respuesta
+                }
               </p>
 
               <p class="result-item__row result-item__row--retro">

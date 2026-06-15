@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, MaxLength, Max, Min, MinLength } from 'class-validator';
 
 export class CreateCasoDto {
   @IsString()
@@ -15,4 +15,10 @@ export class CreateCasoDto {
   @IsString()
   @MaxLength(1000)
   objetivoAprendizaje?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(5)
+  @Max(240)
+  tiempoMaximoMinutos?: number;
 }

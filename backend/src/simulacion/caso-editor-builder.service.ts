@@ -51,12 +51,16 @@ export class CasoEditorBuilderService {
     const preguntas = escenarios.length
       ? await this.postgrest.select<PreguntaDecisionRecord>('preguntas_decision', {
           filters: { escenario_id: escenarios.map((escenario) => escenario.id) },
+          order: 'orden.asc',
         })
       : [];
 
-    const preguntasByEscenarioId = new Map(
-      preguntas.map((pregunta) => [pregunta.escenario_id, pregunta]),
-    );
+    const preguntasByEscenarioId = new Map<string, PreguntaDecisionRecord[]>();
+    for (const pregunta of preguntas) {
+      const current = preguntasByEscenarioId.get(pregunta.escenario_id) ?? [];
+      current.push(pregunta);
+      preguntasByEscenarioId.set(pregunta.escenario_id, current);
+    }
 
     const opciones = preguntas.length
       ? await this.postgrest.select<OpcionRespuestaRecord>('opciones_respuesta', {
@@ -81,7 +85,7 @@ export class CasoEditorBuilderService {
     const retroByOpcionId = new Map(retros.map((retro) => [retro.opcion_id, retro]));
 
     const editorScenarios: CasoEditorScenario[] = escenarios.map((escenario) => {
-      const pregunta = preguntasByEscenarioId.get(escenario.id) ?? null;
+      const preguntasEscenario = preguntasByEscenarioId.get(escenario.id) ?? [];
       const layout = normalizeLayout(
         escenario.layout_data,
         escenario,
@@ -101,7 +105,7 @@ export class CasoEditorBuilderService {
             ? backgroundElement.content['aiAssetId']
             : null;
 
-      return {
+      const scenario = {
         id: escenario.id,
         orden: escenario.orden,
         titulo: escenario.titulo,
@@ -111,9 +115,10 @@ export class CasoEditorBuilderService {
         aiBackgroundAssetId,
         isFinal: escenario.is_final,
         layout: layout.elements.length > 0 ? layout : buildDefaultLayout(escenario),
-        pregunta: pregunta
-          ? {
+        pregunta: null,
+        preguntas: preguntasEscenario.map((pregunta) => ({
               id: pregunta.id,
+              orden: pregunta.orden,
               enunciado: pregunta.enunciado,
               tipo: pregunta.tipo,
               puntajeMaximo: pregunta.puntaje_maximo,
@@ -136,14 +141,18 @@ export class CasoEditorBuilderService {
                     : null,
                 };
               }),
-            }
-          : null,
+        })),
+      };
+
+      return {
+        ...scenario,
+        pregunta: scenario.preguntas[0] ?? null,
       };
     });
 
     const scenarioById = new Map(editorScenarios.map((item) => [item.id, item]));
     const conexiones = editorScenarios.flatMap((scenario, index) =>
-      (scenario.pregunta?.opciones ?? []).map((opcion) => {
+      scenario.preguntas.flatMap((pregunta) => pregunta.opciones).map((opcion) => {
         const explicit = opcion.escenarioDestinoId
           ? scenarioById.get(opcion.escenarioDestinoId) ?? null
           : null;
@@ -174,6 +183,7 @@ export class CasoEditorBuilderService {
       titulo: caso.titulo,
       descripcion: caso.descripcion,
       objetivoAprendizaje: caso.objetivo_aprendizaje,
+      tiempoMaximoMinutos: caso.tiempo_maximo_minutos ?? 60,
       autorDocenteId: caso.autor_docente_id,
       estado: caso.estado,
       isActive: caso.is_active,

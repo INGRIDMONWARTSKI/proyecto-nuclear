@@ -6,12 +6,9 @@ export interface RespuestaSubmitPayload {
 export interface RespuestaSubmitResponse {
   respuestaId: string;
   puntajeObtenido: number;
-  retroalimentacion: {
-    mensaje: string;
-    tipo: 'pedagogica' | 'correctiva' | 'refuerzo';
-    referenciaTeorica: string | null;
-  } | null;
   completed: boolean;
-  nextEscenarioId?: string;
+  respondidas: number;
+  totalPreguntas: number;
+  mensaje: string;
   resultadoUrl?: string;
 }

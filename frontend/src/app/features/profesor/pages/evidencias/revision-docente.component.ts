@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { getErrorMessage } from '../../../../core/utils/http-error.util';
 import { RevisionSesionDocente } from '../../../simulacion/models/docente/revision-sesion-docente.model';
@@ -15,6 +16,7 @@ import { StatusBadgeComponent } from '../../../../shared/ui/status-badge/status-
   standalone: true,
   imports: [
     RouterLink,
+    ReactiveFormsModule,
     DatePipe,
     AlertMessageComponent,
     EmptyStateComponent,
@@ -28,13 +30,19 @@ import { StatusBadgeComponent } from '../../../../shared/ui/status-badge/status-
 export class RevisionDocenteComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
   private readonly simulacionService = inject(SimulacionDocenteService);
 
   protected readonly loading = signal(true);
   protected readonly authorizing = signal(false);
+  protected readonly savingFeedback = signal(false);
+  protected readonly downloadingReport = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly revision = signal<RevisionSesionDocente | null>(null);
+  protected readonly feedbackForm = this.fb.nonNullable.group({
+    mensaje: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(2000)]],
+  });
 
   private sesionId = '';
 
@@ -56,6 +64,9 @@ export class RevisionDocenteComponent implements OnInit {
     this.simulacionService.obtenerRevisionSesion(this.sesionId).subscribe({
       next: (revision) => {
         this.revision.set(revision);
+        this.feedbackForm.patchValue({
+          mensaje: revision.retroalimentacionDocenteGeneral ?? '',
+        });
         this.loading.set(false);
       },
       error: (error) => {
@@ -107,5 +118,61 @@ export class RevisionDocenteComponent implements OnInit {
           this.authorizing.set(false);
         },
       });
+  }
+
+  guardarRetroalimentacionGeneral(): void {
+    if (this.feedbackForm.invalid || this.savingFeedback()) {
+      this.feedbackForm.markAllAsTouched();
+      return;
+    }
+
+    this.savingFeedback.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.simulacionService
+      .guardarRetroalimentacionGeneral(
+        this.sesionId,
+        this.feedbackForm.getRawValue().mensaje,
+      )
+      .subscribe({
+        next: (revision) => {
+          this.revision.set(revision);
+          this.feedbackForm.patchValue({
+            mensaje: revision.retroalimentacionDocenteGeneral ?? '',
+          });
+          this.successMessage.set('Retroalimentacion general guardada.');
+          this.savingFeedback.set(false);
+        },
+        error: (error) => {
+          this.errorMessage.set(
+            getErrorMessage(error, 'No fue posible guardar la retroalimentacion general.'),
+          );
+          this.savingFeedback.set(false);
+        },
+      });
+  }
+
+  descargarReporte(): void {
+    if (this.downloadingReport()) {
+      return;
+    }
+
+    this.downloadingReport.set(true);
+    this.simulacionService.descargarReporteSesion(this.sesionId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `reporte-participacion-${this.sesionId}.csv`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        this.downloadingReport.set(false);
+      },
+      error: (error) => {
+        this.errorMessage.set(getErrorMessage(error, 'No fue posible descargar el reporte.'));
+        this.downloadingReport.set(false);
+      },
+    });
   }
 }

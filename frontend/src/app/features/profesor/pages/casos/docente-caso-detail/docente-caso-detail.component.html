@@ -7,12 +7,18 @@
         <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
         <app-page-header
           [title]="c.titulo"
-          subtitle="Gestiona escenarios, contenido pedagógico, editor visual y publicación."
+          subtitle="Gestiona escenarios, contenido pedagogico, editor visual y publicacion."
           icon="🧠"
         >
           <div actions class="case-header-actions">
             <a class="siep-btn-secondary" routerLink="..">Volver</a>
-            <a class="siep-btn-primary" [routerLink]="['canvas']">Abrir editor visual</a>
+            @if (canEditCase()) {
+              <a class="siep-btn-primary" [routerLink]="['canvas']">Abrir editor visual</a>
+            } @else {
+              <a class="siep-btn-primary" routerLink="/profesor/asignaciones">
+                Asignar a comunidades
+              </a>
+            }
           </div>
         </app-page-header>
       </div>
@@ -42,26 +48,107 @@
             [status]="estadoBadge(c.estado)"
             [label]="estadoLabel(c.estado)"
           />
-          @if (c.estado === 'draft') {
+          @if (c.estado === 'draft' && canEditCase()) {
             <a class="siep-btn-secondary siep-btn--compact" [routerLink]="['editar']">
               Editar datos
             </a>
           }
         </div>
-        <p class="caso-meta__text">{{ c.descripcion || 'Sin descripción' }}</p>
+        <p class="caso-meta__text">{{ c.descripcion || 'Sin descripcion' }}</p>
         <p class="caso-meta__text">
           <strong>Objetivo:</strong>
           {{ c.objetivoAprendizaje || 'Sin objetivo definido' }}
         </p>
+        <p class="caso-meta__text">
+          <strong>Tiempo máximo de participación:</strong>
+          {{ c.tiempoMaximoMinutos }} minutos
+        </p>
         <div class="case-hero__chips">
           <span>Escenas interactivas</span>
           <span>Preguntas situadas</span>
-          <span>Rutas de decisión</span>
+          <span>Rutas de decision</span>
         </div>
         @if (c.estado === 'published') {
           <p class="case-hero__assignment-note">
-            Publicado no significa asignado. Para que los estudiantes puedan verlo, asigna este caso a una o más comunidades académicas.
+            Publicado no significa asignado. Para que los estudiantes puedan verlo, asigna este caso a una o mas comunidades academicas.
           </p>
+        }
+      </section>
+
+      <section class="siep-card rubrica-panel">
+        <div class="section-header">
+          <div>
+            <h2>Rubrica de calificacion</h2>
+            <p class="muted">Define los criterios con los que se justificara la calificacion final del estudiante.</p>
+          </div>
+          @if ((preview()?.rubrica?.length ?? 0) === 0) {
+            <app-status-badge variant="status" status="pending" label="Pendiente" />
+          } @else {
+            <app-status-badge variant="status" status="success" label="Configurada" />
+          }
+        </div>
+
+        @if ((preview()?.rubrica?.length ?? 0) > 0) {
+          <div class="rubrica-list">
+            @for (criterio of preview()!.rubrica; track criterio.id) {
+              <article class="rubrica-item">
+                <div>
+                  <strong>{{ criterio.orden }}. {{ criterio.criterio }}</strong>
+                  <p>{{ criterio.descripcion }}</p>
+                  @if (criterio.nivelEsperado) {
+                    <p class="muted"><strong>Nivel esperado:</strong> {{ criterio.nivelEsperado }}</p>
+                  }
+                  @if (criterio.peso !== null) {
+                    <p class="muted"><strong>Peso:</strong> {{ criterio.peso }}</p>
+                  }
+                </div>
+                @if (canEditRubrica()) {
+                  <div class="escenario-item__actions">
+                    <button class="siep-btn-secondary siep-btn--compact" type="button" (click)="editarCriterioRubrica(criterio)">
+                      Editar
+                    </button>
+                    <button class="siep-btn-danger siep-btn--compact" type="button" [disabled]="savingRubrica()" (click)="eliminarCriterioRubrica(criterio)">
+                      Eliminar
+                    </button>
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="checklist-success">Aun no hay criterios de rubrica para este caso.</p>
+        }
+
+        @if (canEditRubrica()) {
+          <form class="rubrica-form" [formGroup]="rubricaForm" (ngSubmit)="guardarCriterioRubrica()">
+            <h3>{{ editingRubricaId() ? 'Editar criterio' : 'Agregar criterio' }}</h3>
+            <div class="siep-field">
+              <label for="rubrica-criterio">Criterio</label>
+              <input id="rubrica-criterio" type="text" formControlName="criterio" />
+            </div>
+            <div class="siep-field">
+              <label for="rubrica-descripcion">Descripcion</label>
+              <textarea id="rubrica-descripcion" rows="3" formControlName="descripcion"></textarea>
+            </div>
+            <div class="siep-field">
+              <label for="rubrica-nivel">Nivel esperado</label>
+              <textarea id="rubrica-nivel" rows="2" formControlName="nivelEsperado"></textarea>
+            </div>
+            <div class="siep-field">
+              <label for="rubrica-peso">Peso opcional</label>
+              <input id="rubrica-peso" type="number" min="0" step="0.1" formControlName="peso" />
+            </div>
+            <div class="actions-panel__buttons">
+              <button class="siep-btn-primary" type="submit" [disabled]="savingRubrica()">
+                {{ savingRubrica() ? 'Guardando...' : (editingRubricaId() ? 'Actualizar criterio' : 'Agregar criterio') }}
+              </button>
+              @if (editingRubricaId()) {
+                <button class="siep-btn-secondary" type="button" (click)="cancelarEdicionRubrica()">
+                  Cancelar
+                </button>
+              }
+            </div>
+          </form>
         }
       </section>
 
@@ -72,7 +159,7 @@
             <a class="siep-btn-secondary siep-btn--compact" [routerLink]="['canvas']">
               Ver mapa visual
             </a>
-            @if (c.estado === 'draft') {
+            @if (c.estado === 'draft' && canEditCase()) {
               <a class="siep-btn-primary siep-btn--compact" [routerLink]="['escenarios', 'nuevo']">
                 Agregar escenario
               </a>
@@ -98,7 +185,7 @@
                   </p>
                 </div>
                 <div class="escenario-item__actions">
-                  @if (c.estado === 'draft') {
+                  @if (c.estado === 'draft' && canEditCase()) {
                     <a
                       class="siep-btn-secondary siep-btn--compact"
                       [routerLink]="['/profesor/escenarios', esc.id, 'editar']"
@@ -111,8 +198,16 @@
                       [routerLink]="['/profesor/escenarios', esc.id, 'decision']"
                       [queryParams]="{ casoId: c.id }"
                     >
-                      Configurar decisión
+                      Configurar decision
                     </a>
+                    <button
+                      class="siep-btn-danger siep-btn--compact"
+                      type="button"
+                      [disabled]="deletingEscenarioId() === esc.id"
+                      (click)="eliminarEscenario(esc)"
+                    >
+                      {{ deletingEscenarioId() === esc.id ? 'Eliminando...' : 'Eliminar escena' }}
+                    </button>
                   }
                 </div>
               </li>
@@ -121,27 +216,68 @@
         }
       </section>
 
+      <section class="siep-card publication-checklist">
+        <div class="section-header">
+          <h2>Requisitos para publicar</h2>
+          @if (cumpleRequisitosPublicacion()) {
+            <app-status-badge
+              variant="status"
+              status="success"
+              label="Listo para publicacion"
+            />
+          } @else {
+            <app-status-badge
+              variant="status"
+              status="pending"
+              label="Pendientes"
+            />
+          }
+        </div>
+        @if (cumpleRequisitosPublicacion()) {
+          <p class="checklist-success">El caso cumple los requisitos para publicacion.</p>
+        } @else {
+          <div class="checklist-detail">
+            <h3>Pendientes detectados</h3>
+            <ul>
+              @for (pendiente of pendientesPublicacionDetallados(); track pendiente) {
+                <li>{{ pendiente }}</li>
+              }
+            </ul>
+          </div>
+        }
+        <ul class="checklist-list">
+          @for (item of requisitosPublicacion(); track item.label) {
+            <li [class.checklist-list__item--ok]="item.ok">
+              <span aria-hidden="true">{{ item.ok ? '✓' : '•' }}</span>
+              {{ item.label }}
+            </li>
+          }
+        </ul>
+      </section>
+
       <section class="siep-card actions-panel">
         <h2>Acciones del caso</h2>
         <div class="actions-panel__buttons">
-          <a class="siep-btn-primary" [routerLink]="['canvas']">Diseñar en editor visual</a>
+          @if (canEditCase()) {
+            <a class="siep-btn-primary" [routerLink]="['canvas']">Disenar en editor visual</a>
+          }
           <button
             class="siep-btn-secondary"
             type="button"
             [disabled]="loadingPreview()"
             (click)="cargarPreview()"
           >
-            {{ loadingPreview() ? 'Cargando...' : 'Vista previa pedagógica' }}
+            {{ loadingPreview() ? 'Cargando...' : 'Vista previa pedagogica' }}
           </button>
           @if (c.estado === 'published') {
             <button class="siep-btn-secondary" type="button" (click)="cargarEvidencias()">
               Ver evidencias
             </button>
             <a class="siep-btn-primary" routerLink="/profesor/asignaciones">
-              Asignar a comunidades académicas
+              Asignar a comunidades academicas
             </a>
           }
-          @if (c.estado === 'draft') {
+          @if (c.estado === 'draft' && canEditCase()) {
             <button
               class="siep-btn-primary"
               type="button"
@@ -154,34 +290,6 @@
         </div>
       </section>
 
-      @if (showPreview() && preview(); as p) {
-        <section class="siep-card preview-panel">
-          <h2>Vista previa pedagógica</h2>
-          @for (esc of p.escenarios; track esc.id) {
-            <article class="preview-item">
-              <h3>{{ esc.orden }}. {{ esc.titulo }}</h3>
-              <p>{{ esc.situacionTexto }}</p>
-              @if (esc.pregunta) {
-                <p><strong>Pregunta:</strong> {{ esc.pregunta.enunciado }}</p>
-                <ul>
-                  @for (op of esc.pregunta.opciones; track op.id) {
-                    <li>
-                      {{ op.texto }}
-                      @if (op.retroalimentacion) {
-                        · <em>{{ op.retroalimentacion.tipo }}</em>
-                      } @else {
-                        · <span class="warn">Sin retroalimentación</span>
-                      }
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="warn">Sin pregunta configurada.</p>
-              }
-            </article>
-          }
-        </section>
-      }
 
       @if (showEvidencias()) {
         <section class="siep-card">
@@ -215,7 +323,7 @@
         <p class="profesor-page-hero__kicker" aria-hidden="true">MENTORA · CASOS</p>
         <app-page-header
           title="Caso no disponible"
-          subtitle="No se pudo cargar la información del caso."
+          subtitle="No se pudo cargar la informacion del caso."
           icon="🧠"
         >
           <a actions class="siep-btn-secondary" routerLink="..">Volver</a>
@@ -226,4 +334,105 @@
       }
     </section>
   }
+}
+
+@if (showPreview()) {
+  <div
+    class="preview-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="preview-modal-title"
+  >
+    <button
+      type="button"
+      class="preview-modal__backdrop"
+      aria-label="Cerrar vista previa"
+      (click)="closePreview()"
+    ></button>
+    <div class="preview-modal__panel">
+      <div class="preview-modal__head">
+        <h2 id="preview-modal-title">Vista previa pedagógica</h2>
+        <button
+          type="button"
+          class="preview-modal__close"
+          aria-label="Cerrar"
+          (click)="closePreview()"
+        >
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16" aria-hidden="true">
+            <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="preview-modal__body">
+        @if (preview(); as p) {
+          @if (!hasPreviewContent()) {
+            <div class="preview-empty">
+              <p class="preview-empty__title">Aún no hay contenido suficiente para la vista previa.</p>
+              <ul class="preview-empty__list">
+                @for (item of previewMissingItems(); track item) {
+                  <li>{{ item }}</li>
+                }
+              </ul>
+            </div>
+          } @else {
+            <article class="preview-item">
+              <h3>Rubrica de calificacion</h3>
+              @if (p.rubrica.length > 0) {
+                <ul>
+                  @for (criterio of p.rubrica; track criterio.id) {
+                    <li>
+                      <strong>{{ criterio.orden }}. {{ criterio.criterio }}:</strong>
+                      {{ criterio.descripcion }}
+                      @if (criterio.nivelEsperado) {
+                        · <em>{{ criterio.nivelEsperado }}</em>
+                      }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="warn">Sin rubrica configurada.</p>
+              }
+            </article>
+            @for (esc of p.escenarios; track esc.id) {
+              <article class="preview-item">
+                <h3 class="preview-item__title">{{ esc.orden }}. {{ esc.titulo }}</h3>
+                <p class="preview-item__text">{{ esc.situacionTexto }}</p>
+                @if (esc.preguntas.length > 0) {
+                  @for (pregunta of esc.preguntas; track pregunta.id) {
+                    <div class="preview-question">
+                      <p class="preview-question__label">
+                        <strong>Pregunta {{ pregunta.orden }}:</strong> {{ pregunta.enunciado }}
+                      </p>
+                      <ul class="preview-question__options">
+                        @for (op of pregunta.opciones; track op.id) {
+                          <li>
+                            <span class="preview-option__text">{{ op.texto }}</span>
+                            <span class="preview-option__score">Nota {{ op.puntaje }} / 5.0</span>
+                            @if (op.retroalimentacion) {
+                              <em class="preview-option__retro">{{ op.retroalimentacion.tipo }}</em>
+                            } @else {
+                              <span class="preview-option__warn">Sin retroalimentación</span>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                } @else {
+                  <p class="preview-warn">Sin pregunta configurada.</p>
+                }
+              </article>
+            }
+          }
+        } @else {
+          <app-loading-state message="Cargando vista previa..." />
+        }
+      </div>
+      <div class="preview-modal__foot">
+        <button type="button" class="siep-btn-secondary" (click)="closePreview()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
 }

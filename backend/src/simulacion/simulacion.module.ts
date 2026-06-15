@@ -29,6 +29,7 @@ import { PublicacionService } from './publicacion.service';
 import { RespuestasEstudianteService } from './respuestas-estudiante.service';
 import { ResultadosService } from './resultados.service';
 import { RetroalimentacionesService } from './retroalimentaciones.service';
+import { RubricaService } from './rubrica.service';
 import { SesionesSimulacionService } from './sesiones-simulacion.service';
 
 @Module({
@@ -53,6 +54,7 @@ import { SesionesSimulacionService } from './sesiones-simulacion.service';
     EscenariosService,
     DecisionesService,
     RetroalimentacionesService,
+    RubricaService,
     PublicacionService,
     GeminiService,
     OllamaService,

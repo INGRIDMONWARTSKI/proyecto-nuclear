@@ -14,6 +14,14 @@
   line-height: 1.5;
 }
 
+.case-form__help {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--siep-text-soft);
+  line-height: 1.4;
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;

@@ -3,7 +3,6 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter, take } from 'rxjs';
 import { getErrorMessage } from '../../../../core/utils/http-error.util';
-import { FeedbackPanelComponent, FeedbackView } from '../../../../shared/simulacion/feedback-panel/feedback-panel.component';
 import { OpcionesRespuestaComponent } from '../../../../shared/simulacion/opciones-respuesta/opciones-respuesta.component';
 import { EscenarioViewerComponent } from '../../../../shared/simulacion/escenario-viewer/escenario-viewer.component';
 import { SimulacionProgressComponent } from '../../../../shared/simulacion/simulacion-progress/simulacion-progress.component';
@@ -32,7 +31,6 @@ type VideoPhase = 'none' | 'intro' | 'transition' | 'closing';
     AlertMessageComponent,
     LoadingStateComponent,
     PageHeaderComponent,
-    FeedbackPanelComponent,
     OpcionesRespuestaComponent,
     EscenarioViewerComponent,
     SimulacionProgressComponent,
@@ -52,8 +50,10 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly data = signal<EscenarioActualResponse | null>(null);
   protected readonly selectedOpcion = signal<OpcionEscenario | null>(null);
-  protected readonly feedback = signal<FeedbackView | null>(null);
   protected readonly completed = signal(false);
+  protected readonly responseNotice = signal<string | null>(null);
+  protected readonly remainingSeconds = signal(0);
+  protected readonly activePreguntaId = signal<string | null>(null);
 
   // Video guide state — does not affect functional signals above
   protected readonly videoPhase = signal<VideoPhase>('none');
@@ -65,6 +65,7 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
 
   private sesionId = '';
   private introChecked = false;
+  private timerId: ReturnType<typeof setInterval> | null = null;
 
   // Observable derived from data signal for reactive intro check
   private readonly data$ = toObservable(this.data);
@@ -78,18 +79,23 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
 
     this.loadEscenarioActual();
     this.checkIntroVideo();
+    this.destroyRef.onDestroy(() => this.stopTimer());
   }
 
   loadEscenarioActual() {
     this.loading.set(true);
     this.errorMessage.set(null);
-    this.selectedOpcion.set(null);
-    this.feedback.set(null);
+    this.responseNotice.set(null);
 
-    this.simulacionService.getEscenarioActual(this.sesionId).subscribe({
+    this.simulacionService
+      .getEscenarioActual(this.sesionId, this.activePreguntaId() ?? undefined)
+      .subscribe({
       next: (res) => {
         this.data.set(res);
         this.completed.set(Boolean(res.completed) || !res.escenario);
+        this.remainingSeconds.set(res.remainingSeconds ?? 0);
+        this.syncSelectedOptionFromState(res);
+        this.ensureTimer();
         this.loading.set(false);
       },
       error: (error) => {
@@ -98,7 +104,7 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
         );
         this.loading.set(false);
       },
-    });
+      });
   }
 
   seleccionarOpcion(opcion: OpcionEscenario) {
@@ -133,7 +139,7 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
   }
 
   continuar() {
-    this.loadEscenarioActual();
+    this.goToNextPregunta();
   }
 
   verResultado() {
@@ -194,23 +200,9 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
 
   private handleRespuesta(res: RespuestaSubmitResponse) {
     this.sending.set(false);
-    const feedbackView: FeedbackView = res.retroalimentacion
-      ? {
-          ...res.retroalimentacion,
-          puntajeObtenido: res.puntajeObtenido,
-        }
-      : {
-          mensaje: 'Respuesta registrada.',
-          tipo: 'pedagogica',
-          referenciaTeorica: null,
-          puntajeObtenido: res.puntajeObtenido,
-        };
-
-    this.feedback.set(feedbackView);
-
-    if (res.completed) {
-      this.completed.set(true);
-    }
+    this.responseNotice.set(res.mensaje);
+    if (res.completed) this.completed.set(true);
+    this.loadEscenarioActual();
   }
 
   private triggerVideo(phase: VideoPhase, title: string, desc: string): void {
@@ -255,5 +247,115 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
           );
         }
       });
+  }
+
+  protected formatRemaining(): string {
+    const total = Math.max(this.remainingSeconds(), 0);
+    const minutes = Math.floor(total / 60)
+      .toString()
+      .padStart(2, '0');
+    const seconds = Math.floor(total % 60)
+      .toString()
+      .padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  }
+
+  protected selectPregunta(preguntaId: string): void {
+    if (this.completed()) return;
+    this.activePreguntaId.set(preguntaId);
+    this.loadEscenarioActual();
+  }
+
+  protected goToPreviousPregunta(): void {
+    const nav = this.data()?.navegacion ?? [];
+    const currentId = this.data()?.escenario?.pregunta.id;
+    const idx = nav.findIndex((i) => i.preguntaId === currentId);
+    if (idx > 0) this.selectPregunta(nav[idx - 1].preguntaId);
+  }
+
+  protected goToNextPregunta(): void {
+    const nav = this.data()?.navegacion ?? [];
+    const currentId = this.data()?.escenario?.pregunta.id;
+    const idx = nav.findIndex((i) => i.preguntaId === currentId);
+    if (idx >= 0 && idx < nav.length - 1) this.selectPregunta(nav[idx + 1].preguntaId);
+  }
+
+  protected canGoPrev(): boolean {
+    const nav = this.data()?.navegacion ?? [];
+    const currentId = this.data()?.escenario?.pregunta.id;
+    const idx = nav.findIndex((i) => i.preguntaId === currentId);
+    return idx > 0;
+  }
+
+  protected canGoNext(): boolean {
+    const nav = this.data()?.navegacion ?? [];
+    const currentId = this.data()?.escenario?.pregunta.id;
+    const idx = nav.findIndex((i) => i.preguntaId === currentId);
+    return idx >= 0 && idx < nav.length - 1;
+  }
+
+  protected finalizarManual(): void {
+    if (this.completed()) return;
+    const ok = window.confirm(
+      '¿Finalizar simulación? Después de finalizar no podrás cambiar tus respuestas.',
+    );
+    if (!ok) return;
+
+    this.sending.set(true);
+    this.simulacionService.finalizarSesion(this.sesionId).subscribe({
+      next: () => {
+        this.sending.set(false);
+        this.completed.set(true);
+        this.handleVerResultadoClick();
+      },
+      error: (error) => {
+        this.sending.set(false);
+        this.errorMessage.set(getErrorMessage(error, 'No fue posible finalizar la simulación.'));
+      },
+    });
+  }
+
+  private syncSelectedOptionFromState(res: EscenarioActualResponse): void {
+    const selectedId = res.escenario?.pregunta.opcionSeleccionadaId;
+    if (!selectedId || !res.escenario) {
+      this.selectedOpcion.set(null);
+      return;
+    }
+    const option = res.escenario.pregunta.opciones.find((o) => o.id === selectedId) ?? null;
+    this.selectedOpcion.set(option);
+  }
+
+  private ensureTimer(): void {
+    if (this.timerId) return;
+    this.timerId = setInterval(() => {
+      const next = this.remainingSeconds() - 1;
+      this.remainingSeconds.set(Math.max(next, 0));
+      if (next <= 0 && !this.completed()) {
+        this.stopTimer();
+        this.autoFinishByTimeout();
+      }
+    }, 1000);
+  }
+
+  private stopTimer(): void {
+    if (this.timerId) {
+      clearInterval(this.timerId);
+      this.timerId = null;
+    }
+  }
+
+  private autoFinishByTimeout(): void {
+    this.simulacionService.finalizarSesion(this.sesionId).subscribe({
+      next: () => {
+        this.completed.set(true);
+        this.errorMessage.set(
+          'El tiempo máximo de participación finalizó. Se guardaron tus respuestas registradas.',
+        );
+        this.handleVerResultadoClick();
+      },
+      error: () => {
+        this.loadEscenarioActual();
+      },
+    });
   }
 }

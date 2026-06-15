@@ -10,6 +10,7 @@ export interface Notificacion {
   entidadId: string | null;
   leida: boolean;
   createdAt: string;
+  archivedAt: string | null;
 }
 
 export interface NotificacionesCount {

@@ -49,15 +49,41 @@
           @if (notificationsOpen()) {
             <section class="notifications__panel" aria-label="Notificaciones">
               <div class="notifications__header">
-                <h2>Notificaciones</h2>
-                <button
-                  type="button"
-                  class="notifications__mark-all"
-                  [disabled]="unreadCount() === 0"
-                  (click)="marcarTodasComoLeidas()"
-                >
-                  Marcar todas como leídas
-                </button>
+                <h2>{{ showingArchived() ? 'Notificaciones archivadas' : 'Notificaciones' }}</h2>
+                <div class="notifications__header-actions">
+                  @if (showingArchived()) {
+                    <button
+                      type="button"
+                      class="notifications__mark-all"
+                      (click)="verRecientes()"
+                    >
+                      Ver recientes
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="notifications__mark-all"
+                      [disabled]="unreadCount() === 0"
+                      (click)="marcarTodasComoLeidas()"
+                    >
+                      Marcar todas como leidas
+                    </button>
+                    <button
+                      type="button"
+                      class="notifications__mark-all"
+                      (click)="archivarLeidas()"
+                    >
+                      Archivar leidas
+                    </button>
+                    <button
+                      type="button"
+                      class="notifications__mark-all"
+                      (click)="verArchivadas()"
+                    >
+                      Ver archivadas
+                    </button>
+                  }
+                </div>
               </div>
 
               @if (hasNotifications()) {
@@ -79,7 +105,16 @@
                             class="notifications__action"
                             (click)="marcarComoLeida(notificacion)"
                           >
-                            Marcar como leída
+                            Marcar como leida
+                          </button>
+                        }
+                        @if (!showingArchived() && notificacion.leida) {
+                          <button
+                            type="button"
+                            class="notifications__action"
+                            (click)="archivar(notificacion)"
+                          >
+                            Archivar
                           </button>
                         }
                         @if (notificationLink(notificacion); as link) {
@@ -90,7 +125,9 @@
                   }
                 </div>
               } @else {
-                <p class="notifications__empty">No hay notificaciones por ahora.</p>
+                <p class="notifications__empty">
+                  {{ showingArchived() ? 'No hay notificaciones archivadas.' : 'No hay notificaciones por ahora.' }}
+                </p>
               }
             </section>
           }
@@ -103,7 +140,7 @@
             <span class="user-box__role">{{ user.role }}</span>
           </div>
           <button type="button" class="btn btn-secondary btn--small" (click)="logout()">
-            Cerrar sesión
+            Cerrar sesion
           </button>
         </div>
       }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -28,6 +28,29 @@ export class DocenteRevisionController {
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
     return this.resultadosService.getRevisionDocente(sesionId, currentUser);
+  }
+
+  @Patch('sesiones/:sesionId/retroalimentacion-general')
+  guardarRetroalimentacionGeneral(
+    @Param('sesionId') sesionId: string,
+    @Body() body: { mensaje?: string },
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.resultadosService.guardarRetroalimentacionDocente(
+      sesionId,
+      body?.mensaje ?? '',
+      currentUser,
+    );
+  }
+
+  @Get('sesiones/:sesionId/reporte.csv')
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="reporte-participacion.csv"')
+  descargarReporteSesion(
+    @Param('sesionId') sesionId: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.resultadosService.buildReporteSesionCsv(sesionId, currentUser);
   }
 
   @Post('casos/:casoId/estudiantes/:estudianteId/reintentos/autorizar')

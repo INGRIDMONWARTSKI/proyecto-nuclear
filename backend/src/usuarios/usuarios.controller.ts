@@ -53,6 +53,7 @@ export class UsuariosController {
         fullName: crearUsuarioDto.fullName,
         email: crearUsuarioDto.email,
         role: crearUsuarioDto.role,
+        puedeCrearCasos: crearUsuarioDto.puedeCrearCasos,
       });
 
     const emailSent = await this.mailService.sendWelcomeEmail(

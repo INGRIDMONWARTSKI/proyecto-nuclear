@@ -26,6 +26,7 @@ import {
   GenerarCasoIaResponse,
 } from '../models/docente/generar-caso-ia.model';
 import { RevisionSesionDocente } from '../models/docente/revision-sesion-docente.model';
+import { RubricaCriterio } from '../models/docente/rubrica-criterio.model';
 import { SesionEvidencia } from '../models/docente/sesion-evidencia.model';
 
 @Injectable({ providedIn: 'root' })
@@ -36,6 +37,10 @@ export class SimulacionDocenteService {
 
   listarCasos() {
     return this.http.get<CasoDocente[]>(this.casosUrl);
+  }
+
+  listarBibliotecaCasos() {
+    return this.http.get<CasoDocente[]>(`${this.casosUrl}/biblioteca`);
   }
 
   obtenerCaso(casoId: string) {
@@ -50,6 +55,7 @@ export class SimulacionDocenteService {
     titulo: string;
     descripcion?: string;
     objetivoAprendizaje?: string;
+    tiempoMaximoMinutos?: number;
   }) {
     return this.http.post<CasoDocente>(this.casosUrl, payload);
   }
@@ -60,9 +66,14 @@ export class SimulacionDocenteService {
       titulo?: string;
       descripcion?: string;
       objetivoAprendizaje?: string;
+      tiempoMaximoMinutos?: number;
     },
   ) {
     return this.http.patch<CasoDocente>(`${this.casosUrl}/${casoId}`, payload);
+  }
+
+  eliminarBorrador(casoId: string) {
+    return this.http.delete<{ message: string }>(`${this.casosUrl}/${casoId}`);
   }
 
   generarCasoConIa(payload: GenerarCasoIaPayload) {
@@ -187,16 +198,22 @@ export class SimulacionDocenteService {
 
   crearPregunta(
     escenarioId: string,
-    payload: { enunciado: string; tipo?: string; puntajeMaximo?: number },
+    payload: { enunciado: string; tipo?: string; puntajeMaximo?: number; orden?: number },
   ) {
     return this.http.post(`${this.docenteUrl}/escenarios/${escenarioId}/pregunta`, payload);
   }
 
   actualizarPregunta(
     preguntaId: string,
-    payload: { enunciado?: string; tipo?: string; puntajeMaximo?: number },
+    payload: { enunciado?: string; tipo?: string; puntajeMaximo?: number; orden?: number },
   ) {
     return this.http.patch(`${this.docenteUrl}/preguntas/${preguntaId}`, payload);
+  }
+
+  eliminarPregunta(preguntaId: string) {
+    return this.http.delete<{ message: string }>(
+      `${this.docenteUrl}/preguntas/${preguntaId}`,
+    );
   }
 
   crearOpcion(
@@ -274,6 +291,48 @@ export class SimulacionDocenteService {
     );
   }
 
+  listarRubrica(casoId: string) {
+    return this.http.get<RubricaCriterio[]>(`${this.casosUrl}/${casoId}/rubrica`);
+  }
+
+  crearCriterioRubrica(
+    casoId: string,
+    payload: {
+      criterio: string;
+      descripcion: string;
+      nivelEsperado?: string;
+      peso?: number | null;
+      orden?: number;
+    },
+  ) {
+    return this.http.post<RubricaCriterio>(
+      `${this.casosUrl}/${casoId}/rubrica`,
+      payload,
+    );
+  }
+
+  actualizarCriterioRubrica(
+    criterioId: string,
+    payload: {
+      criterio?: string;
+      descripcion?: string;
+      nivelEsperado?: string;
+      peso?: number | null;
+      orden?: number;
+    },
+  ) {
+    return this.http.patch<RubricaCriterio>(
+      `${this.casosUrl}/rubrica/${criterioId}`,
+      payload,
+    );
+  }
+
+  eliminarCriterioRubrica(criterioId: string) {
+    return this.http.delete<{ message: string }>(
+      `${this.casosUrl}/rubrica/${criterioId}`,
+    );
+  }
+
   listarEvidencias(): Observable<EvidenciaDocente[]>;
   listarEvidencias(casoId: string): Observable<SesionEvidencia[]>;
   listarEvidencias(casoId?: string) {
@@ -287,6 +346,19 @@ export class SimulacionDocenteService {
     return this.http.get<RevisionSesionDocente>(
       `${this.docenteUrl}/sesiones/${sesionId}/revision`,
     );
+  }
+
+  guardarRetroalimentacionGeneral(sesionId: string, mensaje: string) {
+    return this.http.patch<RevisionSesionDocente>(
+      `${this.docenteUrl}/sesiones/${sesionId}/retroalimentacion-general`,
+      { mensaje },
+    );
+  }
+
+  descargarReporteSesion(sesionId: string) {
+    return this.http.get(`${this.docenteUrl}/sesiones/${sesionId}/reporte.csv`, {
+      responseType: 'blob',
+    });
   }
 
   autorizarReintento(casoId: string, estudianteId: string, motivo?: string) {

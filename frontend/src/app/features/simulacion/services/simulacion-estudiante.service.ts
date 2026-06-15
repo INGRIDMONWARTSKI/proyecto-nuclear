@@ -28,9 +28,12 @@ export class SimulacionEstudianteService {
     return this.http.post<SesionInicioResponse>(`${this.baseUrl}/sesiones`, { casoId });
   }
 
-  getEscenarioActual(sesionId: string) {
+  getEscenarioActual(sesionId: string, preguntaId?: string) {
+    const params = preguntaId
+      ? `?preguntaId=${encodeURIComponent(preguntaId)}`
+      : '';
     return this.http.get<EscenarioActualResponse>(
-      `${this.baseUrl}/sesiones/${sesionId}/escenario-actual`,
+      `${this.baseUrl}/sesiones/${sesionId}/escenario-actual${params}`,
     );
   }
 

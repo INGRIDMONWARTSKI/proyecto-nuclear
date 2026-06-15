@@ -21,8 +21,13 @@ export interface CasoEditorScenario {
   aiBackgroundAssetId?: string | null;
   isFinal: boolean;
   layout: EscenarioLayout;
-  pregunta: {
+  pregunta: CasoEditorPregunta | null;
+  preguntas: CasoEditorPregunta[];
+}
+
+export interface CasoEditorPregunta {
     id: string;
+    orden: number;
     enunciado: string;
     tipo: 'single_choice';
     puntajeMaximo: number;
@@ -40,7 +45,6 @@ export interface CasoEditorScenario {
         referenciaTeorica: string | null;
       } | null;
     }>;
-  } | null;
 }
 
 export interface CasoEditor extends Caso {

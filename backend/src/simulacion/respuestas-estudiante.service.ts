@@ -13,7 +13,7 @@ import { OpcionRespuestaRecord } from './entities/opcion-respuesta.entity';
 import { PreguntaDecisionRecord } from './entities/pregunta-decision.entity';
 import { EscenarioRecord } from './entities/escenario.entity';
 import { RespuestaEstudianteRecord } from './entities/respuesta-estudiante.entity';
-import { RetroalimentacionRecord } from './entities/retroalimentacion.entity';
+import { SesionSimulacionRecord } from './entities/sesion-simulacion.entity';
 import { SesionesSimulacionService } from './sesiones-simulacion.service';
 
 @Injectable()
@@ -30,13 +30,10 @@ export class RespuestasEstudianteService {
   ): Promise<{
     respuestaId: string;
     puntajeObtenido: number;
-    retroalimentacion: {
-      mensaje: string;
-      tipo: 'pedagogica' | 'correctiva' | 'refuerzo';
-      referenciaTeorica: string | null;
-    } | null;
     completed: boolean;
-    nextEscenarioId?: string;
+    respondidas: number;
+    totalPreguntas: number;
+    mensaje: string;
     resultadoUrl?: string;
   }> {
     this.assertStudentRole(currentUser);
@@ -44,7 +41,10 @@ export class RespuestasEstudianteService {
     const sesion = await this.sesionesService.findSesionById(sesionId);
     this.sesionesService.assertSesionBelongsToStudent(sesion, currentUser);
 
-    if (sesion.estado !== 'in_progress') {
+    const validSesion =
+      await this.sesionesService.ensureSessionCompletedIfTimeExpired(sesion);
+
+    if (validSesion.estado !== 'in_progress') {
       throw new ConflictException('La sesion no se encuentra en progreso.');
     }
 
@@ -64,11 +64,6 @@ export class RespuestasEstudianteService {
       );
     }
 
-    await this.sesionesService.assertPreguntaIsCurrentForSession(
-      sesion,
-      pregunta.id,
-    );
-
     const [alreadyAnswered] = await this.postgrest.select<RespuestaEstudianteRecord>(
       'respuestas_estudiante',
       {
@@ -77,74 +72,70 @@ export class RespuestasEstudianteService {
       },
     );
 
+    let respuesta: RespuestaEstudianteRecord;
+    let sesionActualizada: SesionSimulacionRecord;
+
     if (alreadyAnswered) {
-      throw new ConflictException(
-        'La pregunta ya fue respondida en esta sesion.',
+      const [updatedAnswer] = await this.postgrest.update<RespuestaEstudianteRecord>(
+        'respuestas_estudiante',
+        {
+          opcion_id: opcion.id,
+          escenario_id: escenario.id,
+          puntaje_obtenido: opcion.puntaje,
+          respondida_at: new Date().toISOString(),
+        },
+        {
+          filters: { id: alreadyAnswered.id },
+          select: '*',
+        },
+      );
+      respuesta = updatedAnswer;
+
+      const delta = opcion.puntaje - alreadyAnswered.puntaje_obtenido;
+      const [updatedSession] = await this.postgrest.update<SesionSimulacionRecord>(
+        'sesiones_simulacion',
+        {
+          puntaje_total: validSesion.puntaje_total + delta,
+        },
+        {
+          filters: { id: validSesion.id },
+          select: '*',
+        },
+      );
+      sesionActualizada = updatedSession;
+    } else {
+      respuesta = await this.postgrest.insert<RespuestaEstudianteRecord>(
+        'respuestas_estudiante',
+        {
+          sesion_id: sesionId,
+          pregunta_id: pregunta.id,
+          opcion_id: opcion.id,
+          escenario_id: escenario.id,
+          puntaje_obtenido: opcion.puntaje,
+        },
+        { select: '*' },
+      );
+      sesionActualizada = await this.sesionesService.recordAnswerProgress(
+        validSesion,
+        opcion.puntaje,
       );
     }
 
-    const respuesta = await this.postgrest.insert<RespuestaEstudianteRecord>(
-      'respuestas_estudiante',
-      {
-        sesion_id: sesionId,
-        pregunta_id: pregunta.id,
-        opcion_id: opcion.id,
-        escenario_id: escenario.id,
-        puntaje_obtenido: opcion.puntaje,
-      },
-      { select: '*' },
-    );
-
-    const nextEscenario = await this.sesionesService.resolveNextAfterAnswer(
-      sesion,
-      escenario,
-      opcion,
-    );
-    const shouldComplete = escenario.is_final || !nextEscenario;
-
-    const sesionActualizada = shouldComplete
-      ? await this.sesionesService.completeSessionAfterAnswer(
-          sesion,
-          opcion.puntaje,
-        )
-      : await this.sesionesService.recordAnswerProgress(sesion, opcion.puntaje);
-
-    const [retro] = await this.postgrest.select<RetroalimentacionRecord>(
-      'retroalimentaciones',
-      {
-        filters: { opcion_id: opcion.id },
-        limit: 1,
-      },
-    );
-
-    if (sesionActualizada.estado === 'completed') {
-      return {
-        respuestaId: respuesta.id,
-        puntajeObtenido: respuesta.puntaje_obtenido,
-        retroalimentacion: retro
-          ? {
-              mensaje: retro.mensaje,
-              tipo: retro.tipo,
-              referenciaTeorica: retro.referencia_teorica,
-            }
-          : null,
-        completed: true,
-        resultadoUrl: `/api/simulacion/estudiante/sesiones/${sesionId}/resultado`,
-      };
-    }
-
+    const completed = sesionActualizada.estado === 'completed';
     return {
       respuestaId: respuesta.id,
       puntajeObtenido: respuesta.puntaje_obtenido,
-      retroalimentacion: retro
+      completed,
+      respondidas: sesionActualizada.respondidas,
+      totalPreguntas: sesionActualizada.total_preguntas,
+      mensaje: completed
+        ? 'Participación finalizada. Puedes revisar tu resultado.'
+        : 'Respuesta registrada. Podrás revisar la retroalimentación al finalizar.',
+      ...(completed
         ? {
-            mensaje: retro.mensaje,
-            tipo: retro.tipo,
-            referenciaTeorica: retro.referencia_teorica,
+            resultadoUrl: `/api/simulacion/estudiante/sesiones/${sesionId}/resultado`,
           }
-        : null,
-      completed: false,
-      ...(nextEscenario ? { nextEscenarioId: nextEscenario.id } : {}),
+        : {}),
     };
   }
 

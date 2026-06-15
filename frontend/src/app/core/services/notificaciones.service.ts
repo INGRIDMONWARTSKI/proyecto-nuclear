@@ -8,8 +8,10 @@ export class NotificacionesService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/notificaciones`;
 
-  listar() {
-    return this.http.get<Notificacion[]>(this.baseUrl);
+  listar(archivadas = false) {
+    return this.http.get<Notificacion[]>(
+      archivadas ? `${this.baseUrl}?archivadas=true` : this.baseUrl,
+    );
   }
 
   contarNoLeidas() {
@@ -23,6 +25,17 @@ export class NotificacionesService {
   marcarTodasComoLeidas() {
     return this.http.patch<{ message: string }>(
       `${this.baseUrl}/marcar-todas-leidas`,
+      {},
+    );
+  }
+
+  archivar(id: string) {
+    return this.http.patch<Notificacion>(`${this.baseUrl}/${id}/archivar`, {});
+  }
+
+  archivarLeidas() {
+    return this.http.patch<{ message: string }>(
+      `${this.baseUrl}/archivar-leidas`,
       {},
     );
   }

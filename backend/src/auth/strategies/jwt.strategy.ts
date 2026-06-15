@@ -25,6 +25,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Tu sesion ya no es valida.');
     }
 
-    return payload;
+    return {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      tokenVersion: user.tokenVersion,
+      puedeCrearCasos: user.puedeCrearCasos,
+    };
   }
 }

@@ -15,6 +15,7 @@ import { UsuariosService } from '../usuarios/usuarios.service';
 import { CasosService } from './casos.service';
 import { CreateAsignacionDto } from './dto/create-asignacion.dto';
 import { CasoGrupo } from './entities/caso-grupo.entity';
+import { CasoRecord } from './entities/caso.entity';
 
 @Injectable()
 export class AsignacionesService {
@@ -31,7 +32,7 @@ export class AsignacionesService {
     currentUser: AuthenticatedUser,
   ) {
     const caso = await this.casosService.findCasoById(casoId);
-    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+    this.assertCanAssignCase(caso, currentUser);
 
     if (caso.estado !== 'published') {
       throw new ConflictException(
@@ -87,7 +88,7 @@ export class AsignacionesService {
 
   async listGruposByCaso(casoId: string, currentUser: AuthenticatedUser) {
     const caso = await this.casosService.findCasoById(casoId);
-    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+    this.assertCanAssignCase(caso, currentUser);
 
     const asignaciones = await this.postgrest.select<CasoGrupo>('caso_grupo', {
       filters: { casoId },
@@ -98,13 +99,31 @@ export class AsignacionesService {
       return [];
     }
 
-    const grupoIds = [...new Set(asignaciones.map((item) => item.grupoId))];
+    let filteredAsignaciones = asignaciones;
+    if (currentUser.role === Role.PROFESOR) {
+      const gruposDocente = await this.postgrest.select<Pick<Grupo, 'id'>>('grupos', {
+        filters: {
+          id: [...new Set(asignaciones.map((item) => item.grupoId))],
+          profesorId: currentUser.sub,
+        },
+        select: 'id',
+      });
+      const grupoIdsDocente = new Set(gruposDocente.map((grupo) => grupo.id));
+      filteredAsignaciones = asignaciones.filter((item) =>
+        grupoIdsDocente.has(item.grupoId),
+      );
+    }
+
+    const grupoIds = [...new Set(filteredAsignaciones.map((item) => item.grupoId))];
+    if (grupoIds.length === 0) {
+      return [];
+    }
     const grupos = await this.postgrest.select<Grupo>('grupos', {
       filters: { id: grupoIds },
     });
     const grupoById = new Map(grupos.map((grupo) => [grupo.id, grupo]));
 
-    return asignaciones.map((asignacion) => {
+    return filteredAsignaciones.map((asignacion) => {
       const grupo = grupoById.get(asignacion.grupoId);
       return {
         grupoId: asignacion.grupoId,
@@ -122,7 +141,7 @@ export class AsignacionesService {
     currentUser: AuthenticatedUser,
   ) {
     const caso = await this.casosService.findCasoById(casoId);
-    this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+    this.assertCanAssignCase(caso, currentUser);
 
     const grupo = await this.findGrupoById(grupoId);
     this.assertCanManageGrupo(grupo, currentUser);
@@ -257,6 +276,24 @@ export class AsignacionesService {
 
     throw new ForbiddenException(
       'No tienes permisos para asignar casos a este grupo.',
+    );
+  }
+
+  private assertCanAssignCase(
+    caso: CasoRecord,
+    currentUser: AuthenticatedUser,
+  ): void {
+    if (currentUser.role === Role.ADMIN || currentUser.role === Role.PROFESOR) {
+      if (caso.estado === 'published') {
+        return;
+      }
+
+      this.casosService.assertCanAccessCasoDocente(caso, currentUser);
+      return;
+    }
+
+    throw new ForbiddenException(
+      'No tienes permisos para gestionar asignaciones de casos.',
     );
   }
 }

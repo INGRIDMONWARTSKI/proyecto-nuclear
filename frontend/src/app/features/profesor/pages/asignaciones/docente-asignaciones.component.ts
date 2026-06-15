@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { Grupo } from '../../../../core/models/grupo.model';
 import { getErrorMessage } from '../../../../core/utils/http-error.util';
@@ -32,6 +32,7 @@ export class DocenteAsignacionesComponent implements OnInit {
   private readonly simulacionService = inject(SimulacionDocenteService);
   private readonly gruposService = inject(GruposService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly loadingCasos = signal(true);
   protected readonly loadingGrupos = signal(true);
@@ -69,7 +70,7 @@ export class DocenteAsignacionesComponent implements OnInit {
 
   private cargarCasos() {
     this.loadingCasos.set(true);
-    this.simulacionService.listarCasos().subscribe({
+    this.simulacionService.listarBibliotecaCasos().subscribe({
       next: (casos) => {
         this.casosPublicados.set(
           casos.filter((caso) => caso.estado === 'published'),
@@ -77,6 +78,13 @@ export class DocenteAsignacionesComponent implements OnInit {
         this.casosBorrador.set(
           casos.filter((caso) => caso.estado === 'draft').length,
         );
+        const preselectCasoId = this.route.snapshot.queryParamMap.get('casoId');
+        if (
+          preselectCasoId &&
+          this.casosPublicados().some((caso) => caso.id === preselectCasoId)
+        ) {
+          this.seleccionarCaso(preselectCasoId);
+        }
         this.loadingCasos.set(false);
       },
       error: (error) => {

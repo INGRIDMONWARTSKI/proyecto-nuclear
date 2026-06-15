@@ -153,6 +153,48 @@
   line-height: 1.5;
 }
 
+.revision-card__meta {
+  margin: var(--siep-space-2) 0 0;
+  color: var(--siep-text-soft);
+  font-size: 0.82rem;
+}
+
+.revision-rubrica {
+  display: grid;
+  gap: var(--siep-space-2);
+}
+
+.revision-rubrica__item {
+  padding: var(--siep-space-3);
+  border: 1px solid rgba(124, 179, 66, 0.22);
+  border-radius: var(--siep-radius-md);
+  background: rgba(241, 248, 233, 0.62);
+
+  strong {
+    color: var(--siep-forest);
+    font-family: var(--siep-font-title);
+  }
+
+  p {
+    margin: var(--siep-space-1) 0 0;
+    line-height: 1.45;
+  }
+
+  span {
+    font-weight: 700;
+  }
+}
+
+.revision-feedback-form {
+  display: grid;
+  gap: var(--siep-space-3);
+  margin-top: var(--siep-space-3);
+
+  small {
+    color: var(--siep-error);
+  }
+}
+
 .revision-respuestas {
   display: grid;
   gap: 0.55rem;

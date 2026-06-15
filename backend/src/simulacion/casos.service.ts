@@ -13,6 +13,12 @@ import { CreateCasoDto } from './dto/create-caso.dto';
 import { Caso, CasoRecord } from './entities/caso.entity';
 import { Escenario, EscenarioRecord } from './entities/escenario.entity';
 
+export interface CasoBibliotecaDocente extends Caso {
+  autorDocenteNombre: string | null;
+  totalEscenarios: number;
+  totalPreguntas: number;
+}
+
 @Injectable()
 export class CasosService {
   constructor(private readonly postgrest: PostgrestService) {}
@@ -21,12 +27,13 @@ export class CasosService {
     createCasoDto: CreateCasoDto,
     currentUser: AuthenticatedUser,
   ): Promise<Caso> {
-    this.assertDocenteRole(currentUser);
+    this.assertCanCreateCases(currentUser);
 
     const payload = {
       titulo: createCasoDto.titulo.trim(),
       descripcion: createCasoDto.descripcion?.trim() || null,
       objetivo_aprendizaje: createCasoDto.objetivoAprendizaje?.trim() || null,
+      tiempo_maximo_minutos: createCasoDto.tiempoMaximoMinutos ?? 60,
       autor_docente_id: currentUser.sub,
       estado: 'draft' as const,
       is_active: true,
@@ -42,6 +49,10 @@ export class CasosService {
   async findAllDocente(currentUser: AuthenticatedUser): Promise<Caso[]> {
     this.assertDocenteRole(currentUser);
 
+    if (currentUser.role === Role.PROFESOR && !this.canCreateCases(currentUser)) {
+      return [];
+    }
+
     const filters =
       currentUser.role === Role.ADMIN ? undefined : { autor_docente_id: currentUser.sub };
 
@@ -51,6 +62,77 @@ export class CasosService {
     });
 
     return casos.map((caso) => this.toCaso(caso));
+  }
+
+  async findBibliotecaDocente(
+    currentUser: AuthenticatedUser,
+  ): Promise<CasoBibliotecaDocente[]> {
+    this.assertDocenteRole(currentUser);
+
+    const casos = await this.postgrest.select<CasoRecord>('casos', {
+      filters: {
+        estado: 'published',
+        is_active: true,
+      },
+      order: 'published_at.desc',
+    });
+
+    if (casos.length === 0) {
+      return [];
+    }
+
+    const casoIds = casos.map((caso) => caso.id);
+    const escenarios = await this.postgrest.select<{ id: string; caso_id: string }>(
+      'escenarios',
+      {
+        filters: { caso_id: casoIds },
+      },
+    );
+    const escenariosByCaso = new Map<string, string[]>();
+    for (const escenario of escenarios) {
+      const current = escenariosByCaso.get(escenario.caso_id) ?? [];
+      current.push(escenario.id);
+      escenariosByCaso.set(escenario.caso_id, current);
+    }
+
+    const escenarioIds = escenarios.map((escenario) => escenario.id);
+    const preguntas =
+      escenarioIds.length > 0
+        ? await this.postgrest.select<{ id: string; escenario_id: string }>(
+            'preguntas_decision',
+            {
+              filters: { escenario_id: escenarioIds },
+            },
+          )
+        : [];
+    const totalPreguntasByCaso = new Map<string, number>();
+    const casoByEscenario = new Map(
+      escenarios.map((escenario) => [escenario.id, escenario.caso_id]),
+    );
+    for (const pregunta of preguntas) {
+      const casoId = casoByEscenario.get(pregunta.escenario_id);
+      if (!casoId) {
+        continue;
+      }
+      totalPreguntasByCaso.set(casoId, (totalPreguntasByCaso.get(casoId) ?? 0) + 1);
+    }
+
+    const autorIds = [...new Set(casos.map((caso) => caso.autor_docente_id).filter(Boolean))];
+    const autores =
+      autorIds.length > 0
+        ? await this.postgrest.select<{ id: string; fullName: string }>('usuarios', {
+            filters: { id: autorIds },
+            select: 'id,fullName',
+          })
+        : [];
+    const autorById = new Map(autores.map((autor) => [autor.id, autor.fullName]));
+
+    return casos.map((record) => ({
+      ...this.toCaso(record),
+      autorDocenteNombre: autorById.get(record.autor_docente_id) ?? null,
+      totalEscenarios: (escenariosByCaso.get(record.id) ?? []).length,
+      totalPreguntas: totalPreguntasByCaso.get(record.id) ?? 0,
+    }));
   }
 
   async findOneDocente(casoId: string, currentUser: AuthenticatedUser) {
@@ -92,7 +174,7 @@ export class CasosService {
       );
     }
 
-    const payload: Record<string, string | boolean | null> = {};
+    const payload: Record<string, string | boolean | number | null> = {};
 
     if (updateCasoDto.titulo !== undefined) {
       payload.titulo = updateCasoDto.titulo.trim();
@@ -109,6 +191,10 @@ export class CasosService {
 
     if (updateCasoDto.isActive !== undefined) {
       payload.is_active = updateCasoDto.isActive;
+    }
+
+    if (updateCasoDto.tiempoMaximoMinutos !== undefined) {
+      payload.tiempo_maximo_minutos = updateCasoDto.tiempoMaximoMinutos;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -131,12 +217,60 @@ export class CasosService {
     return this.toCaso(casoActualizado);
   }
 
+  async removeDraft(casoId: string, currentUser: AuthenticatedUser) {
+    this.assertDocenteRole(currentUser);
+
+    const caso = await this.findCasoById(casoId);
+    this.assertCanAccessCasoDocente(caso, currentUser);
+
+    if (caso.estado !== 'draft') {
+      throw new ConflictException('Solo se pueden eliminar casos en borrador.');
+    }
+
+    const [sesion] = await this.postgrest.select<{ id: string }>(
+      'sesiones_simulacion',
+      {
+        filters: { caso_id: casoId },
+        select: 'id',
+        limit: 1,
+      },
+    );
+
+    if (sesion) {
+      throw new ConflictException(
+        'No se puede eliminar este borrador porque tiene sesiones o evidencias asociadas.',
+      );
+    }
+
+    const [asignacion] = await this.postgrest.select<{ id: string }>(
+      'caso_grupo',
+      {
+        filters: { casoId },
+        select: 'id',
+        limit: 1,
+      },
+    );
+
+    if (asignacion) {
+      throw new ConflictException(
+        'No se puede eliminar este borrador porque tiene asignaciones asociadas.',
+      );
+    }
+
+    await this.postgrest.remove('casos', {
+      filters: { id: casoId },
+    });
+
+    return { message: 'Borrador eliminado correctamente.' };
+  }
+
   async findPublishedForStudent(estudianteId: string): Promise<
     Array<{
       id: string;
       titulo: string;
       descripcion: string | null;
       objetivoAprendizaje: string | null;
+      tiempoMaximoMinutos: number;
       totalEscenarios: number;
       publishedAt: string | null;
       tieneReintentoAutorizado: boolean;
@@ -162,6 +296,7 @@ export class CasosService {
       titulo: string;
       descripcion: string | null;
       objetivoAprendizaje: string | null;
+      tiempoMaximoMinutos: number;
       totalEscenarios: number;
       publishedAt: string | null;
       tieneReintentoAutorizado: boolean;
@@ -189,6 +324,7 @@ export class CasosService {
         titulo: caso.titulo,
         descripcion: caso.descripcion,
         objetivoAprendizaje: caso.objetivo_aprendizaje,
+        tiempoMaximoMinutos: caso.tiempo_maximo_minutos ?? 60,
         totalEscenarios: escenarios.length,
         publishedAt: caso.published_at,
         tieneReintentoAutorizado: Boolean(reintento),
@@ -266,7 +402,8 @@ export class CasosService {
 
     if (
       currentUser.role === Role.PROFESOR &&
-      caso.autor_docente_id === currentUser.sub
+      caso.autor_docente_id === currentUser.sub &&
+      this.canCreateCases(currentUser)
     ) {
       return;
     }
@@ -284,12 +421,39 @@ export class CasosService {
     );
   }
 
+  assertCanCreateCases(currentUser: AuthenticatedUser): void {
+    this.assertDocenteRole(currentUser);
+
+    if (currentUser.role === Role.ADMIN) {
+      return;
+    }
+
+    if (currentUser.role === Role.PROFESOR && this.canCreateCases(currentUser)) {
+      return;
+    }
+
+    throw new ForbiddenException(
+      'Tu perfil no tiene permiso para crear o editar casos de estudio.',
+    );
+  }
+
+  canCreateCases(currentUser: AuthenticatedUser): boolean {
+    if (currentUser.role === Role.ADMIN) {
+      return true;
+    }
+    if (currentUser.role !== Role.PROFESOR) {
+      return false;
+    }
+    return currentUser.puedeCrearCasos ?? true;
+  }
+
   private toCaso(record: CasoRecord): Caso {
     return {
       id: record.id,
       titulo: record.titulo,
       descripcion: record.descripcion,
       objetivoAprendizaje: record.objetivo_aprendizaje,
+      tiempoMaximoMinutos: record.tiempo_maximo_minutos ?? 60,
       autorDocenteId: record.autor_docente_id,
       estado: record.estado,
       isActive: record.is_active,

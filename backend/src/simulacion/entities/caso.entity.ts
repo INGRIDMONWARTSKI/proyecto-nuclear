@@ -3,6 +3,7 @@ export interface CasoRecord {
   titulo: string;
   descripcion: string | null;
   objetivo_aprendizaje: string | null;
+  tiempo_maximo_minutos: number;
   autor_docente_id: string;
   estado: 'draft' | 'published' | 'archived';
   is_active: boolean;
@@ -16,6 +17,7 @@ export interface Caso {
   titulo: string;
   descripcion: string | null;
   objetivoAprendizaje: string | null;
+  tiempoMaximoMinutos: number;
   autorDocenteId: string;
   estado: 'draft' | 'published' | 'archived';
   isActive: boolean;

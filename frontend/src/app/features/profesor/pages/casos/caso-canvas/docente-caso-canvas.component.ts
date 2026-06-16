@@ -149,6 +149,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly libraryPanelTab = signal<'sistema' | 'docente' | 'ia' | 'capas'>('sistema');
   protected readonly aiErrorMessage = signal<string | null>(null);
   protected readonly deleteScenarioDialogId = signal<string | null>(null);
+  protected readonly textBubbleDraft = signal('');
 
   protected casoId = '';
   protected readonly sceneBaseWidth = 1280;
@@ -566,6 +567,27 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         textColor: '#21405a',
       },
       size: { width: 308, height: 108 },
+    },
+    {
+      id: 'texto-nube',
+      nombre: 'Nube de texto',
+      tipo: 'text',
+      categoria: 'Texto',
+      categoriaClave: 'texts',
+      icono: 'N',
+      descripcion: 'Agrega un texto editable dentro de la escena.',
+      tag: 'Texto libre',
+      content: {
+        variant: 'nube',
+        texto: 'Escribe aquí…',
+      },
+      style: {
+        backgroundColor: 'rgba(255, 252, 247, 0.94)',
+        borderColor: 'rgba(124, 179, 66, 0.32)',
+        accentColor: '#5a8f42',
+        textColor: '#1f3d2e',
+      },
+      size: { width: 280, height: 120 },
     },
     {
       id: 'objeto-nota',
@@ -1115,6 +1137,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       this.escenarios().find((item) => item.id === escenarioId) ?? null,
     );
     this.selectedElementId.set(firstElement?.id ?? null);
+    this.syncTextBubbleDraft(firstElement?.id ?? null);
     this.syncQuestionDraft();
     this.syncDecisionSelection();
     this.resetStudentPreview();
@@ -1139,6 +1162,15 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   selectElement(elementId: string): void {
     this.selectedElementId.set(elementId);
+    this.syncTextBubbleDraft(elementId);
+
+    const element = this.findElementById(elementId);
+    if (element && this.isTextBubble(element)) {
+      this.openPropertySection.set('content');
+      this.openPropertiesPanel();
+      return;
+    }
+
     this.openPropertySection.set('general');
   }
 
@@ -1570,6 +1602,16 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       escenario.layout.elements.push(newElement);
     });
     this.selectedElementId.set(newElement.id);
+
+    if (libraryItem.content['variant'] === 'nube') {
+      this.textBubbleDraft.set(
+        typeof libraryItem.content['texto'] === 'string'
+          ? libraryItem.content['texto']
+          : 'Escribe aquí…',
+      );
+      this.openPropertySection.set('content');
+      this.openPropertiesPanel();
+    }
   }
 
   generateAiAsset(): void {
@@ -1738,16 +1780,37 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     });
   }
 
+  updateTextBubbleContent(value: string): void {
+    const element = this.selectedElement();
+    if (!element || !this.isTextBubble(element)) {
+      return;
+    }
+
+    const normalized = value.slice(0, 500);
+    this.textBubbleDraft.set(normalized);
+
+    this.updateElement(element.id, (item) => {
+      item.content = {
+        ...item.content,
+        variant: 'nube',
+        texto: normalized,
+      };
+    });
+  }
+
   updateSelectedContent(key: string, value: string): void {
     const element = this.selectedElement();
     if (!element) {
       return;
     }
 
+    const normalizedValue =
+      key === 'texto' && this.isTextBubble(element) ? value.slice(0, 500) : value;
+
     this.updateElement(element.id, (item) => {
       item.content = {
         ...item.content,
-        [key]: value,
+        [key]: normalizedValue,
       };
     });
   }
@@ -2363,7 +2426,43 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     );
   }
 
+  isTextBubble(element: EditorElement): boolean {
+    return element.type === 'text' && element.content['variant'] === 'nube';
+  }
+
+  textBubbleBody(element: EditorElement): string {
+    return this.contentText(element, 'texto') || 'Escribe aquí…';
+  }
+
+  textBubbleLength(element: EditorElement): number {
+    return this.textBubbleDraft().length || this.contentText(element, 'texto').length;
+  }
+
+  private findElementById(elementId: string): EditorElement | null {
+    const escenario = this.escenarioSeleccionado();
+    return escenario?.layout.elements.find((item) => item.id === elementId) ?? null;
+  }
+
+  private syncTextBubbleDraft(elementId = this.selectedElementId()): void {
+    if (!elementId) {
+      this.textBubbleDraft.set('');
+      return;
+    }
+
+    const element = this.findElementById(elementId);
+    if (element && this.isTextBubble(element)) {
+      this.textBubbleDraft.set(this.contentText(element, 'texto') || 'Escribe aquí…');
+      return;
+    }
+
+    this.textBubbleDraft.set('');
+  }
+
   noteTypeLabel(element: EditorElement): string {
+    if (this.isTextBubble(element)) {
+      return 'Nube de texto';
+    }
+
     switch (element.type) {
       case 'instruction':
         return 'Guia';

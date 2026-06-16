@@ -624,6 +624,17 @@
                           [style.object-fit]="elementObjectFit(element)"
                         />
                       </div>
+                    } @else if (isTextBubble(element)) {
+                      <div
+                        class="canvas-text-bubble scene-note scene-note--nube"
+                        [class.scene-note--selected]="selectedElement()?.id === element.id"
+                        [ngStyle]="combinedElementStyle(element)"
+                        (pointerdown)="startDrag($event, element.id)"
+                        (click)="$event.stopPropagation(); selectElement(element.id)"
+                      >
+                        <span class="scene-note__tag">{{ noteTypeLabel(element) }}</span>
+                        <p class="canvas-text-bubble__body">{{ textBubbleBody(element) }}</p>
+                      </div>
                     } @else {
                       <div
                         class="scene-note"
@@ -746,6 +757,17 @@
                                 <strong>Pregunta vinculada</strong>
                                 <p>{{ escenarioSeleccionado()!.pregunta?.enunciado || 'Crea la pregunta principal en la pestaña Decisiones.' }}</p>
                               </div>
+                            } @else if (isTextBubble(element)) {
+                              <label class="field">
+                                <span>Texto de la nube</span>
+                                <textarea
+                                  rows="5"
+                                  maxlength="500"
+                                  [value]="textBubbleDraft()"
+                                  (input)="updateTextBubbleContent($any($event.target).value)"
+                                ></textarea>
+                              </label>
+                              <p class="property-hint">{{ textBubbleDraft().length }}/500 caracteres</p>
                             } @else {
                               <label class="field">
                                 <span>Contenido</span>
@@ -1110,6 +1132,11 @@
                       [alt]="contentLabel(element, 'nombre') || elementAiType(element) || 'Elemento IA'"
                       [style.object-fit]="elementObjectFit(element)"
                     />
+                  </div>
+                } @else if (isTextBubble(element)) {
+                  <div class="canvas-text-bubble scene-note scene-note--nube" [ngStyle]="combinedElementStyle(element)">
+                    <span class="scene-note__tag">{{ noteTypeLabel(element) }}</span>
+                    <p class="canvas-text-bubble__body">{{ textBubbleBody(element) }}</p>
                   </div>
                 } @else {
                   <div class="scene-note" [ngStyle]="combinedElementStyle(element)">

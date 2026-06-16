@@ -30,4 +30,4 @@ RUN mkdir -p /app/backend/uploads
 WORKDIR /app/backend
 EXPOSE 3000
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]

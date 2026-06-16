@@ -61,6 +61,7 @@ export class UsuariosService {
     email: string;
     role: Role;
     puedeCrearCasos?: boolean;
+    password?: string;
   }): Promise<{ usuario: Usuario; temporaryPassword: string }> {
     const usuarioExistente = await this.findByEmail(params.email);
 
@@ -68,7 +69,8 @@ export class UsuariosService {
       throw new ConflictException('Ya existe un usuario con ese correo.');
     }
 
-    const temporaryPassword = generateTemporaryPassword();
+    const temporaryPassword =
+      params.password?.trim() || generateTemporaryPassword();
     const passwordHash = await bcrypt.hash(temporaryPassword, 10);
 
     try {

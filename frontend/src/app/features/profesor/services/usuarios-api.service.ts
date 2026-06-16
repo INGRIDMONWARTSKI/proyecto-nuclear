@@ -9,11 +9,13 @@ export interface CrearUsuarioPayload {
   email: string;
   role: Role;
   puedeCrearCasos?: boolean;
+  password?: string;
 }
 
 export interface CrearUsuarioResponse {
   user: Usuario;
   emailSent: boolean;
+  temporaryPassword: string;
   warning?: string;
 }
 

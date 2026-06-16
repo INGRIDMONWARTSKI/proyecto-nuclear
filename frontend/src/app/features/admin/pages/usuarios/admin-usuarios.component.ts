@@ -57,6 +57,11 @@ export class AdminUsuariosComponent implements OnInit {
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
+  protected readonly createdCredentials = signal<{
+    email: string;
+    temporaryPassword: string;
+  } | null>(null);
+  protected readonly copyPasswordFeedback = signal(false);
   protected readonly usuarios = signal<Usuario[]>([]);
   protected readonly gruposConEstudiantes = signal<GrupoEstudiantesView[]>([]);
   protected readonly estudiantesSinGrupo = signal<Usuario[]>([]);
@@ -230,6 +235,7 @@ export class AdminUsuariosComponent implements OnInit {
   protected readonly createForm = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
+    temporaryPassword: ['', [this.optionalMinLength(8)]],
     role: [Role.ESTUDIANTE, [Validators.required]],
     puedeCrearCasos: [true],
   });
@@ -340,11 +346,13 @@ export class AdminUsuariosComponent implements OnInit {
 
   abrirCrear() {
     this.successMessage.set(null);
+    this.createdCredentials.set(null);
     this.errorMessage.set(null);
     this.editingUsuario.set(null);
     this.createForm.reset({
       fullName: '',
       email: '',
+      temporaryPassword: '',
       role: Role.ESTUDIANTE,
       puedeCrearCasos: true,
     });
@@ -406,24 +414,32 @@ export class AdminUsuariosComponent implements OnInit {
     this.successMessage.set(null);
 
     const raw = this.createForm.getRawValue();
+    const temporaryPassword = raw.temporaryPassword.trim();
     this.usuariosApi
       .crearUsuario({
         fullName: raw.fullName.trim(),
         email: raw.email.trim(),
         role: raw.role,
         puedeCrearCasos: raw.role === Role.PROFESOR ? raw.puedeCrearCasos : undefined,
+        ...(temporaryPassword ? { password: temporaryPassword } : {}),
       })
       .subscribe({
       next: (response) => {
         this.saving.set(false);
-        if (response.warning) {
-          this.successMessage.set(response.warning);
-        } else if (response.emailSent) {
+        this.createdCredentials.set({
+          email: response.user.email,
+          temporaryPassword: response.temporaryPassword,
+        });
+        if (response.emailSent) {
           this.successMessage.set(
-            'Usuario creado. Se envió un correo con la contraseña temporal.',
+            'Usuario creado correctamente. Copia esta contraseña temporal; solo se mostrará una vez. También se envió un correo al usuario.',
           );
+        } else if (response.warning) {
+          this.successMessage.set(response.warning);
         } else {
-          this.successMessage.set('Usuario creado correctamente.');
+          this.successMessage.set(
+            'Usuario creado correctamente. Copia esta contraseña temporal; solo se mostrará una vez.',
+          );
         }
         this.cerrarPanel();
         this.cargarUsuarios();
@@ -592,6 +608,38 @@ export class AdminUsuariosComponent implements OnInit {
     const roleControl =
       mode === 'create' ? this.createForm.controls.role : this.editForm.controls.role;
     return roleControl.value === Role.PROFESOR;
+  }
+
+  protected descartarCredenciales(): void {
+    this.createdCredentials.set(null);
+    this.copyPasswordFeedback.set(false);
+  }
+
+  protected async copiarContrasenaTemporal(): Promise<void> {
+    const creds = this.createdCredentials();
+    if (!creds) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(creds.temporaryPassword);
+      this.copyPasswordFeedback.set(true);
+      window.setTimeout(() => this.copyPasswordFeedback.set(false), 2200);
+    } catch {
+      this.errorMessage.set('No fue posible copiar la contraseña. Cópiala manualmente.');
+    }
+  }
+
+  private optionalMinLength(min: number) {
+    return (control: { value: string }) => {
+      const value = control.value?.trim() ?? '';
+      if (!value) {
+        return null;
+      }
+      return value.length >= min
+        ? null
+        : { minlength: { requiredLength: min, actualLength: value.length } };
+    };
   }
 
   private syncPuedeCrearCasosControl(mode: 'create' | 'edit'): void {

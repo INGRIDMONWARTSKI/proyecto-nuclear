@@ -54,6 +54,7 @@ export class UsuariosController {
         email: crearUsuarioDto.email,
         role: crearUsuarioDto.role,
         puedeCrearCasos: crearUsuarioDto.puedeCrearCasos,
+        password: crearUsuarioDto.password,
       });
 
     const emailSent = await this.mailService.sendWelcomeEmail(
@@ -75,11 +76,12 @@ export class UsuariosController {
     return {
       user: this.usuariosService.sanitizeUser(usuario),
       emailSent,
+      temporaryPassword,
       ...(emailSent
         ? {}
         : {
             warning:
-              'Usuario creado, pero no se pudo enviar el correo.',
+              'Usuario creado, pero no se pudo enviar el correo. Entrega la contraseña temporal manualmente.',
           }),
     };
   }

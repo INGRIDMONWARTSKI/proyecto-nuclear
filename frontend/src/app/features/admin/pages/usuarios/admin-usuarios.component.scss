@@ -741,6 +741,79 @@
   }
 }
 
+.usuarios__temp-password-hint {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+.usuarios__credentials-card {
+  margin-bottom: var(--siep-space-5);
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--siep-radius-lg);
+  border: 1px solid rgba(124, 179, 66, 0.45);
+  background: linear-gradient(160deg, #f7fbf2 0%, #edf6e4 100%);
+  box-shadow: 0 10px 28px rgba(47, 93, 52, 0.08);
+}
+
+.usuarios__credentials-card-head {
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0 0 0.35rem;
+    font-family: var(--siep-font-title);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2f5d34;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: #4f6358;
+  }
+}
+
+.usuarios__credentials-list {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.usuarios__credentials-item {
+  dt {
+    margin: 0 0 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5f7368;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #102a1d;
+    word-break: break-word;
+  }
+}
+
+.usuarios__credentials-password {
+  display: inline-block;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(255, 252, 247, 0.95);
+  border: 1px dashed rgba(47, 93, 52, 0.35);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92rem;
+}
+
+.usuarios__credentials-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
 .field__hint {
   display: block;
   margin-top: var(--siep-space-1);

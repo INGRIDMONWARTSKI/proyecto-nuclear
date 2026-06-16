@@ -19,6 +19,41 @@
     <app-alert-message [message]="successMessage()!" type="success" />
   }
 
+  @if (createdCredentials(); as creds) {
+    <section class="usuarios__credentials-card" aria-live="polite">
+      <header class="usuarios__credentials-card-head">
+        <h2>Acceso inicial del usuario</h2>
+        <p>
+          Usuario creado correctamente. Copia esta contraseña temporal; solo se mostrará una vez.
+        </p>
+      </header>
+      <dl class="usuarios__credentials-list">
+        <div class="usuarios__credentials-item">
+          <dt>Correo del usuario</dt>
+          <dd>{{ creds.email }}</dd>
+        </div>
+        <div class="usuarios__credentials-item">
+          <dt>Contraseña temporal</dt>
+          <dd>
+            <code class="usuarios__credentials-password">{{ creds.temporaryPassword }}</code>
+          </dd>
+        </div>
+      </dl>
+      <div class="usuarios__credentials-actions">
+        <button
+          type="button"
+          class="siep-btn-primary"
+          (click)="copiarContrasenaTemporal()"
+        >
+          {{ copyPasswordFeedback() ? 'Contraseña copiada' : 'Copiar contraseña' }}
+        </button>
+        <button type="button" class="siep-btn-secondary" (click)="descartarCredenciales()">
+          Entendido
+        </button>
+      </div>
+    </section>
+  }
+
   @if (panelMode() === 'create') {
     <section class="siep-card usuarios__panel">
       <h2>Nuevo usuario</h2>
@@ -55,9 +90,30 @@
             <span class="field-error">Ingresa un correo válido.</span>
           }
         </div>
-        <p class="field__hint usuarios__temp-password-hint">
-          MENTORA generará una contraseña temporal y la enviará al correo registrado.
-        </p>
+        <div class="siep-field siep-field--full">
+          <label for="create-temporaryPassword">Contraseña temporal (opcional)</label>
+          <input
+            id="create-temporaryPassword"
+            type="text"
+            formControlName="temporaryPassword"
+            autocomplete="new-password"
+            placeholder="Déjala vacía para generar una automáticamente"
+            [class.is-invalid]="
+              createForm.controls.temporaryPassword.touched &&
+              createForm.controls.temporaryPassword.invalid
+            "
+          />
+          @if (
+            createForm.controls.temporaryPassword.touched &&
+            createForm.controls.temporaryPassword.hasError('minlength')
+          ) {
+            <span class="field-error">La contraseña debe tener al menos 8 caracteres.</span>
+          }
+          <span class="field__hint usuarios__temp-password-hint">
+            Si la dejas vacía, MENTORA generará una contraseña segura. Siempre podrás copiarla aquí
+            después de crear el usuario, aunque el correo no se envíe.
+          </span>
+        </div>
         <div class="siep-field">
           <label for="create-role">Rol</label>
           <select

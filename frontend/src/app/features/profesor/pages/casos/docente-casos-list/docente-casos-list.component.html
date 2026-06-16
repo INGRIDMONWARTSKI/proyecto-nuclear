@@ -71,11 +71,20 @@
       @for (caso of casos(); track caso.id) {
         <li class="siep-card caso-card">
           <div class="caso-card__top">
-            <app-status-badge
-              variant="status"
-              [status]="estadoBadge(caso.estado)"
-              [label]="estadoLabel(caso.estado)"
-            />
+            <div class="caso-card__badges">
+              <app-status-badge
+                variant="status"
+                [status]="estadoBadge(caso.estado)"
+                [label]="estadoLabel(caso.estado)"
+              />
+              @if (requiereRevision(caso)) {
+                <app-status-badge
+                  variant="status"
+                  status="pending"
+                  label="Requiere revisión"
+                />
+              }
+            </div>
             <span class="caso-card__date">{{ caso.createdAt | date: 'shortDate' }}</span>
           </div>
 

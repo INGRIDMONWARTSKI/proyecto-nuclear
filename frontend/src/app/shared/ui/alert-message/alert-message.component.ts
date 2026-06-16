@@ -7,6 +7,7 @@ import { Component, Input } from '@angular/core';
     <div
       [class.siep-alert-error]="type === 'error'"
       [class.siep-alert-success]="type === 'success'"
+      [class.siep-alert-info]="type === 'info'"
       role="alert"
     >
       {{ message }}
@@ -15,5 +16,5 @@ import { Component, Input } from '@angular/core';
 })
 export class AlertMessageComponent {
   @Input({ required: true }) message!: string;
-  @Input() type: 'error' | 'success' = 'error';
+  @Input() type: 'error' | 'success' | 'info' = 'error';
 }

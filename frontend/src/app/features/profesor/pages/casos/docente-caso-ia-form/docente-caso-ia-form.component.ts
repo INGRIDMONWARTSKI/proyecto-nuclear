@@ -33,6 +33,7 @@ export class DocenteCasoIaFormComponent implements OnInit {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly infoMessage = signal<string | null>(null);
   protected readonly casosDisponibles = signal<CasoDocente[]>([]);
 
   protected readonly form = this.fb.nonNullable.group({
@@ -120,10 +121,11 @@ export class DocenteCasoIaFormComponent implements OnInit {
       casosReferenciaIds.length === 0 &&
       !this.tieneContextoSuficiente(casosReferenciaTexto)
     ) {
-      this.errorMessage.set(
-        'Agrega más contexto antes de generar el caso. Incluye situación, población, conflicto principal y objetivo pedagógico.',
+      this.infoMessage.set(
+        'El contexto es breve. Si la IA no completa el caso, se guardará como borrador incompleto para que lo revises.',
       );
-      return;
+    } else {
+      this.infoMessage.set(null);
     }
 
     this.saving.set(true);
@@ -139,6 +141,21 @@ export class DocenteCasoIaFormComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.saving.set(false);
+
+          if (response.borradorParcial) {
+            sessionStorage.setItem(
+              `mentora.casoRequiereRevision:${response.casoId}`,
+              '1',
+            );
+            void this.router.navigate(
+              ['/profesor/casos', response.casoId, 'canvas'],
+              {
+                queryParams: { revision: '1' },
+              },
+            );
+            return;
+          }
+
           void this.router.navigate(['/profesor/casos', response.casoId]);
         },
         error: (error) => {

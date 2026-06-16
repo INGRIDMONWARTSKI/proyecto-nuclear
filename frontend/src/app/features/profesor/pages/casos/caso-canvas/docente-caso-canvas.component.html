@@ -33,6 +33,10 @@
     </div>
   </header>
 
+  @if (revisionNotice()) {
+    <app-alert-message [message]="revisionNotice()!" type="info" />
+  }
+
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />
   }

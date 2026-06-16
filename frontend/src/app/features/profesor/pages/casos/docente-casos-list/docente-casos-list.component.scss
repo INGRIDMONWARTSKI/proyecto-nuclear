@@ -82,6 +82,13 @@
   flex-wrap: wrap;
 }
 
+.caso-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
 .caso-card__title {
   margin: 0;
   font-family: var(--siep-font-title);

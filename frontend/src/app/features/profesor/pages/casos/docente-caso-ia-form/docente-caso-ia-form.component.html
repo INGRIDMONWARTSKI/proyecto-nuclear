@@ -12,6 +12,9 @@
   @if (errorMessage()) {
     <app-alert-message [message]="errorMessage()!" type="error" />
   }
+  @if (infoMessage()) {
+    <app-alert-message [message]="infoMessage()!" type="info" />
+  }
 
   @if (loading()) {
     <app-loading-state message="Cargando referencias disponibles..." />

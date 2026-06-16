@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   Injectable,
   ServiceUnavailableException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Role } from '../common/enums/role.enum';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
@@ -30,8 +29,8 @@ import { CasoPreviewTree } from './types/caso-preview.types';
 export class GeneracionCasosIaService {
   private static readonly MAX_GENERATION_ATTEMPTS = 2;
   private static readonly LOCAL_FALLBACK_MAX_SCENARIOS = 2;
-  private static readonly LOCAL_PARTIAL_DRAFT_WARNING =
-    'La IA local genero un borrador parcial. Revisa y completa el caso antes de publicarlo.';
+  private static readonly INCOMPLETE_DRAFT_WARNING =
+    'El caso fue guardado como borrador incompleto. Revisa y completa escenarios, preguntas y opciones antes de publicarlo.';
 
   constructor(
     private readonly casosService: CasosService,
@@ -90,25 +89,32 @@ export class GeneracionCasosIaService {
       cantidadEscenarios,
     );
 
-    if ('borradorParcial' in generationResult && generationResult.borradorParcial) {
+    if (
+      'borradorParcial' in generationResult &&
+      generationResult.borradorParcial &&
+      !('casoGenerado' in generationResult)
+    ) {
       const creado = await this.persistPartialDraftCase(
         generationResult.partialCase,
+        promptContext,
+        cantidadEscenarios,
         currentUser,
       );
 
       return {
         casoId: creado.id,
         titulo: creado.titulo,
-        totalEscenarios: 0,
+        totalEscenarios: creado.totalEscenarios,
         modelo: generationResult.model,
         proveedor: generationResult.provider,
         borradorParcial: true,
-        advertencia: GeneracionCasosIaService.LOCAL_PARTIAL_DRAFT_WARNING,
+        advertencia: GeneracionCasosIaService.INCOMPLETE_DRAFT_WARNING,
       };
     }
 
     const fullResult = generationResult as CasoIaGenerationResult & {
       casoGenerado: CasoGeneradoIa;
+      borradorIncompleto?: boolean;
     };
     const creado = await this.persistGeneratedCase(
       fullResult.casoGenerado,
@@ -121,6 +127,12 @@ export class GeneracionCasosIaService {
       totalEscenarios: fullResult.casoGenerado.escenarios.length,
       modelo: fullResult.model,
       proveedor: fullResult.provider,
+      ...(creado.borradorIncompleto || fullResult.borradorIncompleto
+        ? {
+            borradorParcial: true,
+            advertencia: GeneracionCasosIaService.INCOMPLETE_DRAFT_WARNING,
+          }
+        : {}),
     };
   }
 
@@ -132,22 +144,9 @@ export class GeneracionCasosIaService {
     referenciasTexto: string[],
     referenciasCasos: CasoPreviewTree[],
   ): void {
-    if (referenciasCasos.length > 0) {
-      return;
-    }
-
-    const totalCharacters = referenciasTexto.join('\n\n').length;
-    const longestReference = referenciasTexto.reduce(
-      (max, item) => Math.max(max, item.length),
-      0,
-    );
-
-    if (totalCharacters < 120 || longestReference < 80) {
-      throw new BadRequestException({
-        message: 'Agrega mas contexto para generar un caso completo.',
-        code: 'IA_PROMPT_INSUFFICIENT',
-      });
-    }
+    // Contexto corto permitido: si la IA no completa la estructura, se guarda borrador incompleto.
+    void referenciasTexto;
+    void referenciasCasos;
   }
 
   private async resolveReferenceCases(
@@ -819,7 +818,7 @@ export class GeneracionCasosIaService {
       context.referenciasTexto[0] ??
       'Caso asistido por IA local';
     const compact = this.compactText(base, 90);
-    return compact.length >= 3 ? compact : 'Caso asistido por IA local';
+    return compact.length >= 3 ? compact : 'Caso generado por IA - requiere revision';
   }
 
   private buildFallbackDescription(context: {
@@ -852,20 +851,29 @@ export class GeneracionCasosIaService {
       descripcion: string | null;
       objetivoAprendizaje: string | null;
     },
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
+    cantidadEscenarios: number,
     currentUser: AuthenticatedUser,
-  ): Promise<{ id: string; titulo: string }> {
-    const casoCreado = await this.casosService.create(
-      {
-        titulo: partialCase.titulo,
-        descripcion: partialCase.descripcion ?? undefined,
-        objetivoAprendizaje: partialCase.objetivoAprendizaje ?? undefined,
-      } satisfies CreateCasoDto,
-      currentUser,
+  ): Promise<{ id: string; titulo: string; totalEscenarios: number }> {
+    const casoGenerado = this.coerceIncompleteGeneratedCase(
+      context,
+      partialCase,
+      cantidadEscenarios,
     );
+    casoGenerado.titulo = this.resolveIncompleteTitle(partialCase.titulo);
+    casoGenerado.descripcion = partialCase.descripcion;
+    casoGenerado.objetivoAprendizaje = partialCase.objetivoAprendizaje;
 
+    const persisted = await this.persistGeneratedCase(casoGenerado, currentUser);
     return {
-      id: casoCreado.id,
-      titulo: casoCreado.titulo,
+      id: persisted.id,
+      titulo: persisted.titulo,
+      totalEscenarios: casoGenerado.escenarios.length,
     };
   }
 
@@ -888,6 +896,10 @@ export class GeneracionCasosIaService {
           descripcion: string | null;
           objetivoAprendizaje: string | null;
         };
+      })
+    | (CasoIaGenerationResult & {
+        casoGenerado: CasoGeneradoIa;
+        borradorIncompleto: true;
       })
   > {
     let lastErrorMessage =
@@ -951,12 +963,19 @@ export class GeneracionCasosIaService {
       };
     }
 
-    throw new UnprocessableEntityException({
-      message:
-        'La IA genero un borrador invalido y no se guardo. Intenta nuevamente con referencias mas especificas.',
-      code: 'IA_DRAFT_INVALID',
-      errors: this.uniqueErrors(collectedErrors.length > 0 ? collectedErrors : [lastErrorMessage]),
-    });
+    return {
+      ...(lastGenerationResult ?? {
+        rawJson: '{}',
+        provider: 'gemini',
+        model: 'unknown',
+      }),
+      casoGenerado: this.coerceIncompleteGeneratedCase(
+        context,
+        lastRawPayload,
+        cantidadEscenarios,
+      ),
+      borradorIncompleto: true,
+    };
   }
 
   private validateGeneratedCase(
@@ -1190,10 +1209,196 @@ export class GeneracionCasosIaService {
     };
   }
 
+  private coerceIncompleteGeneratedCase(
+    context: {
+      instruccion: string | null;
+      cantidadEscenarios: number;
+      referenciasTexto: string[];
+      referenciasCasos: CasoPreviewTree[];
+    },
+    rawPayload: unknown,
+    cantidadEscenarios: number,
+  ): CasoGeneradoIa {
+    const metadata = this.buildPartialDraft(context, rawPayload);
+    const raw =
+      rawPayload && typeof rawPayload === 'object' && !Array.isArray(rawPayload)
+        ? (rawPayload as Record<string, unknown>)
+        : {};
+
+    let escenarios: CasoGeneradoIa['escenarios'] = [];
+
+    if (Array.isArray(raw.escenarios) && raw.escenarios.length > 0) {
+      escenarios = this.coerceEscenariosFromRaw(
+        raw.escenarios as unknown[],
+        metadata,
+        context,
+        cantidadEscenarios,
+      );
+    }
+
+    if (escenarios.length === 0) {
+      escenarios = this.buildMinimalEscenarios(metadata, context, cantidadEscenarios);
+    }
+
+    return {
+      titulo: this.resolveIncompleteTitle(metadata.titulo),
+      descripcion: metadata.descripcion,
+      objetivoAprendizaje: metadata.objetivoAprendizaje,
+      escenarios,
+    };
+  }
+
+  private resolveIncompleteTitle(titulo: string): string {
+    const normalized = titulo.trim();
+    if (normalized.length < 3) {
+      return 'Caso generado por IA - requiere revision';
+    }
+
+    return normalized;
+  }
+
+  private coerceEscenariosFromRaw(
+    items: unknown[],
+    metadata: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    },
+    context: {
+      instruccion: string | null;
+      referenciasTexto: string[];
+    },
+    cantidadEscenarios: number,
+  ): CasoGeneradoIa['escenarios'] {
+    const total = Math.max(1, Math.min(items.length, cantidadEscenarios));
+    const escenarios: CasoGeneradoIa['escenarios'] = [];
+
+    for (let index = 0; index < total; index += 1) {
+      const orden = index + 1;
+      const isFinal = orden === total && total > 1;
+
+      try {
+        escenarios.push(this.validateScenario(items[index], orden, total));
+      } catch {
+        escenarios.push(
+          this.buildMinimalEscenario(metadata, context, orden, isFinal),
+        );
+      }
+    }
+
+    return escenarios;
+  }
+
+  private buildMinimalEscenarios(
+    metadata: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    },
+    context: {
+      instruccion: string | null;
+      referenciasTexto: string[];
+    },
+    cantidadEscenarios: number,
+  ): CasoGeneradoIa['escenarios'] {
+    const total = Math.max(1, Math.min(cantidadEscenarios, 2));
+    return Array.from({ length: total }, (_, index) => {
+      const orden = index + 1;
+      return this.buildMinimalEscenario(
+        metadata,
+        context,
+        orden,
+        total > 1 && orden === total,
+      );
+    });
+  }
+
+  private buildMinimalEscenario(
+    metadata: {
+      titulo: string;
+      descripcion: string | null;
+      objetivoAprendizaje: string | null;
+    },
+    context: {
+      instruccion: string | null;
+      referenciasTexto: string[];
+    },
+    orden: number,
+    isFinal: boolean,
+  ): CasoGeneradoIa['escenarios'][number] {
+    const baseContext =
+      metadata.descripcion ??
+      context.instruccion ??
+      context.referenciasTexto[0] ??
+      'Completa la situacion inicial del caso en el editor.';
+
+    return {
+      orden,
+      titulo:
+        orden === 1
+          ? `Escenario inicial: ${metadata.titulo}`
+          : `Cierre del caso: ${metadata.titulo}`,
+      situacionTexto: this.compactText(baseContext, 900),
+      fondoCodigo: isFinal ? 'oficina_psicologica' : 'aula',
+      isFinal,
+      pregunta: isFinal ? null : this.buildDefaultQuestion(metadata, context),
+    };
+  }
+
+  private buildDefaultQuestion(
+    metadata: {
+      titulo: string;
+      objetivoAprendizaje: string | null;
+    },
+    context: {
+      instruccion: string | null;
+    },
+  ): NonNullable<CasoGeneradoIa['escenarios'][number]['pregunta']> {
+    const enunciadoBase =
+      metadata.objetivoAprendizaje ??
+      context.instruccion ??
+      'Define la pregunta situada para este escenario.';
+
+    return {
+      enunciado: this.compactText(
+        `¿Cuál es la intervención más adecuada? ${enunciadoBase}`,
+        500,
+      ),
+      tipo: 'single_choice',
+      puntajeMaximo: 5,
+      opciones: [
+        {
+          orden: 1,
+          texto: 'Opción A — completa esta respuesta',
+          puntaje: 3,
+          isCorrecta: false,
+          escenarioDestinoOrden: null,
+          retroalimentacion: {
+            mensaje:
+              'Revisa y completa la retroalimentacion pedagogica de esta opcion.',
+            tipo: 'pedagogica',
+          },
+        },
+        {
+          orden: 2,
+          texto: 'Opción B — completa esta respuesta',
+          puntaje: 5,
+          isCorrecta: true,
+          escenarioDestinoOrden: null,
+          retroalimentacion: {
+            mensaje:
+              'Revisa y completa la retroalimentacion pedagogica de esta opcion.',
+            tipo: 'refuerzo',
+          },
+        },
+      ],
+    };
+  }
+
   private async persistGeneratedCase(
     caso: CasoGeneradoIa,
     currentUser: AuthenticatedUser,
-  ): Promise<{ id: string; titulo: string }> {
+  ): Promise<{ id: string; titulo: string; borradorIncompleto?: boolean }> {
     const createdCase = {
       casoId: '' as string,
       escenarioIds: [] as string[],
@@ -1307,12 +1512,11 @@ export class GeneracionCasosIaService {
       );
 
       if (validationErrors.length > 0) {
-        throw new UnprocessableEntityException({
-          message:
-            'La IA genero un borrador invalido y no se guardo. Intenta nuevamente con referencias mas especificas.',
-          code: 'IA_DRAFT_INVALID',
-          errors: this.uniqueErrors(validationErrors),
-        });
+        return {
+          id: casoCreado.id,
+          titulo: casoCreado.titulo,
+          borradorIncompleto: true,
+        };
       }
 
       return {

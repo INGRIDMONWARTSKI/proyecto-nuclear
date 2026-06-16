@@ -114,6 +114,18 @@ export class DocenteCasosListComponent implements OnInit {
     return this.casos().filter((caso) => caso.estado === estado).length;
   }
 
+  requiereRevision(caso: CasoDocente): boolean {
+    if (caso.estado !== 'draft') {
+      return false;
+    }
+
+    if (sessionStorage.getItem(`mentora.casoRequiereRevision:${caso.id}`) === '1') {
+      return true;
+    }
+
+    return (caso.totalEscenarios ?? 0) === 0 || (caso.totalPreguntas ?? 0) === 0;
+  }
+
   eliminarBorrador(caso: CasoDocente): void {
     if (caso.estado !== 'draft' || this.deletingCasoId()) {
       return;

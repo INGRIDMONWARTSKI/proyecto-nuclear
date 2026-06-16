@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ForbiddenException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Role } from '../common/enums/role.enum';
 import { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
@@ -99,17 +98,43 @@ describe('GeneracionCasosIaService', () => {
     ).rejects.toThrow(BadRequestException);
   });
 
-  it('rechaza referencias de texto con contexto insuficiente', async () => {
-    await expect(
-      service.generarCaso(
-        { casosReferenciaTexto: ['Referencia base'], cantidadEscenarios: 2 },
-        currentUser,
-      ),
-    ).rejects.toMatchObject({
-      response: {
-        code: 'IA_PROMPT_INSUFFICIENT',
-      },
-    });
+  it('guarda borrador incompleto cuando las referencias de texto son cortas', async () => {
+    iaGenerationProvider.generateJson = jest
+      .fn()
+      .mockResolvedValueOnce(
+        generationPayload(JSON.stringify({ titulo: 'X', escenarios: [] })),
+      )
+      .mockResolvedValueOnce(
+        generationPayload(JSON.stringify({ titulo: 'X', escenarios: [] })),
+      );
+    casosService.create = jest
+      .fn()
+      .mockResolvedValue({ id: 'caso-corto', titulo: 'Referencia base' } as never);
+    escenariosService.create = jest
+      .fn()
+      .mockResolvedValue({ id: 'esc-corto-1' } as never);
+    decisionesService.createPregunta = jest
+      .fn()
+      .mockResolvedValue({ id: 'preg-corto-1' } as never);
+    decisionesService.createOpcion = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'op-corto-1' } as never)
+      .mockResolvedValueOnce({ id: 'op-corto-2' } as never);
+    retroalimentacionesService.create = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'ret-corto-1' } as never)
+      .mockResolvedValueOnce({ id: 'ret-corto-2' } as never);
+    publicacionService.validateCaseCompletenessById = jest
+      .fn()
+      .mockResolvedValue(['Faltan escenarios finales.']);
+
+    const response = await service.generarCaso(
+      { casosReferenciaTexto: ['Referencia base'], cantidadEscenarios: 2 },
+      currentUser,
+    );
+
+    expect(response.borradorParcial).toBe(true);
+    expect(response.casoId).toBe('caso-corto');
   });
 
   it('rechaza casos de referencia sin permiso', async () => {
@@ -347,7 +372,7 @@ describe('GeneracionCasosIaService', () => {
     expect(response.casoId).toBe('caso-2');
   });
 
-  it('devuelve 422 amable cuando la IA no logra producir un borrador valido', async () => {
+  it('guarda borrador incompleto cuando la IA no logra producir un borrador valido', async () => {
     iaGenerationProvider.generateJson = jest.fn().mockResolvedValue(
       generationPayload(
         JSON.stringify({
@@ -386,19 +411,36 @@ describe('GeneracionCasosIaService', () => {
         }),
       ),
     );
+    casosService.create = jest
+      .fn()
+      .mockResolvedValue({ id: 'caso-invalid', titulo: 'Caso invalido' } as never);
+    escenariosService.create = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'esc-invalid-1' } as never)
+      .mockResolvedValueOnce({ id: 'esc-invalid-2' } as never);
+    decisionesService.createPregunta = jest
+      .fn()
+      .mockResolvedValue({ id: 'preg-invalid-1' } as never);
+    decisionesService.createOpcion = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'op-invalid-1' } as never)
+      .mockResolvedValueOnce({ id: 'op-invalid-2' } as never);
+    retroalimentacionesService.create = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'ret-invalid-1' } as never)
+      .mockResolvedValueOnce({ id: 'ret-invalid-2' } as never);
+    publicacionService.validateCaseCompletenessById = jest
+      .fn()
+      .mockResolvedValue(['Cada pregunta debe incluir al menos dos opciones.']);
 
-    const promise = service.generarCaso(
+    const response = await service.generarCaso(
       { casosReferenciaTexto: [referenciaSuficiente], cantidadEscenarios: 2 },
       currentUser,
     );
 
-    await expect(promise).rejects.toThrow(UnprocessableEntityException);
-    await expect(promise).rejects.toMatchObject({
-      response: {
-        code: 'IA_DRAFT_INVALID',
-        errors: ['Cada pregunta debe incluir al menos dos opciones.'],
-      },
-    });
+    expect(response.borradorParcial).toBe(true);
+    expect(response.casoId).toBe('caso-invalid');
+    expect(postgrest.remove).not.toHaveBeenCalled();
   });
 
   it('arma el prompt con referencias mixtas y mapea destinos por orden', async () => {
@@ -615,7 +657,7 @@ describe('GeneracionCasosIaService', () => {
     });
   });
 
-  it('hace rollback y devuelve un mensaje amable si la validacion final falla', async () => {
+  it('conserva el borrador cuando la validacion final falla', async () => {
     iaGenerationProvider.generateJson = jest.fn().mockResolvedValue(
       generationPayload(
         JSON.stringify({
@@ -685,34 +727,14 @@ describe('GeneracionCasosIaService', () => {
       'El escenario inicial debe tener pregunta y al menos dos opciones.',
     ]);
 
-    const promise = service.generarCaso(
+    const response = await service.generarCaso(
       { casosReferenciaTexto: [referenciaSuficiente], cantidadEscenarios: 2 },
       currentUser,
     );
 
-    await expect(promise).rejects.toThrow(UnprocessableEntityException);
-    await expect(promise).rejects.toMatchObject({
-      response: {
-        code: 'IA_DRAFT_INVALID',
-        errors: ['El escenario inicial debe tener pregunta y al menos dos opciones.'],
-      },
-    });
-
-    expect(postgrest.remove).toHaveBeenCalledWith('retroalimentaciones', {
-      filters: { id: ['ret-invalid-1', 'ret-invalid-2'] },
-    });
-    expect(postgrest.remove).toHaveBeenCalledWith('opciones_respuesta', {
-      filters: { id: ['op-invalid-1', 'op-invalid-2'] },
-    });
-    expect(postgrest.remove).toHaveBeenCalledWith('preguntas_decision', {
-      filters: { id: ['preg-invalid-1'] },
-    });
-    expect(postgrest.remove).toHaveBeenCalledWith('escenarios', {
-      filters: { id: ['esc-invalid-1', 'esc-invalid-2'] },
-    });
-    expect(postgrest.remove).toHaveBeenCalledWith('casos', {
-      filters: { id: 'caso-invalid' },
-    });
+    expect(response.borradorParcial).toBe(true);
+    expect(response.casoId).toBe('caso-invalid');
+    expect(postgrest.remove).not.toHaveBeenCalled();
   });
 
   it('devuelve proveedor y modelo efectivos cuando entra el fallback a Ollama', async () => {
@@ -1023,6 +1045,24 @@ describe('GeneracionCasosIaService', () => {
     casosService.create = jest
       .fn()
       .mockResolvedValue({ id: 'caso-partial', titulo: 'Caso local parcial' } as never);
+    escenariosService.create = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'esc-partial-1' } as never)
+      .mockResolvedValueOnce({ id: 'esc-partial-2' } as never);
+    decisionesService.createPregunta = jest
+      .fn()
+      .mockResolvedValue({ id: 'preg-partial-1' } as never);
+    decisionesService.createOpcion = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'op-partial-1' } as never)
+      .mockResolvedValueOnce({ id: 'op-partial-2' } as never);
+    retroalimentacionesService.create = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'ret-partial-1' } as never)
+      .mockResolvedValueOnce({ id: 'ret-partial-2' } as never);
+    publicacionService.validateCaseCompletenessById = jest
+      .fn()
+      .mockResolvedValue(['Falta escenario final.']);
 
     const response = await service.generarCaso(
       { casosReferenciaTexto: [referenciaSuficiente], cantidadEscenarios: 2 },
@@ -1032,13 +1072,13 @@ describe('GeneracionCasosIaService', () => {
     expect(response).toEqual({
       casoId: 'caso-partial',
       titulo: 'Caso local parcial',
-      totalEscenarios: 0,
+      totalEscenarios: 2,
       modelo: 'llama3.2:latest',
       proveedor: 'ollama',
       borradorParcial: true,
       advertencia:
-        'La IA local genero un borrador parcial. Revisa y completa el caso antes de publicarlo.',
+        'El caso fue guardado como borrador incompleto. Revisa y completa escenarios, preguntas y opciones antes de publicarlo.',
     });
-    expect(escenariosService.create).not.toHaveBeenCalled();
+    expect(escenariosService.create).toHaveBeenCalled();
   });
 });

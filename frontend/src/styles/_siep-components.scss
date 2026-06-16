@@ -324,6 +324,13 @@
   border: 1px solid var(--siep-success-border);
 }
 
+.siep-alert-info {
+  @extend .siep-alert;
+  color: #3f5d34;
+  background: #f3f9ec;
+  border: 1px solid rgba(124, 179, 66, 0.45);
+}
+
 /* —— Campos —— */
 .siep-field {
   margin-bottom: var(--siep-space-4);

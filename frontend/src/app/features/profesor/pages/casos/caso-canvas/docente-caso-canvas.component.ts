@@ -104,6 +104,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly saving = signal(false);
   protected readonly duplicating = signal(false);
   protected readonly deletingScenario = signal(false);
+  protected readonly revisionNotice = signal<string | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly editor = signal<CasoEditor | null>(null);
@@ -1056,6 +1057,12 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       this.errorMessage.set('No se encontro el identificador del caso.');
       this.loading.set(false);
       return;
+    }
+
+    if (this.route.snapshot.queryParamMap.get('revision') === '1') {
+      this.revisionNotice.set(
+        'El caso fue guardado como borrador incompleto. Puedes completar escenarios, preguntas y opciones antes de publicarlo.',
+      );
     }
 
     this.loadEditor();

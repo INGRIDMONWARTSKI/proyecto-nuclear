@@ -199,7 +199,9 @@
                     >
                       <div class="library-card__preview" [ngStyle]="libraryPreviewStyle(item)">
                         <span class="library-card__preview-badge">{{ libraryPreviewBadge(item) }}</span>
-                        <span class="library-card__preview-mark">{{ item.icono }}</span>
+                        @if (!itemHasPreviewImage(item)) {
+                          <span class="library-card__preview-mark">{{ item.icono }}</span>
+                        }
                       </div>
                       <span class="library-card__icon" [ngStyle]="libraryIconStyle(item)">{{ item.icono }}</span>
                       <div class="library-card__content">
@@ -221,7 +223,9 @@
                   <div class="library-footer" [ngStyle]="libraryCardStyle(selectedLibraryItem()!)">
                     <div class="library-footer__preview" [ngStyle]="libraryPreviewStyle(selectedLibraryItem()!)">
                       <span class="library-footer__badge">{{ libraryPreviewBadge(selectedLibraryItem()!) }}</span>
-                      <strong>{{ selectedLibraryItem()!.icono }}</strong>
+                      @if (!itemHasPreviewImage(selectedLibraryItem()!)) {
+                        <strong>{{ selectedLibraryItem()!.icono }}</strong>
+                      }
                     </div>
                     <div class="library-footer__content">
                       <strong>{{ selectedLibraryItem()!.nombre }}</strong>
@@ -781,23 +785,63 @@
           </aside>
         </section>
 
-        <section class="scenario-strip">
-          <div class="scenario-strip__header">
+        <!-- Botón flotante para abrir drawer de escenarios -->
+        <button
+          class="scenarios-drawer-toggle"
+          type="button"
+          (click)="toggleScenariosDrawer()"
+          [class.scenarios-drawer-toggle--open]="scenariosDrawerOpen()"
+          [attr.aria-expanded]="scenariosDrawerOpen()"
+          aria-label="Panel de escenarios"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <rect x="1" y="3" width="14" height="2" rx="1" fill="currentColor"/>
+            <rect x="1" y="7" width="10" height="2" rx="1" fill="currentColor"/>
+            <rect x="1" y="11" width="12" height="2" rx="1" fill="currentColor"/>
+          </svg>
+          <span>Escenas</span>
+          <span class="scenarios-drawer-toggle__count">{{ escenarios().length }}</span>
+        </button>
+
+        <!-- Backdrop del drawer de escenarios -->
+        @if (scenariosDrawerOpen()) {
+          <button
+            class="scenarios-drawer-backdrop"
+            type="button"
+            aria-label="Cerrar panel de escenarios"
+            (click)="closeScenariosDrawer()"
+          ></button>
+        }
+
+        <!-- Drawer lateral de escenarios -->
+        <aside
+          class="scenarios-drawer"
+          [class.scenarios-drawer--open]="scenariosDrawerOpen()"
+          aria-label="Navegación de escenarios"
+        >
+          <div class="scenarios-drawer__header">
             <div>
               <p class="panel__eyebrow">Escenarios</p>
-              <h3>Navegación rápida del caso</h3>
+              <h3>Navegación rápida</h3>
             </div>
-            <button class="siep-btn-primary" type="button" [disabled]="saving()" (click)="createScenario()">
-              + Nueva escena
+            <button
+              class="scene-drawer__close"
+              type="button"
+              aria-label="Cerrar panel de escenarios"
+              (click)="closeScenariosDrawer()"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+              </svg>
             </button>
           </div>
 
-          <div class="scenario-strip__list">
+          <div class="scenarios-drawer__body">
             @for (esc of escenarios(); track esc.id) {
               <article
                 class="scenario-chip"
                 [class.scenario-chip--active]="escenarioSeleccionado()!.id === esc.id"
-                (click)="selectEscenario(esc.id)"
+                (click)="selectEscenario(esc.id); closeScenariosDrawer()"
               >
                 <div class="scenario-chip__thumb" [ngStyle]="scenarioThumbStyle(esc)"></div>
                 <div class="scenario-chip__meta">
@@ -823,7 +867,18 @@
               </article>
             }
           </div>
-        </section>
+
+          <div class="scenarios-drawer__footer">
+            <button
+              class="siep-btn-primary"
+              type="button"
+              [disabled]="saving()"
+              (click)="createScenario()"
+            >
+              + Nueva escena
+            </button>
+          </div>
+        </aside>
       } @else if (workspace() === 'decisions') {
         <section class="decision-layout">
           <aside class="panel decision-panel">

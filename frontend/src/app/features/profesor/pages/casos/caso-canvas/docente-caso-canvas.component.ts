@@ -37,6 +37,12 @@ import {
   EditorElementType,
 } from '../../../../simulacion/models/docente/editor-layout.model';
 import { SimulacionDocenteService } from '../../../../simulacion/services/simulacion-docente.service';
+import {
+  FONDOS_CATALOG,
+  OBJETOS_CATALOG,
+  PERSONAJES_CATALOG,
+  TARJETAS_CATALOG,
+} from './editor-assets.catalog';
 
 type EditorWorkspace = 'scene' | 'decisions' | 'student' | 'map';
 type LibraryCategory = 'backgrounds' | 'characters' | 'texts' | 'objects' | 'questions' | 'audio';
@@ -106,6 +112,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly selectedElementId = signal<string | null>(null);
   protected readonly resourcesPanelOpen = signal(false);
   protected readonly propertiesPanelOpen = signal(false);
+  protected readonly scenariosDrawerOpen = signal(false);
   protected readonly selectedLibraryCategory = signal<LibraryCategory>('backgrounds');
   protected readonly selectedLibraryItemId = signal('ambientes-consultorio');
   protected readonly searchTerm = signal('');
@@ -433,7 +440,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       icono: 'C',
       descripcion: 'Escena profesional y serena para entrevistas clinicas.',
       tag: 'Sereno',
-      content: { backgroundCode: 'oficina_psicologica' },
+      content: { backgroundCode: 'oficina_psicologica', imageUrl: FONDOS_CATALOG[0].previewUrl },
     },
     {
       id: 'ambientes-aula',
@@ -444,7 +451,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       icono: 'A',
       descripcion: 'Contexto pedagogico para convivencia, observacion y apoyo.',
       tag: 'Academico',
-      content: { backgroundCode: 'aula' },
+      content: { backgroundCode: 'aula', imageUrl: FONDOS_CATALOG[1].previewUrl },
     },
     {
       id: 'personaje-estudiante',
@@ -644,6 +651,270 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       },
       size: { width: 296, height: 120 },
     },
+    // — Fondos adicionales —
+    {
+      id: 'ambientes-hospital',
+      nombre: 'Hospital urgencias',
+      tipo: 'background',
+      categoria: 'Fondo',
+      categoriaClave: 'backgrounds',
+      icono: 'H',
+      descripcion: 'Sala de urgencias para intervenciones en crisis o emergencias.',
+      tag: 'Clinico',
+      content: { backgroundCode: 'hospital_urgencias', imageUrl: FONDOS_CATALOG[2].previewUrl },
+    },
+    {
+      id: 'ambientes-comisaria',
+      nombre: 'Comisaria de familia',
+      tipo: 'background',
+      categoria: 'Fondo',
+      categoriaClave: 'backgrounds',
+      icono: 'K',
+      descripcion: 'Espacio institucional para proteccion y orientacion familiar.',
+      tag: 'Institucional',
+      content: { backgroundCode: 'comisaria_familia', imageUrl: FONDOS_CATALOG[3].previewUrl },
+    },
+    {
+      id: 'ambientes-hogar',
+      nombre: 'Hogar familiar',
+      tipo: 'background',
+      categoria: 'Fondo',
+      categoriaClave: 'backgrounds',
+      icono: 'O',
+      descripcion: 'Entorno domestico para casos de dinamica familiar o contexto cercano.',
+      tag: 'Entorno',
+      content: { backgroundCode: 'hogar_familiar', imageUrl: FONDOS_CATALOG[4].previewUrl },
+    },
+    {
+      id: 'ambientes-sala-entrevista',
+      nombre: 'Sala de entrevista',
+      tipo: 'background',
+      categoria: 'Fondo',
+      categoriaClave: 'backgrounds',
+      icono: 'I',
+      descripcion: 'Sala neutra y confidencial para entrevistas formales.',
+      tag: 'Neutral',
+      content: { backgroundCode: 'sala_entrevista', imageUrl: FONDOS_CATALOG[5].previewUrl },
+    },
+    // — Personajes adicionales —
+    {
+      id: 'personaje-funcionario',
+      nombre: 'Funcionario',
+      tipo: 'character',
+      categoria: 'Personaje',
+      categoriaClave: 'characters',
+      icono: 'N',
+      descripcion: 'Representante institucional en contexto de ruta de atencion.',
+      tag: 'Institucional',
+      content: {
+        nombre: 'Funcionario',
+        rol: 'Funcionario institucional',
+        avatar: 'official-context',
+        expresion: 'Formal',
+        estadoEmocional: 'Neutral institucional',
+        dialogo: 'Este proceso requiere seguir los pasos establecidos por el protocolo.',
+      },
+      style: {
+        avatarGradient: 'linear-gradient(180deg, #dce8f0 0%, #8cb4d0 100%)',
+        accentColor: '#4a7e9e',
+        bubbleColor: 'rgba(240,248,255,0.96)',
+      },
+      size: { width: 188, height: 256 },
+    },
+    {
+      id: 'personaje-docente',
+      nombre: 'Docente',
+      tipo: 'character',
+      categoria: 'Personaje',
+      categoriaClave: 'characters',
+      icono: 'J',
+      descripcion: 'Educador que reporta o acompana una situacion en el aula.',
+      tag: 'Escolar',
+      content: {
+        nombre: 'Docente',
+        rol: 'Docente de aula',
+        avatar: 'teacher-context',
+        expresion: 'Alerta',
+        estadoEmocional: 'Preocupacion moderada',
+        dialogo: 'He notado cambios en el comportamiento del estudiante desde hace semanas.',
+      },
+      style: {
+        avatarGradient: 'linear-gradient(180deg, #f0f4e8 0%, #a0be80 100%)',
+        accentColor: '#5b8040',
+        bubbleColor: 'rgba(244,250,240,0.96)',
+      },
+      size: { width: 188, height: 256 },
+    },
+    // — Objetos adicionales —
+    {
+      id: 'objeto-telefono',
+      nombre: 'Telefono',
+      tipo: 'object',
+      categoria: 'Objeto',
+      categoriaClave: 'objects',
+      icono: 'L',
+      descripcion: 'Elemento de contacto o comunicacion urgente.',
+      tag: 'Recurso',
+      content: {
+        nombre: 'Telefono de contacto',
+        texto: 'Llamada pendiente relacionada con el caso.',
+      },
+      style: {
+        backgroundColor: 'rgba(240,248,255,0.95)',
+        borderColor: 'rgba(80,130,180,0.22)',
+        accentColor: '#4a7aae',
+        textColor: '#1f3d5a',
+      },
+      size: { width: 160, height: 80 },
+    },
+    {
+      id: 'objeto-alerta',
+      nombre: 'Senal de alerta',
+      tipo: 'object',
+      categoria: 'Objeto',
+      categoriaClave: 'objects',
+      icono: 'W',
+      descripcion: 'Indicador visual de riesgo o factor de atencion prioritaria.',
+      tag: 'Alerta',
+      content: {
+        nombre: 'Factor de riesgo',
+        texto: 'Situacion que requiere atencion inmediata segun protocolo.',
+      },
+      style: {
+        backgroundColor: 'rgba(255,248,230,0.96)',
+        borderColor: 'rgba(210,150,30,0.28)',
+        accentColor: '#c4860a',
+        textColor: '#5c3d00',
+      },
+      size: { width: 200, height: 90 },
+    },
+    {
+      id: 'objeto-carpeta',
+      nombre: 'Carpeta de caso',
+      tipo: 'object',
+      categoria: 'Objeto',
+      categoriaClave: 'objects',
+      icono: 'Q',
+      descripcion: 'Expediente o registro documentado del caso.',
+      tag: 'Evidencia',
+      content: {
+        nombre: 'Expediente del caso',
+        texto: 'Historial de atencion y registros previos del estudiante.',
+      },
+      style: {
+        backgroundColor: 'rgba(255,252,244,0.96)',
+        borderColor: 'rgba(190,155,70,0.24)',
+        accentColor: '#a07820',
+        textColor: '#4e3800',
+      },
+      size: { width: 200, height: 100 },
+    },
+    {
+      id: 'objeto-computador',
+      nombre: 'Computador',
+      tipo: 'object',
+      categoria: 'Objeto',
+      categoriaClave: 'objects',
+      icono: 'M',
+      descripcion: 'Herramienta de trabajo o acceso a sistemas institucionales.',
+      tag: 'Recurso',
+      content: {
+        nombre: 'Equipo de trabajo',
+        texto: 'Herramienta con acceso al sistema de seguimiento institucional.',
+      },
+      style: {
+        backgroundColor: 'rgba(246,248,252,0.96)',
+        borderColor: 'rgba(90,110,150,0.22)',
+        accentColor: '#4a5f8a',
+        textColor: '#1e2d4a',
+      },
+      size: { width: 200, height: 90 },
+    },
+    // — Audio adicional —
+    {
+      id: 'audio-aula',
+      nombre: 'Ambiente aula',
+      tipo: 'audio',
+      categoria: 'Audio',
+      categoriaClave: 'audio',
+      icono: 'V',
+      descripcion: 'Sonido de entorno escolar con actividad de estudiantes.',
+      tag: 'Escolar',
+      content: {
+        nombre: 'Murmullo escolar',
+        texto: 'Fondo de aula con actividad moderada y conversaciones dispersas.',
+      },
+      style: {
+        backgroundColor: 'rgba(245,250,240,0.95)',
+        borderColor: 'rgba(98,152,92,0.22)',
+        accentColor: '#4f8044',
+        textColor: '#253e20',
+      },
+      size: { width: 240, height: 88 },
+    },
+    {
+      id: 'audio-hospital',
+      nombre: 'Ambiente hospital',
+      tipo: 'audio',
+      categoria: 'Audio',
+      categoriaClave: 'audio',
+      icono: 'X',
+      descripcion: 'Sonido de entorno clinico: pasillos y equipos medicos.',
+      tag: 'Clinico',
+      content: {
+        nombre: 'Ambiente clinico',
+        texto: 'Pasillos de urgencias con actividad medica de fondo.',
+      },
+      style: {
+        backgroundColor: 'rgba(240,246,255,0.96)',
+        borderColor: 'rgba(72,120,175,0.22)',
+        accentColor: '#3a6aa8',
+        textColor: '#162040',
+      },
+      size: { width: 240, height: 88 },
+    },
+    // ── Personajes con imagen real ──────────────────────────────────
+    ...PERSONAJES_CATALOG.map((entry) => ({
+      id: `foto-persona-${entry.id}`,
+      nombre: entry.titulo,
+      tipo: 'image' as const,
+      categoria: 'Personaje',
+      categoriaClave: 'characters' as const,
+      icono: entry.titulo[0].toUpperCase(),
+      descripcion: entry.descripcion,
+      tag: entry.tag,
+      content: { imageUrl: entry.previewUrl, nombre: entry.titulo },
+      style: { objectFit: 'contain' as const },
+      size: { width: 200, height: 320 },
+    })),
+    // ── Objetos con imagen real ─────────────────────────────────────
+    ...OBJETOS_CATALOG.map((entry) => ({
+      id: `foto-obj-${entry.id}`,
+      nombre: entry.titulo,
+      tipo: 'image' as const,
+      categoria: 'Objeto',
+      categoriaClave: 'objects' as const,
+      icono: entry.titulo[0].toUpperCase(),
+      descripcion: entry.descripcion,
+      tag: entry.tag,
+      content: { imageUrl: entry.previewUrl, nombre: entry.titulo },
+      style: { objectFit: 'contain' as const },
+      size: { width: 180, height: 180 },
+    })),
+    // ── Tarjetas visuales ───────────────────────────────────────────
+    ...TARJETAS_CATALOG.map((entry) => ({
+      id: `foto-tarjeta-${entry.id}`,
+      nombre: entry.titulo,
+      tipo: 'image' as const,
+      categoria: 'Tarjeta',
+      categoriaClave: 'texts' as const,
+      icono: entry.titulo[0].toUpperCase(),
+      descripcion: entry.descripcion,
+      tag: entry.tag,
+      content: { imageUrl: entry.previewUrl, nombre: entry.titulo },
+      style: { objectFit: 'contain' as const },
+      size: { width: 280, height: 180 },
+    })),
   ]);
 
   protected readonly library = computed(() => {
@@ -828,6 +1099,14 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     if (workspace === 'scene') {
       this.scheduleFitSceneToViewport();
     }
+  }
+
+  toggleScenariosDrawer(): void {
+    this.scenariosDrawerOpen.update((v) => !v);
+  }
+
+  closeScenariosDrawer(): void {
+    this.scenariosDrawerOpen.set(false);
   }
 
   selectEscenario(escenarioId: string): void {
@@ -1248,21 +1527,26 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     if (libraryItem.tipo === 'background') {
       this.patchScenario((escenario) => {
         const background = this.ensureScenarioBackground(escenario);
+        // Propagate real asset image if the catalog item includes one
+        const catalogImageUrl =
+          typeof libraryItem.content['imageUrl'] === 'string'
+            ? libraryItem.content['imageUrl']
+            : null;
         background.content = {
           ...background.content,
           backgroundCode: libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo,
           aiAssetId: null,
-          imageUrl: null,
+          imageUrl: catalogImageUrl,
         };
         background.style = {
           ...background.style,
           backgroundCode: String(libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo),
           aiAssetId: null,
-          imageUrl: null,
+          imageUrl: catalogImageUrl,
         };
         escenario.fondoCodigo = String(libraryItem.content['backgroundCode'] ?? scenario.fondoCodigo);
         escenario.aiBackgroundAssetId = null;
-        escenario.aiBackgroundUrl = null;
+        escenario.aiBackgroundUrl = catalogImageUrl;
       });
       return;
     }
@@ -2118,7 +2402,76 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     };
   }
 
+  itemHasPreviewImage(item: BibliotecaItem): boolean {
+    return typeof item.content['imageUrl'] === 'string' && (item.content['imageUrl'] as string).length > 0;
+  }
+
   libraryPreviewStyle(item: BibliotecaItem): Record<string, string> {
+    // Use real asset image when available (catalog items with previewUrl)
+    const imageUrl = typeof item.content['imageUrl'] === 'string' ? item.content['imageUrl'] : null;
+    if (imageUrl) {
+      return {
+        backgroundImage: `url('${imageUrl}')`,
+        backgroundSize: item.tipo === 'background' ? 'cover' : 'contain',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: 'var(--siep-surface, #f8faf7)',
+      };
+    }
+
+    if (item.tipo === 'background') {
+      const code = typeof item.content['backgroundCode'] === 'string'
+        ? item.content['backgroundCode'].toLowerCase()
+        : item.id.toLowerCase();
+      if (code.includes('oficina') || code.includes('consultorio') || item.id === 'ambientes-consultorio') {
+        return {
+          background: [
+            'linear-gradient(180deg, #f7f9fc 0%, #e8eff8 60%, #ccd9ea 100%)',
+          ].join(','),
+          borderColor: 'rgba(100, 135, 185, 0.3)',
+        };
+      }
+      if (code.includes('aula') || item.id === 'ambientes-aula') {
+        return {
+          background: [
+            'linear-gradient(180deg, #f8fde9 0%, #deefc0 55%, #bcd89a 100%)',
+          ].join(','),
+          borderColor: 'rgba(95, 148, 78, 0.28)',
+        };
+      }
+      if (code.includes('hospital') || item.id === 'ambientes-hospital') {
+        return {
+          background: [
+            'linear-gradient(180deg, #f2f8ff 0%, #cce3f5 50%, #a8c8e6 100%)',
+          ].join(','),
+          borderColor: 'rgba(72, 120, 170, 0.28)',
+        };
+      }
+      if (code.includes('comisaria') || item.id === 'ambientes-comisaria') {
+        return {
+          background: [
+            'linear-gradient(180deg, #f5f5f0 0%, #dddacf 50%, #c4be9e 100%)',
+          ].join(','),
+          borderColor: 'rgba(130, 118, 80, 0.28)',
+        };
+      }
+      if (code.includes('hogar') || code.includes('casa') || item.id === 'ambientes-hogar') {
+        return {
+          background: [
+            'linear-gradient(180deg, #fef9f0 0%, #f4e3c0 50%, #e6c98a 100%)',
+          ].join(','),
+          borderColor: 'rgba(185, 140, 60, 0.28)',
+        };
+      }
+      if (code.includes('entrevista') || code.includes('sala') || item.id === 'ambientes-sala-entrevista') {
+        return {
+          background: [
+            'linear-gradient(180deg, #f6f4f9 0%, #e2dced 50%, #cdc3e0 100%)',
+          ].join(','),
+          borderColor: 'rgba(120, 100, 160, 0.28)',
+        };
+      }
+    }
     const palette = this.libraryPalette(item);
     return {
       background: palette.preview,

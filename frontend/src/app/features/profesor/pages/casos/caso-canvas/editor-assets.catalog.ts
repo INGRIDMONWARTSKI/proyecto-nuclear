@@ -9,9 +9,15 @@
  *   frontend/src/assets/mentora/editor/personajes/
  *   frontend/src/assets/mentora/editor/objetos/
  *   frontend/src/assets/mentora/editor/tarjetas/
+ *   frontend/src/assets/mentora/editor/personalizadas/
  */
 
-export type EditorAssetFolder = 'fondos' | 'personajes' | 'objetos' | 'tarjetas';
+export type EditorAssetFolder =
+  | 'fondos'
+  | 'personajes'
+  | 'objetos'
+  | 'tarjetas'
+  | 'personalizadas';
 
 /** Genera la URL pública del asset dentro de assets/mentora/editor/ */
 export function assetUrl(folder: EditorAssetFolder, filename: string): string {
@@ -342,5 +348,25 @@ export const TARJETAS_CATALOG: EditorAssetEntry[] = [
     descripcion: 'Tarjeta para reflexiones y puntos clave de aprendizaje.',
     tag: 'Reflexión',
     previewUrl: assetUrl('tarjetas', 'tarjeta-reflexion-01.png'),
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+//  P E R S O N A L I Z A D A S  —  escenas propias MENTORA
+// ─────────────────────────────────────────────────────────────
+export const PERSONALIZADAS_CATALOG: EditorAssetEntry[] = [
+  {
+    id: 'escena_1_entrevista_psicosocial',
+    titulo: 'Escena 1 — Entrevista psicosocial',
+    descripcion: 'Escena personalizada de entrevista psicosocial en contexto clínico.',
+    tag: 'Personalizada',
+    previewUrl: assetUrl('personalizadas', 'escena-1.png'),
+  },
+  {
+    id: 'escena_2_acompanamiento_hospitalario',
+    titulo: 'Escena 2 — Acompañamiento hospitalario',
+    descripcion: 'Escena personalizada de acompañamiento en entorno hospitalario.',
+    tag: 'Personalizada',
+    previewUrl: assetUrl('personalizadas', 'escena-2.png'),
   },
 ];

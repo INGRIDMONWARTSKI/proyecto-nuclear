@@ -41,11 +41,19 @@ import {
   FONDOS_CATALOG,
   OBJETOS_CATALOG,
   PERSONAJES_CATALOG,
+  PERSONALIZADAS_CATALOG,
   TARJETAS_CATALOG,
 } from './editor-assets.catalog';
 
 type EditorWorkspace = 'scene' | 'decisions' | 'student' | 'map';
-type LibraryCategory = 'backgrounds' | 'characters' | 'texts' | 'objects' | 'questions' | 'audio';
+type LibraryCategory =
+  | 'backgrounds'
+  | 'characters'
+  | 'texts'
+  | 'objects'
+  | 'questions'
+  | 'audio'
+  | 'personalizadas';
 type PropertySection = 'general' | 'appearance' | 'layout' | 'content' | 'advanced';
 
 interface BibliotecaItem {
@@ -174,6 +182,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     { id: 'characters', label: 'Personajes' },
     { id: 'texts', label: 'Textos' },
     { id: 'objects', label: 'Objetos' },
+    { id: 'personalizadas', label: 'Personalizadas' },
     { id: 'questions', label: 'Preguntas' },
     { id: 'audio', label: 'Audio' },
   ] as const;
@@ -937,6 +946,20 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       content: { imageUrl: entry.previewUrl, nombre: entry.titulo },
       style: { objectFit: 'contain' as const },
       size: { width: 280, height: 180 },
+    })),
+    // ── Escenas personalizadas ──────────────────────────────────────
+    ...PERSONALIZADAS_CATALOG.map((entry) => ({
+      id: `foto-personalizada-${entry.id}`,
+      nombre: entry.titulo,
+      tipo: 'image' as const,
+      categoria: 'Personalizadas',
+      categoriaClave: 'personalizadas' as const,
+      icono: entry.titulo[0].toUpperCase(),
+      descripcion: entry.descripcion,
+      tag: entry.tag,
+      content: { imageUrl: entry.previewUrl, nombre: entry.titulo },
+      style: { objectFit: 'contain' as const },
+      size: { width: 1000, height: 560 },
     })),
   ]);
 

@@ -49,6 +49,13 @@ import {
   normalizeCasoEditor,
   normalizeEditorLayoutElements,
 } from '../../../../../shared/utils/normalize-asset-url.util';
+import {
+  FIN_SIMULACION_DESTINO,
+  destinoToSelectValue,
+  hasNextScenarioByOrder,
+  labelDestinoOpcion,
+  selectValueToDestinoPayload,
+} from '../../../../simulacion/utils/opcion-destino.util';
 
 type EditorWorkspace = 'scene' | 'decisions' | 'student' | 'map';
 type LibraryCategory =
@@ -166,6 +173,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly textBubbleDraft = signal('');
 
   protected casoId = '';
+  protected readonly finSimulacionDestino = FIN_SIMULACION_DESTINO;
   protected readonly sceneBaseWidth = 1280;
   protected readonly sceneBaseHeight = 720;
 
@@ -1182,6 +1190,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     this.syncQuestionDraft();
     this.syncDecisionSelection();
     this.resetStudentPreview();
+    this.newOptionDestino.set(this.defaultNewOptionDestino());
     this.scheduleFitSceneToViewport();
   }
 
@@ -1270,6 +1279,56 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   updateNewOptionCorrect(value: boolean): void {
     this.newOptionCorrect.set(value);
+  }
+
+  defaultNewOptionDestino(): string {
+    return this.canUseNextScenarioByOrder() ? '' : FIN_SIMULACION_DESTINO;
+  }
+
+  canUseNextScenarioByOrder(): boolean {
+    const escenario = this.escenarioSeleccionado();
+    if (!escenario) {
+      return false;
+    }
+
+    return hasNextScenarioByOrder(
+      escenario.id,
+      this.escenarios().map((item) => ({ id: item.id, orden: item.orden })),
+    );
+  }
+
+  destinoSelectValue(opcion: CasoEditorOpcion): string {
+    const escenario = this.escenarioSeleccionado();
+    if (!escenario) {
+      return '';
+    }
+
+    return destinoToSelectValue(
+      opcion.escenarioDestinoId,
+      escenario.id,
+      this.escenarios().map((item) => ({
+        id: item.id,
+        orden: item.orden,
+        titulo: item.titulo,
+      })),
+    );
+  }
+
+  destinoLabel(opcion: CasoEditorOpcion): string {
+    const escenario = this.escenarioSeleccionado();
+    if (!escenario) {
+      return 'Sin destino';
+    }
+
+    return labelDestinoOpcion(
+      opcion.escenarioDestinoId,
+      escenario.id,
+      this.escenarios().map((item) => ({
+        id: item.id,
+        orden: item.orden,
+        titulo: item.titulo,
+      })),
+    );
   }
 
   updateNewOptionDestino(value: string): void {
@@ -2203,7 +2262,9 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     const texto = (opcion?.texto ?? this.newOptionText()).trim();
     const puntaje = opcion?.puntaje ?? this.newOptionScore();
     const isCorrecta = opcion?.isCorrecta ?? this.newOptionCorrect();
-    const escenarioDestinoId = opcion?.escenarioDestinoId ?? (this.newOptionDestino() || null);
+    const escenarioDestinoId =
+      opcion?.escenarioDestinoId ??
+      selectValueToDestinoPayload(this.newOptionDestino() || '');
 
     if (!texto) {
       this.errorMessage.set('La opción no puede quedar vacía.');
@@ -2233,7 +2294,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         this.newOptionText.set('');
         this.newOptionScore.set(0);
         this.newOptionCorrect.set(false);
-        this.newOptionDestino.set('');
+        this.newOptionDestino.set(this.defaultNewOptionDestino());
         this.successMessage.set(opcion ? 'Opción actualizada.' : 'Opción creada.');
         this.loadEditor();
       },
@@ -2292,7 +2353,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       } else if (field === 'isCorrecta' && typeof value === 'boolean') {
         opcion.isCorrecta = value;
       } else if (field === 'escenarioDestinoId' && typeof value === 'string') {
-        opcion.escenarioDestinoId = value || null;
+        opcion.escenarioDestinoId = selectValueToDestinoPayload(value);
       }
     });
   }
@@ -2810,7 +2871,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       case 'orden':
         return 'Siguiente por orden';
       default:
-        return 'Fin';
+        return 'Fin de simulación';
     }
   }
 

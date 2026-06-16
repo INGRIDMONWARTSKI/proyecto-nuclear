@@ -151,14 +151,18 @@ export class CasoEditorBuilderService {
     });
 
     const scenarioById = new Map(editorScenarios.map((item) => [item.id, item]));
-    const conexiones = editorScenarios.flatMap((scenario, index) =>
+    const sortedScenarios = [...editorScenarios].sort((a, b) => a.orden - b.orden);
+    const conexiones = editorScenarios.flatMap((scenario) =>
       scenario.preguntas.flatMap((pregunta) => pregunta.opciones).map((opcion) => {
         const explicit = opcion.escenarioDestinoId
           ? scenarioById.get(opcion.escenarioDestinoId) ?? null
           : null;
-        const ordered =
-          explicit ?? (index < editorScenarios.length - 1 ? editorScenarios[index + 1] : null);
-        const destino = scenario.isFinal ? null : ordered;
+        const scenarioIndex = sortedScenarios.findIndex((item) => item.id === scenario.id);
+        const nextByOrder =
+          scenarioIndex >= 0 && scenarioIndex < sortedScenarios.length - 1
+            ? sortedScenarios[scenarioIndex + 1]
+            : null;
+        const destino = scenario.isFinal ? null : explicit ?? nextByOrder;
 
         return {
           opcionId: opcion.id,

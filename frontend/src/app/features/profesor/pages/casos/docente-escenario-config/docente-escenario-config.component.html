@@ -141,7 +141,7 @@
                   <p class="destino-badge">
                     <app-status-badge
                       variant="status"
-                      [status]="op.escenarioDestinoId ? 'success' : 'pending'"
+                      [status]="destinoBadgeStatus(op.escenarioDestinoId)"
                       [label]="'Destino: ' + labelEscenarioDestino(op.escenarioDestinoId)"
                     />
                   </p>
@@ -218,9 +218,16 @@
           <div class="siep-field">
             <label for="escenarioDestinoId">Escenario destino</label>
             <select id="escenarioDestinoId" formControlName="escenarioDestinoId">
-              <option value="">Siguiente por orden (default)</option>
+              @if (canUseNextScenarioByOrder()) {
+                <option value="">Siguiente por orden (default)</option>
+              }
+              @if (!canUseNextScenarioByOrder()) {
+                <option [value]="finSimulacionDestino">Fin de simulación</option>
+              }
               @for (esc of escenariosCaso(); track esc.id) {
-                <option [value]="esc.id">{{ esc.orden }}. {{ esc.titulo }}</option>
+                @if (esc.id !== escenario()?.id) {
+                  <option [value]="esc.id">{{ esc.orden }}. {{ esc.titulo }}</option>
+                }
               }
             </select>
           </div>

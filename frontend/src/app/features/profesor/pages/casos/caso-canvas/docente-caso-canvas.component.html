@@ -999,8 +999,16 @@
                       </label>
                       <label class="field">
                         <span>Destino</span>
-                        <select [value]="op.escenarioDestinoId || ''" (change)="updateOptionField(op.id, 'escenarioDestinoId', $any($event.target).value)">
-                          <option value="">Siguiente por orden</option>
+                        <select
+                          [value]="destinoSelectValue(op)"
+                          (change)="updateOptionField(op.id, 'escenarioDestinoId', $any($event.target).value)"
+                        >
+                          @if (canUseNextScenarioByOrder()) {
+                            <option value="">Siguiente por orden</option>
+                          }
+                          @if (!canUseNextScenarioByOrder()) {
+                            <option [value]="finSimulacionDestino">Fin de simulación</option>
+                          }
                           @for (esc of escenarios(); track esc.id) {
                             @if (esc.id !== escenarioSeleccionado()!.id) {
                               <option [value]="esc.id">E{{ esc.orden }} · {{ esc.titulo }}</option>
@@ -1042,7 +1050,12 @@
                   <label class="field">
                     <span>Destino</span>
                     <select [value]="newOptionDestino()" (change)="updateNewOptionDestino($any($event.target).value)">
-                      <option value="">Siguiente por orden</option>
+                      @if (canUseNextScenarioByOrder()) {
+                        <option value="">Siguiente por orden</option>
+                      }
+                      @if (!canUseNextScenarioByOrder()) {
+                        <option [value]="finSimulacionDestino">Fin de simulación</option>
+                      }
                       @for (esc of escenarios(); track esc.id) {
                         @if (esc.id !== escenarioSeleccionado()!.id) {
                           <option [value]="esc.id">E{{ esc.orden }} · {{ esc.titulo }}</option>
@@ -1080,7 +1093,7 @@
                   <strong>{{ option.texto }}</strong>
                   <p>
                     Destino actual:
-                    {{ option.escenarioDestinoId ? 'Escenario definido' : 'Siguiente por orden' }}
+                    {{ destinoLabel(option) }}
                   </p>
                 </div>
 

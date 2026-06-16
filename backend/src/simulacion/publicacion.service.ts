@@ -16,6 +16,7 @@ import { normalizeLayout } from './editor-layout.util';
 import { Caso, CasoRecord } from './entities/caso.entity';
 import { EscenarioRecord } from './entities/escenario.entity';
 import { OpcionRespuestaRecord } from './entities/opcion-respuesta.entity';
+import { resolveNextEscenarioFromOpcion } from './opcion-destino.util';
 import { PreguntaDecisionRecord } from './entities/pregunta-decision.entity';
 import { RetroalimentacionRecord } from './entities/retroalimentacion.entity';
 import { RubricaCriterioRecord } from './entities/rubrica-criterio.entity';
@@ -432,31 +433,14 @@ export class PublicacionService {
     escenarioActual: EscenarioRecord,
     opcion: OpcionRespuestaRecord,
     escenarios: EscenarioRecord[],
-    escenarioById: Map<string, EscenarioRecord>,
+    _escenarioById: Map<string, EscenarioRecord>,
   ): EscenarioRecord | null {
-    if (escenarioActual.is_final) {
-      return null;
-    }
-
-    if (opcion.escenario_destino_id) {
-      const destino = escenarioById.get(opcion.escenario_destino_id);
-
-      if (!destino || destino.caso_id !== casoId) {
-        return null;
-      }
-
-      return destino;
-    }
-
-    const indiceActual = escenarios.findIndex(
-      (escenario) => escenario.id === escenarioActual.id,
+    return resolveNextEscenarioFromOpcion(
+      casoId,
+      escenarioActual,
+      opcion,
+      escenarios,
     );
-
-    if (indiceActual === -1 || indiceActual >= escenarios.length - 1) {
-      return null;
-    }
-
-    return escenarios[indiceActual + 1];
   }
 
   private collectReachableEscenarios(

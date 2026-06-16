@@ -10,6 +10,7 @@ import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { PostgrestService } from '../postgrest/postgrest.service';
 import { normalizeLayout } from './editor-layout.util';
+import { resolveNextEscenarioFromOpcion } from './opcion-destino.util';
 import { CasosService } from './casos.service';
 import { StartSesionSimulacionDto } from './dto/start-sesion-simulacion.dto';
 import { Usuario } from '../usuarios/entities/usuario.entity';
@@ -895,10 +896,6 @@ export class SesionesSimulacionService {
     opcion: Pick<OpcionRespuestaRecord, 'escenario_destino_id'>,
     escenarios: EscenarioRecord[],
   ): EscenarioRecord | null {
-    if (escenarioActual.is_final) {
-      return null;
-    }
-
     if (opcion.escenario_destino_id) {
       const destino = escenarios.find(
         (escenario) => escenario.id === opcion.escenario_destino_id,
@@ -909,19 +906,14 @@ export class SesionesSimulacionService {
           'El escenario destino de la opcion no es valido para este caso.',
         );
       }
-
-      return destino;
     }
 
-    const indiceActual = escenarios.findIndex(
-      (escenario) => escenario.id === escenarioActual.id,
+    return resolveNextEscenarioFromOpcion(
+      casoId,
+      escenarioActual,
+      opcion,
+      escenarios,
     );
-
-    if (indiceActual === -1 || indiceActual >= escenarios.length - 1) {
-      return null;
-    }
-
-    return escenarios[indiceActual + 1];
   }
 
   async resolveNextAfterAnswer(

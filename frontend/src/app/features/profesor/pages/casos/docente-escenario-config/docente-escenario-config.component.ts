@@ -12,6 +12,13 @@ import {
   PreguntaPreview,
 } from '../../../../simulacion/models/docente/caso-preview.model';
 import { SimulacionDocenteService } from '../../../../simulacion/services/simulacion-docente.service';
+import {
+  FIN_SIMULACION_DESTINO,
+  destinoToSelectValue,
+  hasNextScenarioByOrder,
+  labelDestinoOpcion,
+  selectValueToDestinoPayload,
+} from '../../../../simulacion/utils/opcion-destino.util';
 
 @Component({
   selector: 'app-docente-escenario-config',
@@ -73,6 +80,7 @@ export class DocenteEscenarioConfigComponent implements OnInit {
   protected retroOpcionId = signal<string | null>(null);
   protected respuestasModalOpen = signal(false);
   protected retroModalOpen = signal(false);
+  protected readonly finSimulacionDestino = FIN_SIMULACION_DESTINO;
 
   ngOnInit(): void {
     this.escenarioId = this.route.snapshot.paramMap.get('escenarioId') ?? '';
@@ -110,13 +118,19 @@ export class DocenteEscenarioConfigComponent implements OnInit {
             puntajeMaximo: 5,
           });
           const nextOrden = preguntaActual.opciones.length + 1;
-          this.opcionForm.patchValue({ orden: nextOrden });
+          this.opcionForm.patchValue({
+            orden: nextOrden,
+            escenarioDestinoId: this.defaultOpcionDestinoSelectValue(),
+          });
         } else {
           this.preguntaForm.patchValue({
             enunciado: '',
             puntajeMaximo: 5,
           });
-          this.opcionForm.patchValue({ orden: 1 });
+          this.opcionForm.patchValue({
+            orden: 1,
+            escenarioDestinoId: this.defaultOpcionDestinoSelectValue(),
+          });
         }
 
         this.opcionForm.updateValueAndValidity();
@@ -197,7 +211,7 @@ export class DocenteEscenarioConfigComponent implements OnInit {
       orden: Number(raw.orden),
       puntaje: Number(raw.puntaje),
       isCorrecta: raw.isCorrecta,
-      escenarioDestinoId: raw.escenarioDestinoId || null,
+      escenarioDestinoId: selectValueToDestinoPayload(raw.escenarioDestinoId),
     };
 
     const editingId = this.editingOpcionId();
@@ -214,7 +228,7 @@ export class DocenteEscenarioConfigComponent implements OnInit {
         orden: (this.pregunta()?.opciones.length || 0) + 1,
           puntaje: 3,
           isCorrecta: false,
-          escenarioDestinoId: '',
+          escenarioDestinoId: this.defaultOpcionDestinoSelectValue(),
         });
         this.notaEditadaManualmente = false;
         this.cargarPreview();
@@ -236,20 +250,41 @@ export class DocenteEscenarioConfigComponent implements OnInit {
       orden: opcion.orden,
       puntaje: this.normalizeNota(opcion.puntaje),
       isCorrecta: opcion.isCorrecta,
-      escenarioDestinoId: opcion.escenarioDestinoId ?? '',
+      escenarioDestinoId: destinoToSelectValue(
+        opcion.escenarioDestinoId,
+        this.escenarioId,
+        this.escenariosOrdenRef(),
+      ),
     });
     this.opcionForm.updateValueAndValidity();
   }
 
-  labelEscenarioDestino(destinoId: string | null | undefined): string {
-    if (!destinoId) {
-      return 'Siguiente por orden (default)';
+  canUseNextScenarioByOrder(): boolean {
+    return hasNextScenarioByOrder(this.escenarioId, this.escenariosOrdenRef());
+  }
+
+  defaultOpcionDestinoSelectValue(): string {
+    return this.canUseNextScenarioByOrder() ? '' : FIN_SIMULACION_DESTINO;
+  }
+
+  destinoBadgeStatus(destinoId: string | null | undefined): 'success' | 'pending' {
+    if (destinoId) {
+      return 'success';
     }
 
-    const escenario = this.escenariosCaso().find((item) => item.id === destinoId);
-    return escenario
-      ? `${escenario.orden}. ${escenario.titulo}`
-      : 'Escenario destino';
+    return this.canUseNextScenarioByOrder() ? 'pending' : 'success';
+  }
+
+  private escenariosOrdenRef() {
+    return this.escenariosCaso().map((item) => ({
+      id: item.id,
+      orden: item.orden,
+      titulo: item.titulo,
+    }));
+  }
+
+  labelEscenarioDestino(destinoId: string | null | undefined): string {
+    return labelDestinoOpcion(destinoId, this.escenarioId, this.escenariosOrdenRef());
   }
 
   eliminarOpcion(opcionId: string) {
@@ -355,7 +390,7 @@ export class DocenteEscenarioConfigComponent implements OnInit {
       orden: (pregunta?.opciones.length ?? 0) + 1,
       puntaje: 3,
       isCorrecta: false,
-      escenarioDestinoId: '',
+      escenarioDestinoId: this.defaultOpcionDestinoSelectValue(),
     });
     this.notaEditadaManualmente = false;
   }
@@ -375,7 +410,7 @@ export class DocenteEscenarioConfigComponent implements OnInit {
       orden: (this.pregunta()?.opciones.length ?? 0) + 1,
       puntaje: 3,
       isCorrecta: false,
-      escenarioDestinoId: '',
+      escenarioDestinoId: this.defaultOpcionDestinoSelectValue(),
     });
     this.notaEditadaManualmente = false;
   }

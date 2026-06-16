@@ -4,7 +4,8 @@
 
 .resultado {
   position: relative;
-  padding: 0.25rem 0 1.25rem;
+  /* C1: Padding horizontal generoso para evitar que el contenido se pegue al borde */
+  padding: 0.5rem 0 2rem;
   overflow: hidden;
 
   &::before {
@@ -29,7 +30,7 @@
   }
 
   ::ng-deep .siep-page-header {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
 
   ::ng-deep .siep-page-header h1 {
@@ -42,8 +43,14 @@
 }
 
 .score-card {
-  margin-bottom: var(--siep-space-4);
+  /* C1: Separación generosa entre bloques */
+  margin-bottom: var(--siep-space-5);
   border-color: var(--siep-border);
+
+  /* C1: Padding interno más amplio para desktop */
+  &.siep-card {
+    padding: 1.75rem;
+  }
 }
 
 .score-card__head {
@@ -75,13 +82,19 @@
 
 .score-hero {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* C1: 4 columnas en desktop (4 métricas: porcentaje, nota, respuestas, no respondidas) */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--siep-space-3);
   margin-bottom: var(--siep-space-4);
 }
 
+.score-hero--breakdown {
+  /* 3 columnas para el desglose (acertadas/parciales/fallidas) */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .score-hero__metric {
-  padding: var(--siep-space-4);
+  padding: var(--siep-space-4) var(--siep-space-5);
   border-radius: var(--siep-radius-md);
   background: var(--siep-success-bg);
   border: 1px solid var(--siep-border);
@@ -89,6 +102,7 @@
 
 .score-hero__metric--primary {
   background: linear-gradient(145deg, var(--siep-glow-soft) 0%, var(--siep-white) 100%);
+  border-color: rgba(124, 179, 66, 0.3);
 }
 
 .score-hero__label {
@@ -117,7 +131,8 @@
 }
 
 .score-card__reflection {
-  padding: var(--siep-space-4);
+  /* C1: Mejor padding para que el contenido no esté pegado al borde */
+  padding: var(--siep-space-5);
   border-radius: var(--siep-radius-md);
   background: var(--siep-white);
   border-left: 4px solid var(--siep-leaf);
@@ -125,17 +140,17 @@
   border-left-width: 4px;
 
   h3 {
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.65rem;
     font-family: var(--siep-font-title);
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--siep-forest);
   }
 
   p {
     margin: 0;
-    font-size: 0.95rem;
-    line-height: 1.55;
+    font-size: 0.94rem;
+    line-height: 1.6;
     color: var(--siep-text);
   }
 }
@@ -169,12 +184,17 @@
 }
 
 .result-list__head {
+  /* C1: Padding para que el encabezado tenga aire interior */
+  padding: 0.75rem 1.5rem 0.75rem;
+  background: rgba(241, 248, 233, 0.5);
+  border: 1px solid rgba(205, 232, 181, 0.55);
+  border-radius: var(--siep-radius-lg);
   margin-bottom: var(--siep-space-3);
 
   h3 {
-    margin: 0 0 0.2rem;
+    margin: 0 0 0.25rem;
     font-family: var(--siep-font-title);
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--siep-forest);
   }
@@ -189,14 +209,16 @@
 .result-list {
   display: grid;
   gap: var(--siep-space-3);
-  margin-bottom: var(--siep-space-4);
+  margin-bottom: var(--siep-space-5);
 }
 
 .result-item {
   display: flex;
-  gap: var(--siep-space-3);
+  gap: var(--siep-space-4);
   margin: 0;
   border-color: var(--siep-border);
+  /* C1: Padding generoso interno */
+  padding: 1.5rem;
 }
 
 .result-item__step {
@@ -253,11 +275,61 @@
   gap: var(--siep-space-3);
 }
 
-@media (max-width: 720px) {
+/* C5: Responsive */
+@media (max-width: 860px) {
   .score-hero {
+    /* Tablet: 2 columnas */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .score-hero--breakdown {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .score-card.siep-card {
+    padding: 1.35rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .score-hero,
+  .score-hero--breakdown {
+    /* Móvil: 1 columna */
     grid-template-columns: 1fr;
   }
 
+  .score-card.siep-card {
+    padding: 1.1rem;
+  }
+
+  .score-card__reflection {
+    padding: var(--siep-space-4);
+  }
+
+  .result-item {
+    padding: 1rem;
+    flex-direction: column;
+    gap: var(--siep-space-3);
+  }
+
+  .result-list__head {
+    padding: 0.65rem 1rem;
+  }
+
+  .result-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+
+    .siep-btn-primary,
+    .siep-btn-secondary {
+      width: 100%;
+      text-align: center;
+      justify-content: center;
+    }
+  }
+}
+
+@media (max-width: 720px) {
   .result-actions {
     flex-direction: column-reverse;
     align-items: stretch;

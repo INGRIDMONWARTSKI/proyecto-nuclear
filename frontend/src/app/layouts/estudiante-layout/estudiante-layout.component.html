@@ -66,14 +66,14 @@
                       [disabled]="unreadCount() === 0"
                       (click)="marcarTodasComoLeidas()"
                     >
-                      Marcar todas como leidas
+                      Marcar todas como leídas
                     </button>
                     <button
                       type="button"
                       class="notifications__mark-all"
                       (click)="archivarLeidas()"
                     >
-                      Archivar leidas
+                      Archivar leídas
                     </button>
                     <button
                       type="button"
@@ -105,7 +105,7 @@
                             class="notifications__action"
                             (click)="marcarComoLeida(notificacion)"
                           >
-                            Marcar como leida
+                            Marcar como leída
                           </button>
                         }
                         @if (!showingArchived() && notificacion.leida) {
@@ -140,7 +140,7 @@
             <span class="user-box__role">{{ user.role }}</span>
           </div>
           <button type="button" class="btn btn-secondary btn--small" (click)="logout()">
-            Cerrar sesion
+            Cerrar sesión
           </button>
         </div>
       }

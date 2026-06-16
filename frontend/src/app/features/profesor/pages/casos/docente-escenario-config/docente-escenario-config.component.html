@@ -39,10 +39,10 @@
                   <p class="warn">Agrega minimo dos opciones de respuesta.</p>
                 }
                 @if (!preguntaTieneCorrecta(item)) {
-                  <p class="warn">Marca al menos una opcion como correcta.</p>
+                  <p class="warn">Marca al menos una opción como correcta.</p>
                 }
                 @if (!preguntaTieneRetroCompleta(item)) {
-                  <p class="warn">Agrega retroalimentacion para todas las opciones.</p>
+                  <p class="warn">Agrega retroalimentación para todas las opciones.</p>
                 }
               </div>
               <div class="opcion-item__actions">
@@ -80,16 +80,16 @@
           <label for="enunciado">Enunciado</label>
           <textarea id="enunciado" rows="3" formControlName="enunciado"></textarea>
           <small class="muted">
-            Ejemplo: ¿Cual deberia ser la primera accion del practicante al acercarse a la familia en esta situacion de crisis?
+            Ejemplo: ¿Cuál debería ser la primera acción del practicante al acercarse a la familia en esta situación de crisis?
           </small>
           @if (preguntaEnunciadoCorto()) {
             <small class="warn">
-              Escribe una pregunta mas completa para orientar la decision del estudiante.
+              Escribe una pregunta más completa para orientar la decisión del estudiante.
             </small>
           }
         </div>
         <div class="siep-field">
-          <label for="puntajeMaximo">Nota maxima institucional</label>
+          <label for="puntajeMaximo">Nota máxima institucional</label>
           <input
             id="puntajeMaximo"
             type="number"
@@ -126,7 +126,7 @@
         </header>
 
         <p class="helper-note">
-          Agrega las opciones que el estudiante podra elegir. Cada opcion debe tener nota, destino y retroalimentacion.
+          Agrega las opciones que el estudiante podrá elegir. Cada opción debe tener nota, destino y retroalimentación.
         </p>
 
         @if (p.opciones.length > 0) {
@@ -146,9 +146,9 @@
                     />
                   </p>
                   @if (op.retroalimentacion) {
-                    <p class="opcion-retro">Retroalimentacion: {{ op.retroalimentacion.mensaje }}</p>
+                    <p class="opcion-retro">Retroalimentación: {{ op.retroalimentacion.mensaje }}</p>
                   } @else {
-                    <p class="warn">Pendiente: agrega retroalimentacion.</p>
+                    <p class="warn">Pendiente: agrega retroalimentación.</p>
                   }
                 </div>
                 <div class="opcion-item__actions">
@@ -164,7 +164,7 @@
                     type="button"
                     (click)="prepararRetro(op)"
                   >
-                    {{ op.retroalimentacion ? 'Editar retroalimentacion' : 'Agregar retroalimentacion' }}
+                    {{ op.retroalimentacion ? 'Editar retroalimentación' : 'Agregar retroalimentación' }}
                   </button>
                   <button
                     class="siep-btn-danger siep-btn--compact"
@@ -178,10 +178,10 @@
             }
           </ul>
         } @else {
-          <p class="warn">Agrega minimo dos opciones de respuesta.</p>
+          <p class="warn">Agrega mínimo dos opciones de respuesta.</p>
         }
 
-        <h3 class="subpanel-title">{{ editingOpcionId() ? 'Editar opcion' : 'Nueva opcion' }}</h3>
+        <h3 class="subpanel-title">{{ editingOpcionId() ? 'Editar opción' : 'Nueva opción' }}</h3>
         <form class="form-grid" [formGroup]="opcionForm" (ngSubmit)="guardarOpcion()">
           <div class="siep-field">
             <label for="opcion-texto">Texto</label>
@@ -202,7 +202,7 @@
               formControlName="puntaje"
               (input)="marcarNotaManual()"
             />
-            <small class="muted">Este valor define cuanto aporta esta decision a la nota del estudiante.</small>
+            <small class="muted">Este valor define cuánto aporta esta decisión a la nota del estudiante.</small>
             @if (notaOpcionInvalida()) {
               <small class="warn">La nota debe estar entre 0.0 y 5.0.</small>
             }
@@ -213,7 +213,7 @@
               formControlName="isCorrecta"
               (change)="sugerirNotaPorTipo($any($event.target).checked)"
             />
-            Marcar como opcion correcta
+            Marcar como opción correcta
           </label>
           <div class="siep-field">
             <label for="escenarioDestinoId">Escenario destino</label>
@@ -225,7 +225,7 @@
             </select>
           </div>
           <button class="siep-btn-primary" type="submit" [disabled]="saving()">
-            {{ editingOpcionId() ? 'Actualizar opcion' : 'Agregar opcion' }}
+            {{ editingOpcionId() ? 'Actualizar opción' : 'Agregar opción' }}
           </button>
         </form>
       </section>
@@ -243,7 +243,7 @@
       >
         <header class="decision-modal__header">
           <div>
-            <h2 id="retro-modal-title">Retroalimentacion de la opcion</h2>
+            <h2 id="retro-modal-title">Retroalimentación de la opción</h2>
             <p>{{ op.texto }} · Nota {{ formatNota(op.puntaje) }} / 5.0 · {{ tipoOpcionLabel(op) }}</p>
           </div>
           <button class="decision-modal__close" type="button" (click)="cerrarRetroModal()">
@@ -252,7 +252,7 @@
         </header>
 
         <p class="helper-note">
-          Explica al estudiante por que esta decision es adecuada, parcial o riesgosa.
+          Explica al estudiante por qué esta decisión es adecuada, parcial o riesgosa.
         </p>
 
         <form class="form-grid" [formGroup]="retroForm" (ngSubmit)="guardarRetroalimentacion(op)">
@@ -260,13 +260,13 @@
             <label for="retro-mensaje">Mensaje</label>
             <textarea id="retro-mensaje" rows="4" formControlName="mensaje"></textarea>
             @if (retroForm.controls.mensaje.invalid && (retroForm.controls.mensaje.touched || retroForm.controls.mensaje.dirty)) {
-              <small class="warn">Agrega una retroalimentacion para orientar el aprendizaje del estudiante.</small>
+              <small class="warn">Agrega una retroalimentación para orientar el aprendizaje del estudiante.</small>
             }
           </div>
           <div class="siep-field">
             <label for="retro-tipo">Tipo</label>
             <select id="retro-tipo" formControlName="tipo">
-              <option value="pedagogica">Pedagogica</option>
+              <option value="pedagogica">Pedagógica</option>
               <option value="correctiva">Correctiva</option>
               <option value="refuerzo">Refuerzo</option>
             </select>
@@ -276,7 +276,7 @@
             <textarea id="retro-referencia" rows="2" formControlName="referenciaTeorica"></textarea>
           </div>
           <button class="siep-btn-primary" type="submit" [disabled]="saving()">
-            Guardar retroalimentacion
+            Guardar retroalimentación
           </button>
         </form>
       </section>

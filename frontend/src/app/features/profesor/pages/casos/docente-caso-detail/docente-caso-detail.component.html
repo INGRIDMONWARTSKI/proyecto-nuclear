@@ -78,8 +78,8 @@
       <section class="siep-card rubrica-panel">
         <div class="section-header">
           <div>
-            <h2>Rubrica de calificacion</h2>
-            <p class="muted">Define los criterios con los que se justificara la calificacion final del estudiante.</p>
+            <h2>Rúbrica de calificación</h2>
+            <p class="muted">Define los criterios con los que se justificará la calificación final del estudiante.</p>
           </div>
           @if ((preview()?.rubrica?.length ?? 0) === 0) {
             <app-status-badge variant="status" status="pending" label="Pendiente" />
@@ -116,7 +116,7 @@
             }
           </div>
         } @else {
-          <p class="checklist-success">Aun no hay criterios de rubrica para este caso.</p>
+          <p class="checklist-success">Aún no hay criterios de rúbrica para este caso.</p>
         }
 
         @if (canEditRubrica()) {
@@ -127,7 +127,7 @@
               <input id="rubrica-criterio" type="text" formControlName="criterio" />
             </div>
             <div class="siep-field">
-              <label for="rubrica-descripcion">Descripcion</label>
+              <label for="rubrica-descripcion">Descripción</label>
               <textarea id="rubrica-descripcion" rows="3" formControlName="descripcion"></textarea>
             </div>
             <div class="siep-field">
@@ -255,40 +255,109 @@
         </ul>
       </section>
 
-      <section class="siep-card actions-panel">
-        <h2>Acciones del caso</h2>
-        <div class="actions-panel__buttons">
+      <!-- Botón flotante de acciones -->
+      <button
+        class="actions-drawer-toggle"
+        type="button"
+        (click)="toggleActionsDrawer()"
+        [class.actions-drawer-toggle--open]="actionsDrawerOpen()"
+        [attr.aria-expanded]="actionsDrawerOpen()"
+        aria-label="Panel de acciones del caso"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <span>Acciones</span>
+      </button>
+
+      <!-- Backdrop del drawer de acciones -->
+      @if (actionsDrawerOpen()) {
+        <button
+          class="actions-drawer-backdrop"
+          type="button"
+          aria-label="Cerrar panel de acciones"
+          (click)="closeActionsDrawer()"
+        ></button>
+      }
+
+      <!-- Drawer lateral de acciones -->
+      <aside
+        class="actions-drawer"
+        [class.actions-drawer--open]="actionsDrawerOpen()"
+        aria-label="Acciones del caso"
+      >
+        <div class="actions-drawer__header">
+          <div>
+            <p class="actions-drawer__eyebrow">Caso</p>
+            <h3>Acciones</h3>
+          </div>
+          <button
+            class="actions-drawer__close"
+            type="button"
+            aria-label="Cerrar panel de acciones"
+            (click)="closeActionsDrawer()"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="actions-drawer__body">
           @if (canEditCase()) {
-            <a class="siep-btn-primary" [routerLink]="['canvas']">Disenar en editor visual</a>
+            <a class="siep-btn-primary actions-drawer__action" [routerLink]="['canvas']" (click)="closeActionsDrawer()">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+                <rect x="1" y="1" width="13" height="13" rx="2.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M4 11l3-3 2 2 4-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Diseñar en editor visual
+            </a>
           }
           <button
-            class="siep-btn-secondary"
+            class="siep-btn-secondary actions-drawer__action"
             type="button"
             [disabled]="loadingPreview()"
             (click)="cargarPreview()"
           >
-            {{ loadingPreview() ? 'Cargando...' : 'Vista previa pedagogica' }}
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+              <circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M5.5 7.5h4M7.5 5.5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            {{ loadingPreview() ? 'Cargando...' : 'Vista previa pedagógica' }}
           </button>
           @if (c.estado === 'published') {
-            <button class="siep-btn-secondary" type="button" (click)="cargarEvidencias()">
+            <button class="siep-btn-secondary actions-drawer__action" type="button" (click)="cargarEvidencias()">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+                <path d="M3 3h9v9H3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M5 6h5M5 8.5h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
               Ver evidencias
             </button>
-            <a class="siep-btn-primary" routerLink="/profesor/asignaciones">
-              Asignar a comunidades academicas
+            <a class="siep-btn-primary actions-drawer__action" routerLink="/profesor/asignaciones" (click)="closeActionsDrawer()">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+                <circle cx="5.5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/>
+                <circle cx="11" cy="5" r="2" stroke="currentColor" stroke-width="1.3"/>
+                <path d="M1 13c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+              Asignar a comunidades
             </a>
           }
           @if (c.estado === 'draft' && canEditCase()) {
             <button
-              class="siep-btn-primary"
+              class="siep-btn-primary actions-drawer__action"
               type="button"
               [disabled]="publishing()"
               (click)="publicar()"
             >
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+                <path d="M7.5 2v8M4 6l3.5-4L11 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12h11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
               {{ publishing() ? 'Publicando...' : 'Publicar caso' }}
             </button>
           }
         </div>
-      </section>
+      </aside>
 
 
       @if (showEvidencias()) {
@@ -376,7 +445,7 @@
             </div>
           } @else {
             <article class="preview-item">
-              <h3>Rubrica de calificacion</h3>
+              <h3>Rúbrica de calificación</h3>
               @if (p.rubrica.length > 0) {
                 <ul>
                   @for (criterio of p.rubrica; track criterio.id) {
@@ -390,7 +459,7 @@
                   }
                 </ul>
               } @else {
-                <p class="warn">Sin rubrica configurada.</p>
+                <p class="warn">Sin rúbrica configurada.</p>
               }
             </article>
             @for (esc of p.escenarios; track esc.id) {

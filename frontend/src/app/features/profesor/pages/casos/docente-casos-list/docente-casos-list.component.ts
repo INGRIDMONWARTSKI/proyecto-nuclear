@@ -45,6 +45,27 @@ export class DocenteCasosListComponent implements OnInit {
   protected readonly canCreateCases = signal(false);
   protected readonly isAdmin = signal(false);
 
+  canOpenEditor(caso: CasoDocente): boolean {
+    if (caso.estado === 'archived') {
+      return false;
+    }
+
+    const user = this.authService.user();
+    if (!user) {
+      return false;
+    }
+
+    if (user.role === Role.ADMIN) {
+      return true;
+    }
+
+    return (
+      user.role === Role.PROFESOR &&
+      this.authService.canCreateCases() &&
+      caso.autorDocenteId === user.id
+    );
+  }
+
   ngOnInit(): void {
     const user = this.authService.user();
     this.isAdmin.set(user?.role === Role.ADMIN);

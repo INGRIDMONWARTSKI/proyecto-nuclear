@@ -462,9 +462,9 @@ export class DecisionesService {
   }
 
   private assertCaseEditable(caso: CasoRecord): void {
-    if (caso.estado !== 'draft') {
+    if (caso.estado === 'archived') {
       throw new ConflictException(
-        'Solo se permite configurar decisiones en casos draft.',
+        'Solo se permite configurar decisiones en casos no archivados.',
       );
     }
   }

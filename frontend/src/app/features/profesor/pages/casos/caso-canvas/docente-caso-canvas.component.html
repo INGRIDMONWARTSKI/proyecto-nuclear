@@ -27,11 +27,17 @@
         {{ saving() ? 'Guardando...' : 'Guardar' }}
       </button>
       <button class="siep-btn-secondary" type="button" (click)="setWorkspace('student')">Vista previa</button>
-      <button class="siep-btn-primary editor-header__publish" type="button" [disabled]="saving()" (click)="publishCase()">
-        Publicar
-      </button>
+      @if (editor()?.estado === 'draft') {
+        <button class="siep-btn-primary editor-header__publish" type="button" [disabled]="saving()" (click)="publishCase()">
+          Publicar
+        </button>
+      }
     </div>
   </header>
+
+  @if (publishedEditNotice()) {
+    <app-alert-message [message]="publishedEditNotice()!" type="info" />
+  }
 
   @if (revisionNotice()) {
     <app-alert-message [message]="revisionNotice()!" type="info" />

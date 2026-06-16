@@ -100,13 +100,15 @@
             <a class="siep-btn-primary" [routerLink]="[caso.id]">
               {{ isAdmin() ? 'Ver caso' : 'Abrir caso' }}
             </a>
-            @if (canCreateCases() && !isAdmin()) {
+            @if (canOpenEditor(caso)) {
               <a class="siep-btn-secondary" [routerLink]="[caso.id, 'canvas']">
                 Abrir editor visual
               </a>
             }
-            @if (caso.estado === 'draft' && canCreateCases() && !isAdmin()) {
+            @if (canOpenEditor(caso)) {
               <a class="siep-btn-secondary" [routerLink]="[caso.id, 'editar']">Editar datos</a>
+            }
+            @if (caso.estado === 'draft' && canOpenEditor(caso)) {
               <button
                 class="siep-btn-danger"
                 type="button"

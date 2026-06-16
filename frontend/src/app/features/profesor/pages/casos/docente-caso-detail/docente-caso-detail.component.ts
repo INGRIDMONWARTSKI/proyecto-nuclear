@@ -374,11 +374,11 @@ export class DocenteCasoDetailComponent implements OnInit {
   canEditCase(): boolean {
     const user = this.authService.user();
     const caso = this.caso();
-    if (!user || !caso) {
+    if (!user || !caso || caso.estado === 'archived') {
       return false;
     }
     if (user.role === Role.ADMIN) {
-      return false;
+      return true;
     }
     return (
       user.role === Role.PROFESOR &&

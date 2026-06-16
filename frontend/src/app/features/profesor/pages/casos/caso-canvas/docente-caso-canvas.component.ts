@@ -288,6 +288,11 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   );
 
   protected readonly validationErrors = computed(() => this.editor()?.validationErrors ?? []);
+  protected readonly publishedEditNotice = computed(() =>
+    this.editor()?.estado === 'published'
+      ? 'Este caso está publicado. Los cambios guardados afectarán las futuras sesiones de los estudiantes.'
+      : null,
+  );
   protected readonly deleteScenarioTarget = computed(() => {
     const scenarioId = this.deleteScenarioDialogId();
     if (!scenarioId) {

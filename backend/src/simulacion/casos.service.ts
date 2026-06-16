@@ -162,12 +162,6 @@ export class CasosService {
     const caso = await this.findCasoById(casoId);
     this.assertCanAccessCasoDocente(caso, currentUser);
 
-    if (caso.estado === 'published') {
-      throw new ConflictException(
-        'No se permite editar un caso publicado en esta fase.',
-      );
-    }
-
     if (caso.estado === 'archived') {
       throw new ConflictException(
         'No se permite editar un caso archivado.',

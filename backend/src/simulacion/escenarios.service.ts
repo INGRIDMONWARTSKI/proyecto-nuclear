@@ -302,12 +302,6 @@ export class EscenariosService {
   }
 
   private assertCaseEditable(caso: CasoRecord): void {
-    if (caso.estado === 'published') {
-      throw new ConflictException(
-        'No se permiten cambios en escenarios de un caso publicado.',
-      );
-    }
-
     if (caso.estado === 'archived') {
       throw new ConflictException(
         'No se permiten cambios en escenarios de un caso archivado.',

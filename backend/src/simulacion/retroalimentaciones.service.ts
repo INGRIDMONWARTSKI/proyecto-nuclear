@@ -159,9 +159,9 @@ export class RetroalimentacionesService {
   }
 
   private assertCaseEditable(caso: CasoRecord): void {
-    if (caso.estado !== 'draft') {
+    if (caso.estado === 'archived') {
       throw new ConflictException(
-        'Solo se permite configurar retroalimentaciones en casos draft.',
+        'Solo se permite configurar retroalimentaciones en casos no archivados.',
       );
     }
   }

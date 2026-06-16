@@ -48,7 +48,7 @@
             [status]="estadoBadge(c.estado)"
             [label]="estadoLabel(c.estado)"
           />
-          @if (c.estado === 'draft' && canEditCase()) {
+          @if (canEditCase()) {
             <a class="siep-btn-secondary siep-btn--compact" [routerLink]="['editar']">
               Editar datos
             </a>
@@ -159,7 +159,7 @@
             <a class="siep-btn-secondary siep-btn--compact" [routerLink]="['canvas']">
               Ver mapa visual
             </a>
-            @if (c.estado === 'draft' && canEditCase()) {
+            @if (canEditCase()) {
               <a class="siep-btn-primary siep-btn--compact" [routerLink]="['escenarios', 'nuevo']">
                 Agregar escenario
               </a>
@@ -185,7 +185,7 @@
                   </p>
                 </div>
                 <div class="escenario-item__actions">
-                  @if (c.estado === 'draft' && canEditCase()) {
+                  @if (canEditCase()) {
                     <a
                       class="siep-btn-secondary siep-btn--compact"
                       [routerLink]="['/profesor/escenarios', esc.id, 'editar']"
@@ -200,6 +200,8 @@
                     >
                       Configurar decision
                     </a>
+                  }
+                  @if (c.estado === 'draft' && canEditCase()) {
                     <button
                       class="siep-btn-danger siep-btn--compact"
                       type="button"

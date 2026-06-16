@@ -127,7 +127,9 @@
                 <h3>Biblioteca de escena</h3>
               </div>
               <button class="scene-drawer__close" type="button" aria-label="Cerrar biblioteca" (click)="closeResourcesPanel()">
-                ×
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                </svg>
               </button>
             </div>
 
@@ -650,7 +652,9 @@
                 <h3>Panel contextual</h3>
               </div>
               <button class="scene-drawer__close" type="button" aria-label="Cerrar propiedades" (click)="closePropertiesPanel()">
-                ×
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                </svg>
               </button>
             </div>
 
@@ -663,7 +667,9 @@
                     <section class="accordion__section" [class.accordion__section--open]="isSectionOpen(section.id)">
                       <button class="accordion__toggle" type="button" (click)="openSection(section.id)">
                         <span>{{ section.label }}</span>
-                        <span>{{ isSectionOpen(section.id) ? '−' : '+' }}</span>
+                        <svg class="accordion__chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                       </button>
 
                       @if (isSectionOpen(section.id)) {

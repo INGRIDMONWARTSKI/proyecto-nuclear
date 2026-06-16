@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { normalizeUploadUrl } from '../common/utils/upload-url.util';
 import { EscenarioRecord } from './entities/escenario.entity';
 import {
   EditorElementBase,
@@ -57,6 +58,19 @@ function safeRecord(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function normalizeAssetFields(record: Record<string, unknown>): Record<string, unknown> {
+  const next = { ...record };
+
+  for (const key of ['imageUrl']) {
+    const value = next[key];
+    if (typeof value === 'string') {
+      next[key] = normalizeUploadUrl(value) ?? value;
+    }
+  }
+
+  return next;
+}
+
 function normalizeElement(raw: unknown): EditorElementBase | null {
   const record = safeRecord(raw);
   const position = safeRecord(record.position);
@@ -82,8 +96,11 @@ function normalizeElement(raw: unknown): EditorElementBase | null {
     zIndex: safeNumber(record.zIndex, 1),
     locked: safeBoolean(record.locked, false),
     hidden: safeBoolean(record.hidden, false),
-    style: safeRecord(record.style) as Record<string, string | number | boolean | null>,
-    content: safeRecord(record.content),
+    style: normalizeAssetFields(safeRecord(record.style)) as Record<
+      string,
+      string | number | boolean | null
+    >,
+    content: normalizeAssetFields(safeRecord(record.content)),
     bindings: {
       preguntaId:
         typeof bindings.preguntaId === 'string' ? bindings.preguntaId : null,

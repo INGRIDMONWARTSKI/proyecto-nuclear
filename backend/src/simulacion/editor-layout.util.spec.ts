@@ -66,12 +66,12 @@ describe('editor-layout.util', () => {
             style: {
               ...defaultBackground.style,
               aiAssetId: 'asset-1',
-              imageUrl: 'http://localhost:3000/uploads/ai-assets/test.jpg',
+              imageUrl: 'http://localhost:8080/uploads/ai-assets/test.jpg',
             },
             content: {
               ...defaultBackground.content,
               aiAssetId: 'asset-1',
-              imageUrl: 'http://localhost:3000/uploads/ai-assets/test.jpg',
+              imageUrl: 'http://localhost:8080/uploads/ai-assets/test.jpg',
             },
           },
         ],
@@ -86,12 +86,12 @@ describe('editor-layout.util', () => {
       hidden: false,
       style: {
         aiAssetId: 'asset-1',
-        imageUrl: 'http://localhost:3000/uploads/ai-assets/test.jpg',
+        imageUrl: '/uploads/ai-assets/test.jpg',
         backgroundCode: escenario.fondo_codigo,
       },
       content: {
         aiAssetId: 'asset-1',
-        imageUrl: 'http://localhost:3000/uploads/ai-assets/test.jpg',
+        imageUrl: '/uploads/ai-assets/test.jpg',
         title: escenario.titulo,
         situacionTexto: escenario.situacion_texto,
       },

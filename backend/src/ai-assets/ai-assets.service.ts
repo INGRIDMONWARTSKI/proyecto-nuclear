@@ -12,6 +12,7 @@ import { randomUUID } from 'crypto';
 import * as fs from 'fs/promises';
 import { extname, join } from 'path';
 import { Role } from '../common/enums/role.enum';
+import { normalizeUploadUrl } from '../common/utils/upload-url.util';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 import { PostgrestService } from '../postgrest/postgrest.service';
 import { CasosService } from '../simulacion/casos.service';
@@ -93,7 +94,6 @@ export class AiAssetsService {
   private readonly imageHeight = 720;
   private readonly imageModel: string;
   private readonly imageProviderPolicy: 'auto' | 'hf-inference';
-  private readonly publicBaseUrl: string;
   private readonly hfToken: string | null;
   private readonly inferenceClient: HuggingFaceImageClient | null;
 
@@ -111,10 +111,6 @@ export class AiAssetsService {
     );
     this.imageProviderPolicy =
       this.configService.get<'auto' | 'hf-inference'>('HF_IMAGE_PROVIDER', 'auto');
-    this.publicBaseUrl = this.configService.get<string>(
-      'APP_PUBLIC_URL',
-      `http://localhost:${this.configService.get<string>('PORT', '3000')}`,
-    );
     this.inferenceClient = this.hfToken
       ? (new InferenceClient(this.hfToken) as unknown as HuggingFaceImageClient)
       : null;
@@ -187,7 +183,6 @@ export class AiAssetsService {
 
     const safeRelativePath = await this.writeDocenteAssetFile(file);
     const dbType = this.mapDocenteUploadType(dto.tipo);
-    const publicUrl = this.buildPublicUrl(safeRelativePath);
 
     const inserted = await this.postgrest.insert<AiAssetRecord>(
       'recursos_visuales',
@@ -200,7 +195,7 @@ export class AiAssetsService {
         // Guardamos el tipo original para mostrarlo en la biblioteca docente.
         prompt_original: dto.tipo,
         prompt_final: 'Subido por docente',
-        url_externa: publicUrl,
+        url_externa: safeRelativePath,
         ruta_archivo: safeRelativePath,
         ancho: null,
         alto: null,
@@ -565,7 +560,7 @@ export class AiAssetsService {
   }
 
   private buildPublicUrl(relativePath: string): string {
-    return `${this.publicBaseUrl.replace(/\/$/, '')}${relativePath}`;
+    return normalizeUploadUrl(relativePath) ?? relativePath;
   }
 
   private assertValidDocenteUploadFile(

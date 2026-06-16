@@ -390,7 +390,7 @@
                         [class.ai-preview-card--active]="latestAiAsset().id === asset.id"
                         (click)="selectAiAsset(asset.id)"
                       >
-                        <div class="ai-preview-card__thumb" [style.background-image]="'url(' + asset.publicUrl + ')'"></div>
+                        <div class="ai-preview-card__thumb" [style.background-image]="'url(' + assetPreviewUrl(asset) + ')'"></div>
                         <div class="ai-preview-card__meta">
                           <strong>{{ asset.nombre }}</strong>
                           <span>{{ asset.visibleType || asset.tipo }} · {{ asset.estilo }}</span>
@@ -402,7 +402,7 @@
 
                 @if (latestAiAsset(); as asset) {
                   <div class="ai-preview">
-                    <div class="ai-preview__image" [style.background-image]="'url(' + asset.publicUrl + ')'"></div>
+                    <div class="ai-preview__image" [style.background-image]="'url(' + assetPreviewUrl(asset) + ')'"></div>
                     <div class="ai-preview__meta">
                       <strong>Vista previa lista</strong>
                       <span>{{ asset.estilo }} · {{ asset.proveedor }}</span>

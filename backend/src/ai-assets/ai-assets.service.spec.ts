@@ -124,7 +124,7 @@ describe('AiAssetsService', () => {
       expect.stringContaining('.jpg'),
       expect.any(Buffer),
     );
-    expect(asset.imageUrl).toBe('http://localhost:3000/uploads/ai-assets/test.jpg');
+    expect(asset.imageUrl).toBe('/uploads/ai-assets/test.jpg');
     expect(asset.metadata?.backgroundRemoved).toBeUndefined();
   });
 
@@ -192,11 +192,11 @@ describe('AiAssetsService', () => {
       { select: '*' },
     );
     expect(asset.rutaArchivo).toMatch(/\.png$/);
-    expect(asset.imageUrl).toBe(`http://localhost:3000${asset.rutaArchivo}`);
+    expect(asset.imageUrl).toBe(asset.rutaArchivo);
     expect(asset.metadata).toMatchObject({
       backgroundRemoved: true,
-      originalImageUrl: 'http://localhost:3000/uploads/ai-assets/test.jpg',
-      processedImageUrl: 'http://localhost:3000/uploads/ai-assets/test.png',
+      originalImageUrl: '/uploads/ai-assets/test.jpg',
+      processedImageUrl: '/uploads/ai-assets/test.png',
     });
   });
 
@@ -264,7 +264,7 @@ describe('AiAssetsService', () => {
     );
     expect(asset.rutaArchivo).toMatch(/\.jpg$/);
     expect(asset.metadata).toMatchObject({
-      originalImageUrl: 'http://localhost:3000/uploads/ai-assets/test.jpg',
+      originalImageUrl: '/uploads/ai-assets/test.jpg',
       backgroundRemovalWarning: 'La remocion de fondo tardo demasiado.',
     });
   });
@@ -294,7 +294,7 @@ describe('AiAssetsService', () => {
     const assets = await service.listByCaso('caso-1', currentUser);
 
     expect(assets).toHaveLength(1);
-    expect(assets[0].imageUrl).toBe('http://localhost:3000/uploads/ai-assets/test.jpg');
+    expect(assets[0].imageUrl).toBe('/uploads/ai-assets/test.jpg');
     expect(assets[0].metadata).toMatchObject({
       provider: 'huggingface',
       visibleType: 'object',
@@ -418,7 +418,7 @@ describe('AiAssetsService', () => {
     expect(asset).toMatchObject({
       tipo: 'OBJETO',
       visibleType: 'symbol',
-      imageUrl: 'http://localhost:3000/uploads/ai-assets/test.png',
+      imageUrl: '/uploads/ai-assets/test.png',
       insertedElementId: expect.any(String),
     });
   });

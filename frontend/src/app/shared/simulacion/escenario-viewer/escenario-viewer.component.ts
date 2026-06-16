@@ -2,6 +2,7 @@ import { NgStyle } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { EscenarioActual } from '../../../features/simulacion/models/escenario-actual.model';
 import { EditorElement } from '../../../features/simulacion/models/docente/editor-layout.model';
+import { normalizeAssetUrl } from '../../utils/normalize-asset-url.util';
 
 @Component({
   selector: 'app-escenario-viewer',
@@ -62,7 +63,7 @@ export class EscenarioViewerComponent {
   }
 
   elementImageUrl(element: EditorElement): string {
-    return this.contentLabel(element, 'imageUrl');
+    return normalizeAssetUrl(this.contentLabel(element, 'imageUrl'));
   }
 
   elementObjectFit(element: EditorElement): string {
@@ -115,12 +116,12 @@ export class EscenarioViewerComponent {
 
     const styleUrl = background.style['imageUrl'];
     if (typeof styleUrl === 'string' && styleUrl.trim()) {
-      return styleUrl.trim();
+      return normalizeAssetUrl(styleUrl.trim());
     }
 
     const contentUrl = background.content['imageUrl'];
     if (typeof contentUrl === 'string' && contentUrl.trim()) {
-      return contentUrl.trim();
+      return normalizeAssetUrl(contentUrl.trim());
     }
 
     return '';

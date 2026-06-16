@@ -44,6 +44,11 @@ import {
   PERSONALIZADAS_CATALOG,
   TARJETAS_CATALOG,
 } from './editor-assets.catalog';
+import {
+  normalizeAssetUrl,
+  normalizeCasoEditor,
+  normalizeEditorLayoutElements,
+} from '../../../../../shared/utils/normalize-asset-url.util';
 
 type EditorWorkspace = 'scene' | 'decisions' | 'student' | 'map';
 type LibraryCategory =
@@ -1112,12 +1117,13 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
     this.simulacionService.obtenerEditorCaso(this.casoId).subscribe({
       next: (editor) => {
-        this.initializeScenarioHistory(editor.escenarios);
-        this.editor.set(editor);
+        const normalizedEditor = normalizeCasoEditor(editor);
+        this.initializeScenarioHistory(normalizedEditor.escenarios);
+        this.editor.set(normalizedEditor);
         this.dirtyScenarioIds.set([]);
         const currentScenario = this.selectedEscenarioId()
-          ? editor.escenarios.find((item) => item.id === this.selectedEscenarioId())
-          : editor.escenarios[0];
+          ? normalizedEditor.escenarios.find((item) => item.id === this.selectedEscenarioId())
+          : normalizedEditor.escenarios[0];
         this.selectedEscenarioId.set(currentScenario?.id ?? null);
         const pendingElementId = this.pendingAiInsertedElementId;
         const insertedElement = pendingElementId
@@ -1420,7 +1426,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     this.simulacionService
       .actualizarLayoutEscenario(escenario.id, {
         version: escenario.layout.version,
-        elements: escenario.layout.elements,
+        elements: normalizeEditorLayoutElements(escenario.layout.elements),
       })
       .subscribe({
         next: () => {
@@ -1676,7 +1682,15 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
         next: (asset) => {
           this.aiGenerating.set(false);
           this.aiDescription.set('');
-          this.aiAssets.set([asset, ...this.aiAssets().filter((item) => item.id !== asset.id)]);
+          const normalizedAsset = {
+            ...asset,
+            publicUrl: normalizeAssetUrl(asset.publicUrl),
+            imageUrl: asset.imageUrl ? normalizeAssetUrl(asset.imageUrl) : asset.imageUrl,
+          };
+          this.aiAssets.set([
+            normalizedAsset,
+            ...this.aiAssets().filter((item) => item.id !== asset.id),
+          ]);
           this.selectedAiAssetId.set(asset.id);
           this.successMessage.set(
             visibleType === 'background'
@@ -1719,17 +1733,17 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
           if (visibleType === 'background') {
             this.patchScenario((item) => {
               item.aiBackgroundAssetId = appliedAsset.id;
-              item.aiBackgroundUrl = appliedAsset.publicUrl;
+              item.aiBackgroundUrl = normalizeAssetUrl(appliedAsset.publicUrl);
               const background = this.ensureScenarioBackground(item);
               background.style = {
                 ...background.style,
                 aiAssetId: appliedAsset.id,
-                imageUrl: appliedAsset.publicUrl,
+                imageUrl: normalizeAssetUrl(appliedAsset.publicUrl),
               };
               background.content = {
                 ...background.content,
                 aiAssetId: appliedAsset.id,
-                imageUrl: appliedAsset.publicUrl,
+                imageUrl: normalizeAssetUrl(appliedAsset.publicUrl),
               };
             });
             this.successMessage.set('Fondo IA aplicado al escenario actual.');
@@ -2018,7 +2032,14 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       .subscribe({
         next: (asset) => {
           this.docenteUploading.set(false);
-          this.docenteAssets.set([asset, ...this.docenteAssets().filter((item) => item.id !== asset.id)]);
+          const normalizedAsset = {
+            ...asset,
+            url: normalizeAssetUrl(asset.url),
+          };
+          this.docenteAssets.set([
+            normalizedAsset,
+            ...this.docenteAssets().filter((item) => item.id !== asset.id),
+          ]);
           this.docenteAssetName.set('');
           this.docenteAssetFile.set(null);
           this.docenteMessage.set('Recurso subido correctamente. Ya puedes agregarlo a la escena.');
@@ -2041,17 +2062,17 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
     if (asset.tipo === 'FONDO') {
       this.patchScenario((item) => {
         item.aiBackgroundAssetId = asset.id;
-        item.aiBackgroundUrl = asset.url;
+        item.aiBackgroundUrl = normalizeAssetUrl(asset.url);
         const background = this.ensureScenarioBackground(item);
         background.style = {
           ...background.style,
           aiAssetId: asset.id,
-          imageUrl: asset.url,
+          imageUrl: normalizeAssetUrl(asset.url),
         };
         background.content = {
           ...background.content,
           aiAssetId: asset.id,
-          imageUrl: asset.url,
+          imageUrl: normalizeAssetUrl(asset.url),
           sourceType: 'docente',
         };
       });
@@ -2079,7 +2100,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
       style: { objectFit: 'contain' },
       content: {
         nombre: asset.nombre,
-        imageUrl: asset.url,
+        imageUrl: normalizeAssetUrl(asset.url),
         aiAssetId: asset.id,
         aiType: asset.tipo.toLowerCase(),
         sourceType: 'docente',
@@ -2307,7 +2328,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   }
 
   canvasBackgroundStyle(escenario = this.escenarioSeleccionado()): Record<string, string> {
-    const imageUrl = escenario?.aiBackgroundUrl ?? null;
+    const imageUrl = normalizeAssetUrl(escenario?.aiBackgroundUrl ?? '');
 
     if (imageUrl) {
       return {
@@ -2326,9 +2347,10 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   }
 
   scenarioThumbStyle(escenario: CasoEditorEscenario): Record<string, string> {
-    if (escenario.aiBackgroundUrl) {
+    const imageUrl = normalizeAssetUrl(escenario.aiBackgroundUrl ?? '');
+    if (imageUrl) {
       return {
-        backgroundImage: `url('${escenario.aiBackgroundUrl}')`,
+        backgroundImage: `url('${imageUrl}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       };
@@ -2373,7 +2395,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   }
 
   elementImageUrl(element: EditorElement): string {
-    return this.contentLabel(element, 'imageUrl');
+    return normalizeAssetUrl(this.contentLabel(element, 'imageUrl'));
   }
 
   elementAiType(element: EditorElement): string {
@@ -2537,7 +2559,10 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   libraryPreviewStyle(item: BibliotecaItem): Record<string, string> {
     // Use real asset image when available (catalog items with previewUrl)
-    const imageUrl = typeof item.content['imageUrl'] === 'string' ? item.content['imageUrl'] : null;
+    const imageUrl =
+      typeof item.content['imageUrl'] === 'string'
+        ? normalizeAssetUrl(item.content['imageUrl'])
+        : null;
     if (imageUrl) {
       return {
         backgroundImage: `url('${imageUrl}')`,
@@ -2717,11 +2742,11 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
 
   latestAiAssetUrl(): string {
     const asset = this.latestAiAsset();
-    return asset?.imageUrl || asset?.publicUrl || '';
+    return normalizeAssetUrl(asset?.imageUrl || asset?.publicUrl || '');
   }
 
   assetPreviewUrl(asset: AiAsset): string {
-    return asset.imageUrl || asset.publicUrl;
+    return normalizeAssetUrl(asset.imageUrl || asset.publicUrl);
   }
 
   aiGenerationHint(): string {
@@ -3114,7 +3139,13 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   private loadAiAssets(): void {
     this.simulacionService.listarAiAssetsCaso(this.casoId).subscribe({
       next: (assets) => {
-        this.aiAssets.set(assets);
+        this.aiAssets.set(
+          assets.map((asset) => ({
+            ...asset,
+            publicUrl: normalizeAssetUrl(asset.publicUrl),
+            imageUrl: asset.imageUrl ? normalizeAssetUrl(asset.imageUrl) : asset.imageUrl,
+          })),
+        );
         if (!this.selectedAiAssetId() && assets.length > 0) {
           this.selectedAiAssetId.set(assets[0].id);
         }
@@ -3128,7 +3159,12 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   private loadDocenteAssets(): void {
     this.simulacionService.listarDocenteAssetsCaso(this.casoId).subscribe({
       next: (assets) => {
-        this.docenteAssets.set(assets);
+        this.docenteAssets.set(
+          assets.map((asset) => ({
+            ...asset,
+            url: normalizeAssetUrl(asset.url),
+          })),
+        );
       },
       error: () => {
         this.docenteAssets.set([]);

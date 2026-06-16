@@ -59,7 +59,7 @@ async function bootstrap() {
     }),
   );
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads',
+    prefix: '/uploads/',
   });
   const publicDir = join(process.cwd(), 'public');
   const indexPath = join(publicDir, 'index.html');

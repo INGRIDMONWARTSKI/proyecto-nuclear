@@ -914,7 +914,7 @@ describe('GeneracionCasosIaService', () => {
     });
   });
 
-  it('redondea puntajes decimales generados por la IA antes de persistirlos', async () => {
+  it('conserva puntajes decimales generados por la IA al persistirlos', async () => {
     iaGenerationProvider.generateJson = jest.fn().mockResolvedValue(
       generationPayload(
         JSON.stringify({
@@ -998,19 +998,19 @@ describe('GeneracionCasosIaService', () => {
 
     expect(decisionesService.createPregunta).toHaveBeenCalledWith(
       'esc-1',
-      expect.objectContaining({ puntajeMaximo: 5 }),
+      expect.objectContaining({ puntajeMaximo: 4.6 }),
       currentUser,
     );
     expect(decisionesService.createOpcion).toHaveBeenNthCalledWith(
       1,
       'preg-1',
-      expect.objectContaining({ puntaje: 4 }),
+      expect.objectContaining({ puntaje: 4.4 }),
       currentUser,
     );
     expect(decisionesService.createOpcion).toHaveBeenNthCalledWith(
       2,
       'preg-1',
-      expect.objectContaining({ puntaje: 1 }),
+      expect.objectContaining({ puntaje: 0.5 }),
       currentUser,
     );
   });

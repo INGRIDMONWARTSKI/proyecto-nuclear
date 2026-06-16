@@ -1170,10 +1170,7 @@ export class GeneracionCasosIaService {
     const nota = numeric > 5 ? numeric / 20 : numeric;
     const notaNormalizada = Math.min(nota, 5);
 
-    // La persistencia actual usa columnas integer para puntajes.
-    // Redondeamos a la escala entera 0..5 para mantener compatibilidad
-    // con PostgREST/PostgreSQL y evitar errores cuando la IA devuelve 0.5, 2.7, etc.
-    return Math.round(notaNormalizada);
+    return Number(notaNormalizada.toFixed(1));
   }
 
   private validateFeedback(payload: unknown) {

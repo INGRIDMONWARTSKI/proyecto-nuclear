@@ -937,7 +937,14 @@
               </label>
               <label class="field">
                 <span>Puntaje máximo</span>
-                <input type="number" [value]="questionScoreDraft()" (input)="updateQuestionScoreDraft($any($event.target).value)" />
+                <input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  [value]="questionScoreDraft()"
+                  (input)="updateQuestionScoreDraft($any($event.target).value)"
+                />
               </label>
               <button class="siep-btn-primary" type="button" (click)="saveQuestion()">Guardar pregunta</button>
             </section>
@@ -975,7 +982,14 @@
                     <div class="decision-option-card__grid">
                       <label class="field">
                         <span>Puntaje</span>
-                        <input type="number" [value]="op.puntaje" (input)="updateOptionField(op.id, 'puntaje', toNumber($any($event.target).value))" />
+                        <input
+                          type="number"
+                          min="0"
+                          max="5"
+                          step="0.1"
+                          [value]="op.puntaje"
+                          (input)="updateOptionField(op.id, 'puntaje', toNumber($any($event.target).value))"
+                        />
                       </label>
                       <label class="field">
                         <span>Destino</span>
@@ -1010,7 +1024,14 @@
                 <div class="decision-option-card__grid">
                   <label class="field">
                     <span>Puntaje</span>
-                    <input type="number" [value]="newOptionScore()" (input)="updateNewOptionScore($any($event.target).value)" />
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      [value]="newOptionScore()"
+                      (input)="updateNewOptionScore($any($event.target).value)"
+                    />
                   </label>
                   <label class="field">
                     <span>Destino</span>

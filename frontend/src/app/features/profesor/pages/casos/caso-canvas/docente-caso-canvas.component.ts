@@ -121,7 +121,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   protected readonly openPropertySection = signal<PropertySection>('general');
   protected readonly zoomLevel = signal(1);
   protected readonly questionDraft = signal('');
-  protected readonly questionScoreDraft = signal(10);
+  protected readonly questionScoreDraft = signal(5);
   protected readonly newOptionText = signal('');
   protected readonly newOptionScore = signal(0);
   protected readonly newOptionCorrect = signal(false);
@@ -3052,7 +3052,7 @@ export class DocenteCasoCanvasComponent implements OnInit, AfterViewInit, OnDest
   private syncQuestionDraft(): void {
     const pregunta = this.escenarioSeleccionado()?.pregunta;
     this.questionDraft.set(pregunta?.enunciado ?? '');
-    this.questionScoreDraft.set(pregunta?.puntajeMaximo ?? 10);
+    this.questionScoreDraft.set(pregunta?.puntajeMaximo ?? 5);
   }
 
   private syncDecisionSelection(): void {

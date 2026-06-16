@@ -60,12 +60,14 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
   protected readonly videoSrc = signal('');
   protected readonly videoTitle = signal('');
   protected readonly videoDesc = signal('');
+  protected readonly videoPlaybackKey = signal(0);
   // Triggers a CSS fade-in on the scene content each time a video overlay is dismissed.
   protected readonly sceneEntering = signal(false);
 
   private sesionId = '';
   private introChecked = false;
   private timerId: ReturnType<typeof setInterval> | null = null;
+  private afterTransition: (() => void) | null = null;
 
   // Observable derived from data signal for reactive intro check
   private readonly data$ = toObservable(this.data);
@@ -138,21 +140,22 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
       });
   }
 
-  continuar() {
-    this.goToNextPregunta();
+  continuar(): void {
+    const nav = this.data()?.navegacion ?? [];
+    const currentId = this.data()?.escenario?.pregunta.id;
+    const idx = nav.findIndex((i) => i.preguntaId === currentId);
+    if (idx >= 0 && idx < nav.length - 1) {
+      this.applyPreguntaSelection(nav[idx + 1].preguntaId);
+    }
   }
 
   verResultado() {
     void this.router.navigate(['/estudiante/resultados', this.sesionId]);
   }
 
-  /** Intercepta "Continuar recorrido": muestra video de transición antes de cargar siguiente escena. */
+  /** Intercepta avance: muestra video de transición antes de cargar la siguiente escena/pregunta. */
   handleContinuarClick(): void {
-    this.triggerVideo(
-      'transition',
-      'Antes de continuar',
-      'Observa esta transición antes de avanzar a la siguiente escena.',
-    );
+    this.playTransitionVideo(() => this.continuar());
   }
 
   /** Intercepta "Ver resultado": muestra video de cierre si aún no fue visto. */
@@ -188,9 +191,12 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
         markIntroWatched(this.sesionId);
         // Scenario was already loaded in background; template reveals it automatically.
         break;
-      case 'transition':
-        this.continuar();
+      case 'transition': {
+        const next = this.afterTransition;
+        this.afterTransition = null;
+        next?.();
         break;
+      }
       case 'closing':
         markClosingWatched(this.sesionId);
         this.verResultado();
@@ -201,8 +207,13 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
   private handleRespuesta(res: RespuestaSubmitResponse) {
     this.sending.set(false);
     this.responseNotice.set(res.mensaje);
-    if (res.completed) this.completed.set(true);
-    this.loadEscenarioActual();
+    if (res.completed) {
+      this.completed.set(true);
+      this.loadEscenarioActual();
+      return;
+    }
+
+    this.playTransitionVideo(() => this.loadEscenarioActual());
   }
 
   private triggerVideo(phase: VideoPhase, title: string, desc: string): void {
@@ -217,7 +228,17 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
             : 'cierre',
       ),
     );
+    this.videoPlaybackKey.update((key) => key + 1);
     this.videoPhase.set(phase);
+  }
+
+  private playTransitionVideo(next: () => void): void {
+    this.afterTransition = next;
+    this.triggerVideo(
+      'transition',
+      'Antes de continuar',
+      'Observa esta transición antes de avanzar a la siguiente escena.',
+    );
   }
 
   /**
@@ -262,22 +283,41 @@ export class EstudianteSimulacionPlayerComponent implements OnInit {
 
   protected selectPregunta(preguntaId: string): void {
     if (this.completed()) return;
-    this.activePreguntaId.set(preguntaId);
-    this.loadEscenarioActual();
+
+    const currentId = this.data()?.escenario?.pregunta.id;
+    if (currentId === preguntaId) return;
+
+    const nav = this.data()?.navegacion ?? [];
+    const currentIdx = nav.findIndex((item) => item.preguntaId === currentId);
+    const targetIdx = nav.findIndex((item) => item.preguntaId === preguntaId);
+
+    if (targetIdx > currentIdx) {
+      this.playTransitionVideo(() => this.applyPreguntaSelection(preguntaId));
+      return;
+    }
+
+    this.applyPreguntaSelection(preguntaId);
   }
 
   protected goToPreviousPregunta(): void {
     const nav = this.data()?.navegacion ?? [];
     const currentId = this.data()?.escenario?.pregunta.id;
     const idx = nav.findIndex((i) => i.preguntaId === currentId);
-    if (idx > 0) this.selectPregunta(nav[idx - 1].preguntaId);
+    if (idx > 0) this.applyPreguntaSelection(nav[idx - 1].preguntaId);
   }
 
   protected goToNextPregunta(): void {
     const nav = this.data()?.navegacion ?? [];
     const currentId = this.data()?.escenario?.pregunta.id;
     const idx = nav.findIndex((i) => i.preguntaId === currentId);
-    if (idx >= 0 && idx < nav.length - 1) this.selectPregunta(nav[idx + 1].preguntaId);
+    if (idx >= 0 && idx < nav.length - 1) {
+      this.playTransitionVideo(() => this.applyPreguntaSelection(nav[idx + 1].preguntaId));
+    }
+  }
+
+  private applyPreguntaSelection(preguntaId: string): void {
+    this.activePreguntaId.set(preguntaId);
+    this.loadEscenarioActual();
   }
 
   protected canGoPrev(): boolean {

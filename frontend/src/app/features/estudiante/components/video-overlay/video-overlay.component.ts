@@ -1,4 +1,4 @@
-import { Component, effect, input, output, signal } from '@angular/core';
+import { Component, ElementRef, effect, input, output, signal, viewChild } from '@angular/core';
 
 @Component({
   selector: 'app-video-overlay',
@@ -14,15 +14,26 @@ export class VideoOverlayComponent {
 
   protected readonly videoError = signal(false);
   protected readonly isExiting = signal(false);
+  private readonly videoRef = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
   private finished = false;
 
   constructor() {
-    // When source changes between video phases, reset all local state.
+    // When source changes between video phases, reset local state and reload playback.
     effect(() => {
-      this.src();
+      const url = this.src();
       this.finished = false;
       this.videoError.set(false);
       this.isExiting.set(false);
+
+      queueMicrotask(() => {
+        const video = this.videoRef()?.nativeElement;
+        if (!video || !url) {
+          return;
+        }
+
+        video.load();
+        void video.play().catch(() => undefined);
+      });
     });
   }
 

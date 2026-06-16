@@ -4,12 +4,14 @@
   [class.player--scene-entering]="sceneEntering()"
 >
   @if (videoPhase() !== 'none') {
-    <app-video-overlay
-      [src]="videoSrc()"
-      [titulo]="videoTitle()"
-      [descripcion]="videoDesc()"
-      (ended)="onVideoEnded()"
-    />
+    @for (playbackKey of [videoPlaybackKey()]; track playbackKey) {
+      <app-video-overlay
+        [src]="videoSrc()"
+        [titulo]="videoTitle()"
+        [descripcion]="videoDesc()"
+        (ended)="onVideoEnded()"
+      />
+    }
   }
 
   @if (videoPhase() === 'none') {
